@@ -1,0 +1,3 @@
+[submodule "mpfr-cs"]
+	path = mpfr-cs
+	url = https://github.com/albrdev/mpfr-cs.git
