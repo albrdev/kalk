@@ -39,6 +39,15 @@
     <Reference Include="Costura, Version=4.0.0.0, Culture=neutral, PublicKeyToken=9919ef960d84173d, processorArchitecture=MSIL">
       <HintPath>..\packages\Costura.Fody.4.0.0\lib\net40\Costura.dll</HintPath>
     </Reference>
+    <Reference Include="Libs.Collections">
+      <HintPath>lib\Libs.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="Libs.Core">
+      <HintPath>lib\Libs.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Libs.Text">
+      <HintPath>lib\Libs.Text.dll</HintPath>
+    </Reference>
     <Reference Include="NDesk.Options, Version=0.2.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\NDesk.Options.0.2.1\lib\NDesk.Options.dll</HintPath>
     </Reference>
