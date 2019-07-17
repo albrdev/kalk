@@ -7,6 +7,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kalk", "kalk\kalk.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mpfr-cs", "mpfr-cs\mpfr-cs\mpfr-cs.csproj", "{18730017-85A3-4BC1-8C1C-9BB95E5C69B4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "kalk", "kalk", "{2979DA21-058B-41B7-B216-10B26C87EA03}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		.gitmodules = .gitmodules
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +33,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9D252F8A-EB03-4827-A9FA-2FA7A12922BA} = {2979DA21-058B-41B7-B216-10B26C87EA03}
+		{18730017-85A3-4BC1-8C1C-9BB95E5C69B4} = {2979DA21-058B-41B7-B216-10B26C87EA03}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {34E75B57-7EF7-4106-9E0E-26FBB0A9A5B0}
