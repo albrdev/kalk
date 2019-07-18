@@ -27,7 +27,7 @@ namespace kalk
             result.AppendLine($"{mpfr_rnd_t.MPFR_RNDZ}\t- {"Round toward zero"}");
             result.AppendLine($"{mpfr_rnd_t.MPFR_RNDU}\t- {"Round toward +Infinity"}");
             result.AppendLine($"{mpfr_rnd_t.MPFR_RNDD}\t- {"Round toward -Infinity"}");
-            result.AppendLine($"{mpfr_rnd_t.MPFR_RNDA}\t- {"Round away from zero."}");
+            result.AppendLine($"{mpfr_rnd_t.MPFR_RNDA}\t- {"Round away from zero"}");
             result.AppendLine($"{mpfr_rnd_t.MPFR_RNDF}\t- {"Faithful rounding"}");
             result.AppendLine($"{mpfr_rnd_t.MPFR_RNDNA}\t- {"Round to nearest, with ties away from zero"}");
 
