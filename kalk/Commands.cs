@@ -2,6 +2,8 @@
 using Math.Mpfr.Native;
 using Libs.Text.Parsing;
 using Libs.Text.Formatting;
+using Libs.Utilities;
+using System.Text;
 
 namespace kalk
 {
@@ -85,6 +87,17 @@ namespace kalk
                 return $"{MPFR_Value.RoundingMode} ({(int)MPFR_Value.RoundingMode})";
         }
 
+        private static object GetRoundingModes(params string[] args)
+        {
+            StringBuilder result = new StringBuilder();
+            foreach(var value in EnumUtilities.GetValues<mpfr_rnd_t>())
+            {
+                result.AppendLine($"{value} ({(int)value})");
+            }
+
+            return result.ToString();
+        }
+
         private static object Seed(params string[] args)
         {
             if(args.Length > 0)
@@ -115,6 +128,7 @@ namespace kalk
 
             { "prec", Precision },
             { "rmode", RoundingMode },
+            { "rmodes", GetRoundingModes },
             { "dgtcnt", DigitCount },
             { "seed", Seed },
             { "seedstr", SeedString },
