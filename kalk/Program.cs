@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Math.Mpfr.Native;
 using NDesk.Options;
+using Libs.Utilities;
 
 namespace kalk
 {
@@ -22,26 +23,12 @@ namespace kalk
             optionsSet.WriteOptionDescriptions(Console.Out);
         }
 
-        public static TEnum Parse<TEnum>(string value) where TEnum : struct, IConvertible
-        {
-            TEnum result = (TEnum)Enum.Parse(typeof(TEnum), value);
-            if(!Enum.IsDefined(typeof(TEnum), value))
-                throw new System.OverflowException();
-
-            return result;
-        }
-
-        public static bool TryParse<TEnum>(string value, out TEnum result) where TEnum : struct, IConvertible
-        {
-            return Enum.TryParse(value, out result) ? Enum.IsDefined(typeof(TEnum), result) : false;
-        }
-
         internal static mpfr_rnd_t ParseRoundingMode(string value)
         {
-            if(TryParse(value, out mpfr_rnd_t result))
+            if(EnumUtilities.TryParse(value, out mpfr_rnd_t result))
                 return result;
 
-            return Parse<mpfr_rnd_t>("MPFR_" + value);
+            return EnumUtilities.Parse<mpfr_rnd_t>("MPFR_" + value);
         }
 
         static int Main(string[] args)
