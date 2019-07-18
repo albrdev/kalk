@@ -86,6 +86,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArithmeticExpressions.cs" />
+    <Compile Include="ChemicalExpressions.cs" />
+    <Compile Include="Commands.cs" />
+    <Compile Include="Common.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
