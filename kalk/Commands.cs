@@ -119,6 +119,12 @@ namespace kalk
             else
                 return MPFR_Value.RandomState;
         }
+
+        private static object PrintInfo(params string[] args)
+        {
+            Program.PrintInfo(args.Length > 0 ? args[0] : null);
+            return null;
+        }
         #endregion
 
         internal static CommandParser Parser { get; } = new CommandParser(Common.EscapeSequenceFormatter)
@@ -134,7 +140,9 @@ namespace kalk
             { "seedstr", SeedString },
 
             { "ans", (args) => Common.Ans(args) },
-            { "nans", (args) => Common.ResultVariables.Count }
+            { "nans", (args) => Common.ResultVariables.Count },
+
+            { "list", PrintInfo },
         };
     }
 }
