@@ -88,10 +88,10 @@ namespace kalk
                 { "n|oprec=",       "Ouput precision (decimal count)",                  (int v) => options.OutputPrecision = v },
                 { "z|seed=",        "Random seed",                                      v => options.Seed = v },
                 { "Z|seedstring=",  "Random seed string",                               v => options.SeedString = v },
-                { "i|interactive",  "Interactive mode",                                 v => options.InteractiveMode = v != null },
+                { "i|interactive",  "Interactive mode",                                 v => options.InteractiveMode = true },
                 { "l|list:",        "Prints info about available variables/functions",  v => options.PrintInfo = (true, v) },
-                { "h|help",         "Prints usage",                                     v => options.PrintUsage = v != null },
-                { "version",        "Prints version information",                       v => options.PrintVersion = v != null },
+                { "h|help",         "Prints usage",                                     v => options.PrintUsage = true },
+                { "version",        "Prints version information",                       v => options.PrintVersion = true },
                 { "<>",                                                                 v => options.Expressions.Add(v) }
             };
 
