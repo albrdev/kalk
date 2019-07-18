@@ -4,6 +4,7 @@ using System.IO;
 using Math.Mpfr.Native;
 using NDesk.Options;
 using Libs.Utilities;
+using System.Text.RegularExpressions;
 
 namespace kalk
 {
@@ -12,6 +13,31 @@ namespace kalk
         private static string ApplicationName
         {
             get => Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]);
+        }
+
+        internal static void PrintInfo(string pattern = null)
+        {
+            Regex regex = new Regex($@"{(string.IsNullOrWhiteSpace(pattern) ? "." : Regex.Escape(pattern))}+");
+
+            Console.WriteLine("Variables:");
+            foreach(var info in ArithmeticExpressions.VariableInfo)
+            {
+                if(regex.IsMatch(info.Identifier) || regex.IsMatch(info.Name) || regex.IsMatch(info.Description))
+                {
+                    Console.WriteLine($"{info.Identifier}");
+                    Console.WriteLine($"  {info.Name} - {info.Description}\n");
+                }
+            }
+
+            Console.WriteLine("Functions:");
+            foreach(var info in ArithmeticExpressions.FunctionInfo)
+            {
+                if(regex.IsMatch(info.Identifier) || regex.IsMatch(info.Name) || regex.IsMatch(info.Description))
+                {
+                    Console.WriteLine($"{info.Identifier}");
+                    Console.WriteLine($"  {info.Name} - {info.Description}\n");
+                }
+            }
         }
 
         private static void PrintUsage(OptionSet optionsSet)
@@ -33,7 +59,7 @@ namespace kalk
 
         static int Main(string[] args)
         {
-            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int OutputPrecision, string Seed, string SeedString, bool InteractiveMode, bool PrintUsage) options = (new List<string>(), 1024, default, 128, null, null, false, false);
+            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int OutputPrecision, string Seed, string SeedString, bool InteractiveMode, (bool Flag, string Pattern) PrintInfo, bool PrintUsage) options = (new List<string>(), 1024, default, 128, null, null, false, (false, null), false);
 
             var optionSet = new OptionSet()
             {
@@ -44,6 +70,7 @@ namespace kalk
                 { "z|seed=", "Random seed", v => options.Seed = v },
                 { "Z|seedstring=", "Random seed string", v => options.SeedString = v },
                 { "i|interactive", "Interactive mode", v => options.InteractiveMode = v != null },
+                { "l|list:", "Prints info about available variables/functions", (v) => options.PrintInfo = (true, v) },
                 { "h|help",  "Prints usage", v => options.PrintUsage = v != null },
                 { "<>", v => options.Expressions.Add(v) }
             };
@@ -62,6 +89,12 @@ namespace kalk
             if(options.PrintUsage)
             {
                 PrintUsage(optionSet);
+                return 0;
+            }
+
+            if(options.PrintInfo.Flag)
+            {
+                PrintInfo(options.PrintInfo.Pattern);
                 return 0;
             }
 

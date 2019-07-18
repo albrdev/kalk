@@ -137,6 +137,87 @@ namespace kalk
         };
         #endregion
 
+        #region Info
+        internal static (string Identifier, string Name, string Description)[] VariableInfo { get; } =
+        {
+            ( "Y",          @"Yotta",                           @"10^24" ),
+            ( "Z",          @"Zetta",                           @"10^21" ),
+            ( "E",          @"Exa",                             @"10^18" ),
+            ( "P",          @"Peta",                            @"10^15" ),
+            ( "T",          @"Tera",                            @"10^12" ),
+            ( "G",          @"Giga",                            @"10^9" ),
+            ( "M",          @"Mega",                            @"10^6" ),
+            ( "k",          @"Kilo",                            @"10^3" ),
+            ( "h",          @"Hecto",                           @"10^2" ),
+            ( "da",         @"Deca",                            @"10^1" ),
+            ( "d",          @"Deci",                            @"10^-1" ),
+            ( "c",          @"Centi",                           @"10^-2" ),
+            ( "m",          @"Milli",                           @"10^-3" ),
+            ( "u",          @"Micro",                           @"10^-6" ),
+            ( "n",          @"Nano",                            @"10^-9" ),
+            ( "p",          @"Pico",                            @"10^-12" ),
+            ( "f",          @"Femto",                           @"10^-15" ),
+            ( "a",          @"Atto",                            @"10^-18" ),
+            ( "z",          @"Zepto",                           @"10^-21" ),
+            ( "y",          @"Yocto",                           @"10^-24" ),
+
+            ( "math.pi",    @"Pi",                              @"~3.14159" ),
+            ( "math.E",     @"Euler-Mascheroni constant",       @"~0.57721" ),
+            ( "math.G",     @"Catalan's constant",              @"~0.91596" ),
+            ( "math.ln2",   @"Logarithm of 2",                  @"~0.69314" ),
+            ( "math.e",     @"Euler's number",                  @"Mathematical constant 'e' (~2.71828)" ),
+
+            ( "phys.NA",    @"Avogadro constant",               @"6.02214076*10^23" ),
+            ( "phys.au",    @"Astronomical_unit",               @"Defined in 'metres'" ),
+            ( "phys.ly",    @"Light year",                      @"Defined in 'metres'" ),
+            ( "phys.pc",    @"Parsec",                          @"Defined in 'metres'" ),
+            ( "phys.c",     @"Speed of light",                  @"Defined in 'metres'" ),
+            ( "phys.G",     @"Gravitational constant",          @"Defined in 'm^3*kg^-1*s^-2'" ),
+            ( "phys.g",     @"Gravitational acceleration",      @"Defined in 'm/s^2'" ),
+            ( "phys.R",     @"Gas constant",                    @"Defined in 'J*K^-1*mol^-1'" ),
+
+            ( "googol",     @"Googol",                          @"10^100" )
+        };
+
+        internal static (string Identifier, string Name, string Description)[] FunctionInfo { get; } =
+        {
+            ( "ans",    @"Answer/Result",           @"Result of a previous calculation" ),
+
+            ( "abs",    @"Absolute value",          @"+x" ),
+            ( "neg",    @"Negative value",          @"-x" ),
+            ( "pow",    @"Power",                   @"b^n" ),
+            ( "root",   @"Root",                    @"Nth root of a value" ),
+            ( "sqrt",   @"Square root",             @"Square root of a value" ),
+            ( "cbrt",   @"Cubic root",              @"Cubic root of a value" ),
+            ( "log",    @"Logarithm ( base 'e')",   @"Natural logarithm" ),
+            ( "log2",   @"Logarithm (base 2)",      @"Binary logarithm" ),
+            ( "log10",  @"Logarithm (base 10)",     @"Common logarithm" ),
+
+            ( "sin",    @"Sine",                    @"Trigonometric function" ),
+            ( "cos",    @"Cosine",                  @"Trigonometric function" ),
+            ( "tan",    @"Tangent",                 @"Trigonometric function" ),
+            ( "asin",   @"Arcsine",                 @"Inverse trigonometric function" ),
+            ( "acos",   @"Arccosine",               @"Inverse trigonometric function" ),
+            ( "atan",   @"Arctangent",              @"Inverse trigonometric function" ),
+            ( "sinh",   @"Hyperbolic sine",         @"Hyperbolic trigonometric function" ),
+            ( "cosh",   @"Hyperbolic cosine",       @"Hyperbolic trigonometric function" ),
+            ( "tanh",   @"Hyperbolic tangent",      @"Hyperbolic trigonometric function" ),
+            ( "asinh",  @"Hyperbolic arcsine",      @"Inverse hyperbolic trigonometric function" ),
+            ( "acosh",  @"Hyperbolic arccosine",    @"Inverse hyperbolic trigonometric function" ),
+            ( "atanh",  @"Hyperbolic arctangent",   @"Inverse hyperbolic trigonometric function" ),
+
+            ( "min",    @"Minimum",                 @"Returns the smallest value in a set" ),
+            ( "max",    @"Maximum",                 @"Returns the largest value in a set" ),
+
+            ( "rnd",    @"Random",                  @"Uniform random value (0 <= x < 1)" ),
+            ( "rndi",   @"Inclusive random",        @"Uniform random value (0 <= x <= 1)" ),
+
+            ( "chem.M", @"Molar mass",              @"Return the molar mass of a chemical compound formed string" ),
+
+            ( "strlen", @"String length",           @"Returns the length of a string" ),
+        };
+        #endregion
+
         internal static ExpressionParser Parser { get; } = new ExpressionParser(UnaryOperators, BinaryOperators, Variables, Functions, ShorthandOperator, Common.AssignmentOperator, Common.EscapeSequenceFormatter);
 
         static ArithmeticExpressions()
