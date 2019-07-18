@@ -1,9 +1,6 @@
 ﻿using System;
 using Math.Mpfr.Native;
 using Libs.Text.Parsing;
-using Libs.Text.Formatting;
-using Libs.Utilities;
-using System.Text;
 
 namespace kalk
 {

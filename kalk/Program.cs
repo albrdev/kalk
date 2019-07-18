@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using Math.Mpfr.Native;
 using NDesk.Options;
 using Libs.Utilities;
-using System.Text.RegularExpressions;
-using System.Text;
 
 namespace kalk
 {
@@ -39,22 +39,22 @@ namespace kalk
             Regex regex = new Regex($@"{(string.IsNullOrWhiteSpace(pattern) ? "." : Regex.Escape(pattern))}+");
 
             Console.WriteLine("Variables:");
-            foreach(var info in ArithmeticExpressions.VariableInfo)
+            foreach(var (Identifier, Name, Description) in ArithmeticExpressions.VariableInfo)
             {
-                if(regex.IsMatch(info.Identifier) || regex.IsMatch(info.Name) || regex.IsMatch(info.Description))
+                if(regex.IsMatch(Identifier) || regex.IsMatch(Name) || regex.IsMatch(Description))
                 {
-                    Console.WriteLine($"{info.Identifier}");
-                    Console.WriteLine($"  {info.Name} - {info.Description}\n");
+                    Console.WriteLine($"{Identifier}");
+                    Console.WriteLine($"  {Name} - {Description}\n");
                 }
             }
 
             Console.WriteLine("Functions:");
-            foreach(var info in ArithmeticExpressions.FunctionInfo)
+            foreach(var (Identifier, Name, Description) in ArithmeticExpressions.FunctionInfo)
             {
-                if(regex.IsMatch(info.Identifier) || regex.IsMatch(info.Name) || regex.IsMatch(info.Description))
+                if(regex.IsMatch(Identifier) || regex.IsMatch(Name) || regex.IsMatch(Description))
                 {
-                    Console.WriteLine($"{info.Identifier}");
-                    Console.WriteLine($"  {info.Name} - {info.Description}\n");
+                    Console.WriteLine($"{Identifier}");
+                    Console.WriteLine($"  {Name} - {Description}\n");
                 }
             }
         }
