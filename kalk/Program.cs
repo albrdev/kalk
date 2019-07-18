@@ -33,14 +33,14 @@ namespace kalk
 
         static int Main(string[] args)
         {
-            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int DigitOuputCount, string Seed, string SeedString, bool InteractiveMode, bool PrintUsage) options = (new List<string>(), 1024, default, 128, null, null, false, false);
+            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int OutputPrecision, string Seed, string SeedString, bool InteractiveMode, bool PrintUsage) options = (new List<string>(), 1024, default, 128, null, null, false, false);
 
             var optionSet = new OptionSet()
             {
                 { "x|expr=", "Expression", v => options.Expressions.Add(v) },
                 { "p|prec=", "Precision", (uint v) => options.Precision = v },
                 { "r|rmode=", "Rounding mode", v => options.RoundingMode = ParseRoundingMode(v) },
-                { "n|dgtcnt=", "Digit output count", (int v) => options.DigitOuputCount = v },
+                { "n|oprec=", "Ouput precision (decimal count)", (int v) => options.OutputPrecision = v },
                 { "z|seed=", "Random seed", v => options.Seed = v },
                 { "Z|seedstring=", "Random seed string", v => options.SeedString = v },
                 { "i|interactive", "Interactive mode", v => options.InteractiveMode = v != null },
@@ -76,7 +76,7 @@ namespace kalk
 
             MPFR_Value.DefaultPrecision = options.Precision;
             MPFR_Value.RoundingMode = options.RoundingMode;
-            MPFR_Value.DigitOutputCount = options.DigitOuputCount;
+            MPFR_Value.OutputPrecision = options.OutputPrecision;
 
             foreach(var expr in options.Expressions)
             {

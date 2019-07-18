@@ -65,15 +65,15 @@ namespace kalk
                 return MPFR_Value.DefaultPrecision;
         }
 
-        private static object DigitCount(params string[] args)
+        private static object OutputPrecision(params string[] args)
         {
             if(args.Length > 0)
             {
-                MPFR_Value.DigitOutputCount = System.Convert.ToInt32(args[0]);
+                MPFR_Value.OutputPrecision = System.Convert.ToInt32(args[0]);
                 return null;
             }
             else
-                return MPFR_Value.DigitOutputCount;
+                return MPFR_Value.OutputPrecision;
         }
 
         private static object RoundingMode(params string[] args)
@@ -129,7 +129,7 @@ namespace kalk
             { "prec", Precision },
             { "rmode", RoundingMode },
             { "rmodes", GetRoundingModes },
-            { "dgtcnt", DigitCount },
+            { "oprec", OutputPrecision },
             { "seed", Seed },
             { "seedstr", SeedString },
 
