@@ -82,7 +82,7 @@ namespace kalk
                 return null;
             }
             else
-                return MPFR_Value.RoundingMode;
+                return $"{MPFR_Value.RoundingMode} ({(int)MPFR_Value.RoundingMode})";
         }
 
         private static object Seed(params string[] args)
