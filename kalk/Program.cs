@@ -5,14 +5,33 @@ using Math.Mpfr.Native;
 using NDesk.Options;
 using Libs.Utilities;
 using System.Text.RegularExpressions;
+using System.Text;
 
 namespace kalk
 {
     class Program
     {
-        private static string ApplicationName
+        internal static mpfr_rnd_t ParseRoundingMode(string value)
         {
-            get => Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]);
+            if(EnumUtilities.TryParse(value, out mpfr_rnd_t result))
+                return result;
+
+            return EnumUtilities.Parse<mpfr_rnd_t>("MPFR_" + value);
+        }
+
+        internal static string GetRoundingModesInfo()
+        {
+            StringBuilder result = new StringBuilder();
+
+            result.AppendLine($"{mpfr_rnd_t.MPFR_RNDN}\t- {"Round to nearest, with ties to even"}");
+            result.AppendLine($"{mpfr_rnd_t.MPFR_RNDZ}\t- {"Round toward zero"}");
+            result.AppendLine($"{mpfr_rnd_t.MPFR_RNDU}\t- {"Round toward +Infinity"}");
+            result.AppendLine($"{mpfr_rnd_t.MPFR_RNDD}\t- {"Round toward -Infinity"}");
+            result.AppendLine($"{mpfr_rnd_t.MPFR_RNDA}\t- {"Round away from zero."}");
+            result.AppendLine($"{mpfr_rnd_t.MPFR_RNDF}\t- {"Faithful rounding"}");
+            result.AppendLine($"{mpfr_rnd_t.MPFR_RNDNA}\t- {"Round to nearest, with ties away from zero"}");
+
+            return result.ToString();
         }
 
         internal static void PrintInfo(string pattern = null)
@@ -40,6 +59,11 @@ namespace kalk
             }
         }
 
+        private static string ApplicationName
+        {
+            get => Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]);
+        }
+
         private static void PrintUsage(OptionSet optionsSet)
         {
             Console.WriteLine($"Usage: {ApplicationName} [-p precision] [-r roundingmode] [-z seed] expression");
@@ -47,14 +71,6 @@ namespace kalk
             Console.WriteLine();
             Console.WriteLine("Options:");
             optionsSet.WriteOptionDescriptions(Console.Out);
-        }
-
-        internal static mpfr_rnd_t ParseRoundingMode(string value)
-        {
-            if(EnumUtilities.TryParse(value, out mpfr_rnd_t result))
-                return result;
-
-            return EnumUtilities.Parse<mpfr_rnd_t>("MPFR_" + value);
         }
 
         static int Main(string[] args)
@@ -65,7 +81,7 @@ namespace kalk
             {
                 { "x|expr=", "Expression", v => options.Expressions.Add(v) },
                 { "p|prec=", "Precision", (uint v) => options.Precision = v },
-                { "r|rmode=", "Rounding mode", v => options.RoundingMode = ParseRoundingMode(v) },
+                { "r|rmode=", "Rounding mode\n" + GetRoundingModesInfo(), v => options.RoundingMode = ParseRoundingMode(v) },
                 { "n|oprec=", "Ouput precision (decimal count)", (int v) => options.OutputPrecision = v },
                 { "z|seed=", "Random seed", v => options.Seed = v },
                 { "Z|seedstring=", "Random seed string", v => options.SeedString = v },
