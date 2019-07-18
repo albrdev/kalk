@@ -82,17 +82,17 @@ namespace kalk
 
             var optionSet = new OptionSet()
             {
-                { "x|expr=", "Expression", v => options.Expressions.Add(v) },
-                { "p|prec=", "Precision", (uint v) => options.Precision = v },
-                { "r|rmode=", "Rounding mode\n" + GetRoundingModesInfo(), v => options.RoundingMode = ParseRoundingMode(v) },
-                { "n|oprec=", "Ouput precision (decimal count)", (int v) => options.OutputPrecision = v },
-                { "z|seed=", "Random seed", v => options.Seed = v },
-                { "Z|seedstring=", "Random seed string", v => options.SeedString = v },
-                { "i|interactive", "Interactive mode", v => options.InteractiveMode = v != null },
-                { "l|list:", "Prints info about available variables/functions", (v) => options.PrintInfo = (true, v) },
-                { "h|help",  "Prints usage", v => options.PrintUsage = v != null },
-                { "version", "Prints version information", v => options.PrintVersion = v != null },
-                { "<>", v => options.Expressions.Add(v) }
+                { "x|expr=",        "Expression",                                       v => options.Expressions.Add(v) },
+                { "p|prec=",        "Precision",                                        (uint v) => options.Precision = v },
+                { "r|rmode=",       "Rounding mode\n" + GetRoundingModesInfo(),         v => options.RoundingMode = ParseRoundingMode(v) },
+                { "n|oprec=",       "Ouput precision (decimal count)",                  (int v) => options.OutputPrecision = v },
+                { "z|seed=",        "Random seed",                                      v => options.Seed = v },
+                { "Z|seedstring=",  "Random seed string",                               v => options.SeedString = v },
+                { "i|interactive",  "Interactive mode",                                 v => options.InteractiveMode = v != null },
+                { "l|list:",        "Prints info about available variables/functions",  v => options.PrintInfo = (true, v) },
+                { "h|help",         "Prints usage",                                     v => options.PrintUsage = v != null },
+                { "version",        "Prints version information",                       v => options.PrintVersion = v != null },
+                { "<>",                                                                 v => options.Expressions.Add(v) }
             };
 
             try
