@@ -45,6 +45,9 @@
     <Reference Include="Libs.Core">
       <HintPath>lib\Libs.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Libs.Settings">
+      <HintPath>lib\Libs.Settings.dll</HintPath>
+    </Reference>
     <Reference Include="Libs.Text">
       <HintPath>lib\Libs.Text.dll</HintPath>
     </Reference>

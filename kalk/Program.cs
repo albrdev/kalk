@@ -6,11 +6,14 @@ using System.Text.RegularExpressions;
 using Math.Mpfr.Native;
 using NDesk.Options;
 using Libs.Utilities;
+using Libs.Settings;
 
 namespace kalk
 {
     class Program
     {
+        internal static VersionData Version { get; } = new VersionData(0, 1, 0, VersionData.RevisionType.a);
+
         internal static mpfr_rnd_t ParseRoundingMode(string value)
         {
             if(EnumUtilities.TryParse(value, out mpfr_rnd_t result))
@@ -75,7 +78,7 @@ namespace kalk
 
         static int Main(string[] args)
         {
-            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int OutputPrecision, string Seed, string SeedString, bool InteractiveMode, (bool Flag, string Pattern) PrintInfo, bool PrintUsage) options = (new List<string>(), 1024, default, 128, null, null, false, (false, null), false);
+            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int OutputPrecision, string Seed, string SeedString, bool InteractiveMode, (bool Flag, string Pattern) PrintInfo, bool PrintUsage, bool PrintVersion) options = (new List<string>(), 1024, default, 128, null, null, false, (false, null), false, false);
 
             var optionSet = new OptionSet()
             {
@@ -88,6 +91,7 @@ namespace kalk
                 { "i|interactive", "Interactive mode", v => options.InteractiveMode = v != null },
                 { "l|list:", "Prints info about available variables/functions", (v) => options.PrintInfo = (true, v) },
                 { "h|help",  "Prints usage", v => options.PrintUsage = v != null },
+                { "version", "Prints version information", v => options.PrintVersion = v != null },
                 { "<>", v => options.Expressions.Add(v) }
             };
 
@@ -107,8 +111,12 @@ namespace kalk
                 PrintUsage(optionSet);
                 return 0;
             }
-
-            if(options.PrintInfo.Flag)
+            else if(options.PrintVersion)
+            {
+                Console.WriteLine($"{ApplicationName} v{Program.Version}");
+                return 0;
+            }
+            else if(options.PrintInfo.Flag)
             {
                 PrintInfo(options.PrintInfo.Pattern);
                 return 0;
