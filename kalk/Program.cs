@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using Math.Gmp.Native;
 using Math.Mpfr.Native;
 using NDesk.Options;
 using Libs.Utilities;
 using Libs.Settings;
+using Libs.Text.Parsing;
 
 namespace kalk
 {
@@ -76,9 +78,13 @@ namespace kalk
             optionsSet.WriteOptionDescriptions(Console.Out);
         }
 
+        internal static ExpressionParser CurrentParser { get; private set; } = ArithmeticExpressions.Parser;
+
+        internal static void SwitchMode() => Program.CurrentParser = Program.CurrentParser == ArithmeticExpressions.Parser ? BinaryExpressions.Parser : ArithmeticExpressions.Parser;
+
         static int Main(string[] args)
         {
-            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int OutputPrecision, string Seed, string SeedString, bool InteractiveMode, (bool Flag, string Pattern) PrintInfo, bool PrintUsage, bool PrintVersion) options = (new List<string>(), 1024, default, 128, null, null, false, (false, null), false, false);
+            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int OutputPrecision, int OutputBase, int InputBase, string Seed, string SeedString, bool BinaryMode, bool InteractiveMode, (bool Flag, string Pattern) PrintInfo, bool PrintUsage, bool PrintVersion) options = (new List<string>(), 1024, default, 128, 10, 10, null, null, false, false, (false, null), false, false);
 
             var optionSet = new OptionSet()
             {
@@ -86,8 +92,12 @@ namespace kalk
                 { "p|prec=",        "Precision",                                        (uint v) => options.Precision = v },
                 { "r|rmode=",       "Rounding mode\n" + GetRoundingModesInfo(),         v => options.RoundingMode = ParseRoundingMode(v) },
                 { "n|oprec=",       "Ouput precision (decimal count)",                  (int v) => options.OutputPrecision = v },
+                { "b|obase=",       "Set ouput base",                                   (int v) => options.OutputBase = v },
+                { "B|ibase=",       "Set input base",                                   (int v) => options.InputBase = v },
+                { "base=",          "Set input/output base",                            (int v) => options.InputBase = options.OutputBase = v },
                 { "z|seed=",        "Random seed",                                      v => options.Seed = v },
                 { "Z|seedstring=",  "Random seed string",                               v => options.SeedString = v },
+                { "binary",         "Binary mode",                                      v => options.BinaryMode = true },
                 { "i|interactive",  "Interactive mode",                                 v => options.InteractiveMode = true },
                 { "l|list:",        "Prints info about available variables/functions",  v => options.PrintInfo = (true, v) },
                 { "h|help",         "Prints usage",                                     v => options.PrintUsage = true },
@@ -134,10 +144,17 @@ namespace kalk
             MPFR.DefaultPrecision = options.Precision;
             MPFR.RoundingMode = options.RoundingMode;
             MPFR.OutputPrecision = options.OutputPrecision;
+            Common.InputBase = options.InputBase;
+            MPZ.OutputBase = options.OutputBase;
+
+            if(options.BinaryMode)
+            {
+                SwitchMode();
+            }
 
             foreach(var expr in options.Expressions)
             {
-                var result = ArithmeticExpressions.Parser.Evaluate(expr);
+                var result = CurrentParser.Evaluate(expr);
                 if(!options.InteractiveMode)
                     Common.ResultVariables.Add(result);
 
@@ -172,7 +189,7 @@ namespace kalk
                     {
                         try
                         {
-                            result = ArithmeticExpressions.Parser.Evaluate(input);
+                            result = CurrentParser.Evaluate(input);
                             Common.ResultVariables.Add(result);
                         }
                         catch(Exception e)

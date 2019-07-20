@@ -93,6 +93,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArithmeticExpressions.cs" />
+    <Compile Include="BinaryExpressions.cs" />
     <Compile Include="ChemicalExpressions.cs" />
     <Compile Include="Commands.cs" />
     <Compile Include="Common.cs" />

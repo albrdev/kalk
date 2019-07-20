@@ -1,4 +1,5 @@
 ﻿using System;
+using Math.Gmp.Native;
 using Math.Mpfr.Native;
 using Libs.Text.Parsing;
 
@@ -73,6 +74,46 @@ namespace kalk
                 return MPFR.OutputPrecision;
         }
 
+        private static object InputBase(params string[] args)
+        {
+            if(args.Length > 0)
+            {
+                int value = System.Convert.ToInt32(args[0]);
+                if(value >= 2)
+                    Common.InputBase = value;
+
+                return null;
+            }
+            else
+                return Common.InputBase;
+        }
+
+        private static object OutputBase(params string[] args)
+        {
+            if(args.Length > 0)
+            {
+                int value = System.Convert.ToInt32(args[0]);
+                if(value >= 2)
+                    MPZ.OutputBase = value;
+
+                return null;
+            }
+            else
+                return MPZ.OutputBase;
+        }
+
+        private static object Base(params string[] args)
+        {
+            if(args.Length > 0)
+            {
+                InputBase(args);
+                OutputBase(args);
+                return null;
+            }
+            else
+                return $"{Common.InputBase}, {MPZ.OutputBase}";
+        }
+
         private static object RoundingMode(params string[] args)
         {
             if(args.Length > 0)
@@ -111,6 +152,35 @@ namespace kalk
             Program.PrintInfo(args.Length > 0 ? args[0] : null);
             return null;
         }
+
+        private static object SwitchMode(params string[] args)
+        {
+            Program.SwitchMode();
+
+            string mode = string.Empty;
+            if(Program.CurrentParser == ArithmeticExpressions.Parser)
+                mode = "Default";
+            else if(Program.CurrentParser == BinaryExpressions.Parser)
+                mode = "Binary";
+
+            if(args.Length > 0)
+            {
+                if(args.Length == 1)
+                {
+                    Base(args[0]);
+                }
+                else
+                {
+                    InputBase(args[0]);
+
+                    if(args.Length > 1)
+                        OutputBase(args[1]);
+                }
+            }
+
+            Console.WriteLine($"Switched parser to '{mode}'");
+            return null;
+        }
         #endregion
 
         internal static CommandParser Parser { get; } = new CommandParser(Common.EscapeSequenceFormatter)
@@ -118,10 +188,15 @@ namespace kalk
             { "exit", Exit },
             { "clear", Clear },
 
+            { "switch", SwitchMode },
+
             { "prec", Precision },
             { "rmode", RoundingMode },
             { "rmodes", (args) => Program.GetRoundingModesInfo() },
             { "oprec", OutputPrecision },
+            { "obase", OutputBase },
+            { "ibase", InputBase },
+            { "base", Base },
             { "seed", Seed },
             { "seedstr", SeedString },
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Math.Gmp.Native;
 using Math.Mpfr.Native;
 using Libs.Text.Parsing;
 using static Libs.Text.Parsing.Operator;
@@ -31,6 +32,8 @@ namespace kalk
         #endregion
 
         internal static object ParseMPFR(string value) => new MPFR(value);
+        internal static int InputBase { get; set; } = 10;
+        internal static object ParseMPZ(string value) => new MPZ(value, InputBase);
 
         internal static UnaryOperator AssignmentOperator { get; } = ('=', 1, AssociativityType.Right, (value) => value);
         internal static EscapeSequenceFormatter EscapeSequenceFormatter { get; } = new ExtendedNativeEscapeSequenceFormatter();
