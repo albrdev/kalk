@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "kalk", "kalk", "{2979DA21-0
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gmp-cs", "mpfr-cs\gmp-cs\gmp-cs.csproj", "{5CF7E0D2-9CCF-4E19-B31F-8370D3A18048}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependencies", "Dependencies", "{FC30E027-1FC3-4904-A173-F1359846CD0D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,13 +34,19 @@ Global
 		{18730017-85A3-4BC1-8C1C-9BB95E5C69B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18730017-85A3-4BC1-8C1C-9BB95E5C69B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18730017-85A3-4BC1-8C1C-9BB95E5C69B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5CF7E0D2-9CCF-4E19-B31F-8370D3A18048}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CF7E0D2-9CCF-4E19-B31F-8370D3A18048}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CF7E0D2-9CCF-4E19-B31F-8370D3A18048}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CF7E0D2-9CCF-4E19-B31F-8370D3A18048}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9D252F8A-EB03-4827-A9FA-2FA7A12922BA} = {2979DA21-058B-41B7-B216-10B26C87EA03}
-		{18730017-85A3-4BC1-8C1C-9BB95E5C69B4} = {2979DA21-058B-41B7-B216-10B26C87EA03}
+		{18730017-85A3-4BC1-8C1C-9BB95E5C69B4} = {FC30E027-1FC3-4904-A173-F1359846CD0D}
+		{5CF7E0D2-9CCF-4E19-B31F-8370D3A18048} = {FC30E027-1FC3-4904-A173-F1359846CD0D}
+		{FC30E027-1FC3-4904-A173-F1359846CD0D} = {2979DA21-058B-41B7-B216-10B26C87EA03}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {34E75B57-7EF7-4106-9E0E-26FBB0A9A5B0}

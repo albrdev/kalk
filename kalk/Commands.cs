@@ -55,55 +55,55 @@ namespace kalk
         {
             if(args.Length > 0)
             {
-                MPFR_Value.DefaultPrecision = System.Convert.ToUInt32(args[0]);
+                MPFR.DefaultPrecision = System.Convert.ToUInt32(args[0]);
                 return null;
             }
             else
-                return MPFR_Value.DefaultPrecision;
+                return MPFR.DefaultPrecision;
         }
 
         private static object OutputPrecision(params string[] args)
         {
             if(args.Length > 0)
             {
-                MPFR_Value.OutputPrecision = System.Convert.ToInt32(args[0]);
+                MPFR.OutputPrecision = System.Convert.ToInt32(args[0]);
                 return null;
             }
             else
-                return MPFR_Value.OutputPrecision;
+                return MPFR.OutputPrecision;
         }
 
         private static object RoundingMode(params string[] args)
         {
             if(args.Length > 0)
             {
-                MPFR_Value.RoundingMode = Program.ParseRoundingMode(args[0].ToString());
+                MPFR.RoundingMode = Program.ParseRoundingMode(args[0].ToString());
                 return null;
             }
             else
-                return $"{MPFR_Value.RoundingMode} ({(int)MPFR_Value.RoundingMode})";
+                return $"{MPFR.RoundingMode} ({(int)MPFR.RoundingMode})";
         }
 
         private static object Seed(params string[] args)
         {
             if(args.Length > 0)
             {
-                MPFR_Value.RandomState = System.Convert.ToUInt32(args[0]);
+                MPFR.RandomState = System.Convert.ToUInt32(args[0]);
                 return null;
             }
             else
-                return MPFR_Value.RandomState;
+                return MPFR.RandomState;
         }
 
         private static object SeedString(params string[] args)
         {
             if(args.Length > 0)
             {
-                MPFR_Value.RandomState = args[0];
+                MPFR.RandomState = args[0];
                 return null;
             }
             else
-                return MPFR_Value.RandomState;
+                return MPFR.RandomState;
         }
 
         private static object PrintInfo(params string[] args)

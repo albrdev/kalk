@@ -124,16 +124,16 @@ namespace kalk
 
             if(options.SeedString != null)
             {
-                MPFR_Value.RandomState = options.SeedString;
+                MPFR.RandomState = options.SeedString;
             }
             else if(options.Seed != null)
             {
-                MPFR_Value.RandomState = uint.Parse(options.Seed);
+                MPFR.RandomState = uint.Parse(options.Seed);
             }
 
-            MPFR_Value.DefaultPrecision = options.Precision;
-            MPFR_Value.RoundingMode = options.RoundingMode;
-            MPFR_Value.OutputPrecision = options.OutputPrecision;
+            MPFR.DefaultPrecision = options.Precision;
+            MPFR.RoundingMode = options.RoundingMode;
+            MPFR.OutputPrecision = options.OutputPrecision;
 
             foreach(var expr in options.Expressions)
             {
