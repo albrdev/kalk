@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Math.Gmp.Native;
 using Math.Mpfr.Native;
 using Libs.Collections;
 using Libs.Text.Parsing;
@@ -218,11 +219,20 @@ namespace kalk
         };
         #endregion
 
+        private static object ArgumentHandler(object value)
+        {
+            if(value is MPZ tmp)
+                return (MPFR)tmp;
+
+            return value;
+        }
+
         internal static ExpressionParser Parser { get; } = new ExpressionParser(UnaryOperators, BinaryOperators, Variables, Functions, ShorthandOperator, Common.AssignmentOperator, Common.EscapeSequenceFormatter);
 
         static ArithmeticExpressions()
         {
             Parser.NumberConverter = Common.ParseMPFR;
+            Parser.ArgumentHandler = ArgumentHandler;
         }
     }
 }
