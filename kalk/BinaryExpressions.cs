@@ -28,8 +28,7 @@ namespace kalk
             ( "^", 4, AssociativityType.Left, (lhs, rhs) => (MPZ)lhs ^ (MPZ)rhs ),
 
             ( "<<", 2, AssociativityType.Right, (lhs, rhs) => (MPZ)lhs << (MPZ)rhs ),
-            ( ">>", 2, AssociativityType.Left, (lhs, rhs) => (MPZ)lhs >> (MPZ)rhs ),
-            ( ">>>", 2, AssociativityType.Left, (lhs, rhs) => MPZ.RightShift2((MPZ)lhs, (MPZ)rhs) )
+            ( ">>", 2, AssociativityType.Left, (lhs, rhs) => (MPZ)lhs >> (MPZ)rhs )
         };
 
         private static readonly BinaryOperator ShorthandOperator = ("*", 3, AssociativityType.Right, (lhs, rhs) => (MPZ)lhs & (MPZ)rhs);
