@@ -178,7 +178,7 @@ namespace kalk
                 }
             }
 
-            Console.WriteLine($"Switched parser to '{mode}'");
+            Console.WriteLine($"Switched to '{mode}' mode");
             return null;
         }
         #endregion
