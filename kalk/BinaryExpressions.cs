@@ -38,7 +38,7 @@ namespace kalk
 
             ( '~', 1, AssociativityType.Right, (value) => ~(MPZ)value ),
 
-            ( '!', 1, AssociativityType.Right,  (value) => value is bool ? !(bool)value : !(MPZ)value )
+            ( '!', 1, AssociativityType.Right,  (value) => !Convert.ToBoolean(value) )
         };
 
         private static readonly ExtendedDictionary<string, BinaryOperator> BinaryOperators = new ExtendedDictionary<string, BinaryOperator>((value) => value.Identifier)
