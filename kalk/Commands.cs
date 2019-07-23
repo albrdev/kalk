@@ -29,14 +29,14 @@ namespace kalk
                             ReadLine.ClearHistory();
                             break;
                         case "results":
-                            Common.ResultVariables.Clear();
+                            Common.Resuls.Clear();
                             break;
                         case "variables":
                             Common.CustomVariables.Clear();
                             break;
                         case "all":
                             Common.CustomVariables.Clear();
-                            Common.ResultVariables.Clear();
+                            Common.Resuls.Clear();
                             ReadLine.ClearHistory();
                             Console.Clear();
                             break;
@@ -201,7 +201,7 @@ namespace kalk
             { "seedstr", SeedString },
 
             { "ans", (args) => Common.Ans(args) },
-            { "nans", (args) => Common.ResultVariables.Count },
+            { "nans", (args) => Common.Resuls.Count },
 
             { "list", PrintInfo },
         };

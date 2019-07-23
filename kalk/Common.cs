@@ -14,20 +14,20 @@ namespace kalk
         #region Custom methods
         internal static object Ans(params object[] args)
         {
-            if(!ResultVariables.Any())
+            if(!Resuls.Any())
                 throw new System.IndexOutOfRangeException($@"List contains no elements");
 
             if(!args.Any())
-                return ResultVariables.Last();
+                return Resuls.Last();
 
             int index = System.Convert.ToInt32(args[0]);
             if(index < 0)
-                index = ResultVariables.Count + index;
+                index = Resuls.Count + index;
 
-            if(index < 0 || index >= ResultVariables.Count)
-                throw new System.IndexOutOfRangeException($@"Index out of range (Count: {ResultVariables.Count})");
+            if(index < 0 || index >= Resuls.Count)
+                throw new System.IndexOutOfRangeException($@"Index out of range (Count: {Resuls.Count})");
 
-            return ResultVariables[index];
+            return Resuls[index];
         }
         #endregion
 
@@ -39,6 +39,6 @@ namespace kalk
         internal static EscapeSequenceFormatter EscapeSequenceFormatter { get; } = new ExtendedNativeEscapeSequenceFormatter();
 
         internal static Dictionary<string, Variable> CustomVariables { get; } = new Dictionary<string, Variable>();
-        internal static List<object> ResultVariables { get; } = new List<object>();
+        internal static List<object> Resuls { get; } = new List<object>();
     }
 }

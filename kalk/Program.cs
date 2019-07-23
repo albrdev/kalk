@@ -156,7 +156,7 @@ namespace kalk
             {
                 var result = CurrentParser.Evaluate(expr);
                 if(!options.InteractiveMode)
-                    Common.ResultVariables.Add(result);
+                    Common.Resuls.Add(result);
 
                 Console.WriteLine($"{result}");
             }
@@ -190,7 +190,7 @@ namespace kalk
                         try
                         {
                             result = CurrentParser.Evaluate(input);
-                            Common.ResultVariables.Add(result);
+                            Common.Resuls.Add(result);
                         }
                         catch(Exception e)
                         {
