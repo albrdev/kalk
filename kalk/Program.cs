@@ -139,17 +139,11 @@ namespace kalk
             }
 
             if(options.SeedString != null)
-            {
                 MPZ.RandomState = MPFR.RandomState = options.SeedString;
-            }
             else if(options.Seed != null)
-            {
                 MPZ.RandomState = MPFR.RandomState = uint.Parse(options.Seed);
-            }
             else
-            {
                 MPZ.RandomState = MPFR.RandomState = Environment.TickCount;
-            }
 
             MPFR.DefaultPrecision = options.Precision;
             MPFR.RoundingMode = options.RoundingMode;
@@ -158,9 +152,7 @@ namespace kalk
             MPZ.OutputBase = options.OutputBase;
 
             if(options.BinaryMode)
-            {
                 SwitchMode();
-            }
 
             foreach(var expr in options.Expressions)
             {
@@ -209,9 +201,7 @@ namespace kalk
                     }
 
                     if(result != null)
-                    {
                         Console.WriteLine($"{result}");
-                    }
 
                     ReadLine.AddHistory(inputRaw);
                 }
