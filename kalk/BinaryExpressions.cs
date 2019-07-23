@@ -71,7 +71,11 @@ namespace kalk
             return value;
         }
 
-        internal static ExpressionParser Parser { get; } = new ExpressionParser(UnaryOperators, BinaryOperators, Variables, Functions, ShorthandOperator, Common.AssignmentOperator, Common.EscapeSequenceFormatter);
+        internal static ExpressionParser Parser { get; } = new ExpressionParser(UnaryOperators, BinaryOperators, Variables, Functions, Common.CustomVariables, Common.AssignmentOperator)
+        {
+            ShorthandOperator = ShorthandOperator,
+            EscapeSequenceFormatter = Common.EscapeSequenceFormatter
+        };
 
         static BinaryExpressions()
         {

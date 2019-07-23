@@ -199,7 +199,10 @@ namespace kalk
         };
         #endregion
 
-        private static readonly ExpressionParser Parser = new ExpressionParser(null, BinaryOperators, Variables, null, ShorthandOperator, null, null);
+        private static readonly ExpressionParser Parser = new ExpressionParser(null, BinaryOperators, Variables, null, null, null)
+        {
+            ShorthandOperator = ShorthandOperator,
+        };
 
         static ChemicalExpressions()
         {

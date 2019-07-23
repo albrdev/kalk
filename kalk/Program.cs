@@ -7,8 +7,8 @@ using Math.Gmp.Native;
 using Math.Mpfr.Native;
 using NDesk.Options;
 using Libs.Utilities;
-using Libs.Settings;
 using Libs.Text.Parsing;
+using Libs.Settings;
 
 namespace kalk
 {

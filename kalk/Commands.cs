@@ -32,10 +32,10 @@ namespace kalk
                             Common.ResultVariables.Clear();
                             break;
                         case "variables":
-                            ArithmeticExpressions.Parser.ClearAssignedVariables();
+                            Common.CustomVariables.Clear();
                             break;
                         case "all":
-                            ArithmeticExpressions.Parser.ClearAssignedVariables();
+                            Common.CustomVariables.Clear();
                             Common.ResultVariables.Clear();
                             ReadLine.ClearHistory();
                             Console.Clear();
