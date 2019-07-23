@@ -158,7 +158,7 @@ namespace kalk
             Program.SwitchMode();
 
             string mode = string.Empty;
-            if(Program.CurrentParser == ArithmeticExpressions.Parser)
+            if(Program.CurrentParser == DefaultExpressions.Parser)
                 mode = "Default";
             else if(Program.CurrentParser == BinaryExpressions.Parser)
                 mode = "Binary";

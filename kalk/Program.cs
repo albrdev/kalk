@@ -44,7 +44,7 @@ namespace kalk
             Regex regex = new Regex($@"{(string.IsNullOrWhiteSpace(pattern) ? "." : Regex.Escape(pattern))}+");
 
             Console.WriteLine("Variables:");
-            foreach(var (Identifier, Name, Description) in ArithmeticExpressions.VariableInfo)
+            foreach(var (Identifier, Name, Description) in DefaultExpressions.VariableInfo)
             {
                 if(regex.IsMatch(Identifier) || regex.IsMatch(Name) || regex.IsMatch(Description))
                 {
@@ -54,7 +54,7 @@ namespace kalk
             }
 
             Console.WriteLine("Functions:");
-            foreach(var (Identifier, Name, Description) in ArithmeticExpressions.FunctionInfo)
+            foreach(var (Identifier, Name, Description) in DefaultExpressions.FunctionInfo)
             {
                 if(regex.IsMatch(Identifier) || regex.IsMatch(Name) || regex.IsMatch(Description))
                 {
@@ -78,9 +78,9 @@ namespace kalk
             optionsSet.WriteOptionDescriptions(Console.Out);
         }
 
-        internal static ExpressionParser CurrentParser { get; private set; } = ArithmeticExpressions.Parser;
+        internal static ExpressionParser CurrentParser { get; private set; } = DefaultExpressions.Parser;
 
-        internal static void SwitchMode() => Program.CurrentParser = Program.CurrentParser == ArithmeticExpressions.Parser ? BinaryExpressions.Parser : ArithmeticExpressions.Parser;
+        internal static void SwitchMode() => Program.CurrentParser = Program.CurrentParser == DefaultExpressions.Parser ? BinaryExpressions.Parser : DefaultExpressions.Parser;
 
         static int Main(string[] args)
         {

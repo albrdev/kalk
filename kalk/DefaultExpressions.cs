@@ -8,7 +8,7 @@ using static Libs.Text.Parsing.Operator;
 
 namespace kalk
 {
-    internal static class ArithmeticExpressions
+    internal static class DefaultExpressions
     {
         #region Custom methods
         private static object StringLength(params object[] args)
@@ -233,7 +233,7 @@ namespace kalk
             EscapeSequenceFormatter = Common.EscapeSequenceFormatter
         };
 
-        static ArithmeticExpressions()
+        static DefaultExpressions()
         {
             Parser.NumberConverter = Common.ParseMPFR;
             Parser.ArgumentHandler = ArgumentHandler;
