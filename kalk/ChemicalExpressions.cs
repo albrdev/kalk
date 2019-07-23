@@ -54,7 +54,7 @@ namespace kalk
         private static readonly ExtendedDictionary<string, BinaryOperator> BinaryOperators = new ExtendedDictionary<string, BinaryOperator>((value) => value.Identifier)
         {
             ( "+", 4, AssociativityType.Left,   (lhs, rhs) => (MPFR)lhs + (MPFR)rhs ),
-            ( "*", 3, AssociativityType.Left,   (lhs, rhs) => (MPFR)lhs * (MPFR)rhs ),
+            ( "*", 3, AssociativityType.Left,   (lhs, rhs) => (MPFR)lhs * (MPFR)rhs )
         };
 
         private static readonly BinaryOperator ShorthandOperator = ("*", 3, AssociativityType.Right, (lhs, rhs) => (MPFR)lhs * (MPFR)rhs);

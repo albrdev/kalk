@@ -41,20 +41,32 @@ namespace kalk
         private static readonly ExtendedDictionary<char, UnaryOperator> UnaryOperators = new ExtendedDictionary<char, UnaryOperator>((value) => value.Identifier)
         {
             ( '+', 1, AssociativityType.Right,  (value) => +(MPFR)value ),
-            ( '-', 1, AssociativityType.Right,  (value) => -(MPFR)value )
+            ( '-', 1, AssociativityType.Right,  (value) => -(MPFR)value ),
+
+            ( '!', 1, AssociativityType.Right,  (value) => value is bool ? !(bool)value : !(MPFR)value )
         };
 
         private static readonly ExtendedDictionary<string, BinaryOperator> BinaryOperators = new ExtendedDictionary<string, BinaryOperator>((value) => value.Identifier)
         {
-            ( "+", 4, AssociativityType.Left,   (lhs, rhs) => lhs is string || rhs is string? (object)$"{lhs}{rhs}" : (object)((MPFR)lhs + (MPFR)rhs) ),
-            ( "-", 4, AssociativityType.Left,   (lhs, rhs) => (MPFR)lhs - (MPFR)rhs ),
-            ( "*", 3, AssociativityType.Left,   (lhs, rhs) => (MPFR)lhs * (MPFR)rhs ),
-            ( "/", 3, AssociativityType.Left,   (lhs, rhs) => (MPFR)lhs / (MPFR)rhs ),
-            ( "%", 3, AssociativityType.Left,   (lhs, rhs) => (MPFR)lhs % (MPFR)rhs ),
-            ( "^", 2, AssociativityType.Right,  (lhs, rhs) => MPFR.Pow((MPFR)lhs, (MPFR)rhs) ),
+            ( "+", 4,   AssociativityType.Left,     (lhs, rhs) => lhs is string || rhs is string? (object)$"{lhs}{rhs}" : (object)((MPFR)lhs + (MPFR)rhs) ),
+            ( "-", 4,   AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs - (MPFR)rhs ),
+            ( "*", 3,   AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs * (MPFR)rhs ),
+            ( "/", 3,   AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs / (MPFR)rhs ),
+            ( "%", 3,   AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs % (MPFR)rhs ),
+            ( "^", 2,   AssociativityType.Right,    (lhs, rhs) => MPFR.Pow((MPFR)lhs, (MPFR)rhs) ),
 
-            ( "//", 3, AssociativityType.Right, (lhs, rhs) => MPFR.TruncatedDivision((MPFR)lhs, (MPFR)rhs) ),
-            ( "**", 2, AssociativityType.Left,  (lhs, rhs) => MPFR.Pow((MPFR)lhs, (MPFR)rhs) )
+            ( "//", 3,  AssociativityType.Right,    (lhs, rhs) => MPFR.TruncatedDivision((MPFR)lhs, (MPFR)rhs) ),
+            ( "**", 2,  AssociativityType.Right,    (lhs, rhs) => MPFR.Pow((MPFR)lhs, (MPFR)rhs) ),
+
+            ( "==", 5,  AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs == (MPFR)rhs ),
+            ( "!=", 5,  AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs != (MPFR)rhs ),
+            ( "<", 5,   AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs < (MPFR)rhs ),
+            ( ">", 5,   AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs > (MPFR)rhs ),
+            ( "<=", 5,  AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs <= (MPFR)rhs ),
+            ( ">=", 5,  AssociativityType.Left,     (lhs, rhs) => (MPFR)lhs >= (MPFR)rhs ),
+
+            ( "||", 6,  AssociativityType.Left,     (lhs, rhs) => System.Convert.ToBoolean(lhs) || System.Convert.ToBoolean(rhs) ),
+            ( "&&", 6,  AssociativityType.Left,     (lhs, rhs) => System.Convert.ToBoolean(lhs) && System.Convert.ToBoolean(rhs) )
         };
 
         private static readonly BinaryOperator ShorthandOperator = ("*", 3, AssociativityType.Right, (lhs, rhs) => (MPFR)lhs * (MPFR)rhs);
@@ -270,12 +282,12 @@ namespace kalk
 
             ( "mean",   @"Mean",                        @"Returns the mean value in a set" ),
 
-            ( "rnd",    @"Random",                      @"Uniform random value (0 <= x < 1)" ),
-            ( "rndi",   @"Inclusive random",            @"Uniform random value (0 <= x <= 1)" ),
+            ( "rnd",    @"Random",                      @"Uniform random value (min <= x < max)" ),
+            ( "rndi",   @"Inclusive random",            @"Uniform random value (min <= x <= max)" ),
 
             ( "chem.M", @"Molar mass",                  @"Return the molar mass of a chemical compound formed string" ),
 
-            ( "strlen", @"String length",               @"Returns the length of a string" ),
+            ( "strlen", @"String length",               @"Returns the length of a string" )
         };
         #endregion
 

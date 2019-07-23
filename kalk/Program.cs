@@ -39,29 +39,35 @@ namespace kalk
             return result.ToString();
         }
 
+        private static void PrintInfoSection((string Identifier, string Name, string Description)[] section, Regex regex)
+        {
+            foreach(var (Identifier, Name, Description) in section)
+            {
+                if(regex.IsMatch(Identifier) || regex.IsMatch(Name) || regex.IsMatch(Description))
+                {
+                    Console.WriteLine($"{Identifier}");
+                    Console.WriteLine($"  {Name} - {Description}\n");
+                }
+            }
+        }
+
         internal static void PrintInfo(string pattern = null)
         {
             Regex regex = new Regex($@"{(string.IsNullOrWhiteSpace(pattern) ? "." : Regex.Escape(pattern))}+");
 
-            Console.WriteLine("Variables:");
-            foreach(var (Identifier, Name, Description) in DefaultExpressions.VariableInfo)
-            {
-                if(regex.IsMatch(Identifier) || regex.IsMatch(Name) || regex.IsMatch(Description))
-                {
-                    Console.WriteLine($"{Identifier}");
-                    Console.WriteLine($"  {Name} - {Description}\n");
-                }
-            }
+            Console.WriteLine("Variables (Default):");
+            PrintInfoSection(DefaultExpressions.VariableInfo, regex);
 
-            Console.WriteLine("Functions:");
-            foreach(var (Identifier, Name, Description) in DefaultExpressions.FunctionInfo)
-            {
-                if(regex.IsMatch(Identifier) || regex.IsMatch(Name) || regex.IsMatch(Description))
-                {
-                    Console.WriteLine($"{Identifier}");
-                    Console.WriteLine($"  {Name} - {Description}\n");
-                }
-            }
+            Console.WriteLine("Variables (Binary):");
+            PrintInfoSection(BinaryExpressions.VariableInfo, regex);
+
+            Console.WriteLine("Functions (Default):");
+            PrintInfoSection(DefaultExpressions.FunctionInfo, regex);
+
+            Console.WriteLine("Functions (Binary):");
+            PrintInfoSection(BinaryExpressions.FunctionInfo, regex);
+
+            Console.ReadLine();
         }
 
         private static string ApplicationName
@@ -134,11 +140,15 @@ namespace kalk
 
             if(options.SeedString != null)
             {
-                MPFR.RandomState = options.SeedString;
+                MPZ.RandomState = MPFR.RandomState = options.SeedString;
             }
             else if(options.Seed != null)
             {
-                MPFR.RandomState = uint.Parse(options.Seed);
+                MPZ.RandomState = MPFR.RandomState = uint.Parse(options.Seed);
+            }
+            else
+            {
+                MPZ.RandomState = MPFR.RandomState = Environment.TickCount;
             }
 
             MPFR.DefaultPrecision = options.Precision;
@@ -174,7 +184,7 @@ namespace kalk
 
                     string input = inputRaw.Trim();
                     object result;
-                    if(input[0] == '!')
+                    if(input[0] == '/')
                     {
                         try
                         {
