@@ -36,7 +36,7 @@ namespace kalk
                         case "variables":
                             Common.CustomVariables.Clear();
                             break;
-                        case "all":
+                        case "all": case "*":
                             Common.CustomVariables.Clear();
                             Common.Resuls.Clear();
                             ReadLine.ClearHistory();
