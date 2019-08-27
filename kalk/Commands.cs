@@ -149,17 +149,42 @@ namespace kalk
                 return MPFR.RandomState;
         }
 
-        private static object PrintAnsContent(params string[] args)
+        private static object Ans(params string[] args)
         {
-            (int StartIndex, int EndIndex, int Count, bool Verbose) options = (int.MinValue, int.MinValue, int.MinValue, false);
+            int start = Common.Resuls.Count - 1;
+            int end = Common.Resuls.Count;
+
+            ((int Value, bool IsSet) StartIndex, (int Value, bool IsSet) EndIndex, (int Value, bool IsSet) Count, bool Verbose) options = ((int.MinValue, false), (int.MinValue, false), (int.MinValue, false), false);
 
             var optionSet = new OptionSet()
             {
-                { "s=", "Start index",  (int v) => options.StartIndex = v },
-                { "e=", "End index",    (int v) => options.EndIndex = v },
-                { "n=", "Count",        (int v) => options.Count = v },
+                { "s=", "Start index",  (int v) => {
+                    options.StartIndex.Value = v;
+                    options.StartIndex.IsSet = true;
+                } },
+                { "e=", "End index",    (int v) => {
+                    options.EndIndex.Value = v;
+                    options.EndIndex.IsSet = true;
+                } },
+                { "n=", "Count",        (int v) => {
+                    options.Count.Value = v;
+                    options.Count.IsSet = true;
+                } },
                 { "v",  "Verbose",      v => options.Verbose = true },
-                { "<>",                 (int v) => options.EndIndex = options.StartIndex = v }
+                { "<>",                 v => {
+                    switch(v)
+                    {
+                        case "all": case "*":
+                            start = 0;
+                            end = Common.Resuls.Count;
+                            break;
+
+                        default:
+                            options.EndIndex.Value = options.StartIndex.Value = int.Parse(v);
+                            options.EndIndex.IsSet = options.StartIndex.IsSet = true;
+                            break;
+                    }
+                } }
             };
 
             try
@@ -172,22 +197,19 @@ namespace kalk
                 return null;
             }
 
-            int start = 0;
-            int end = Common.Resuls.Count;
-
-            if(options.StartIndex != int.MinValue)
+            if(options.StartIndex.IsSet)
             {
-                start = options.StartIndex < 0 ? (Common.Resuls.Count + options.StartIndex) : options.StartIndex;
+                start = options.StartIndex.Value < 0 ? (Common.Resuls.Count + options.StartIndex.Value) : options.StartIndex.Value;
             }
 
-            if(options.EndIndex != int.MinValue)
+            if(options.EndIndex.IsSet)
             {
-                end = (options.EndIndex < 0 ? (Common.Resuls.Count + options.EndIndex) : options.EndIndex) + 1;
+                end = (options.EndIndex.Value < 0 ? (Common.Resuls.Count + options.EndIndex.Value) : options.EndIndex.Value) + 1;
             }
 
-            if(options.Count >= 0)
+            if(options.Count.IsSet)
             {
-                end = start + options.Count;
+                end = start + options.Count.Value;
             }
 
             if(end > Common.Resuls.Count)
@@ -198,11 +220,18 @@ namespace kalk
             else if(start > end)
                 start = end;
 
-            int padLength1 = (Common.Resuls.Count - 1).Length();
-            int padLength2 = Common.Resuls.Count.Length() + 1;
-            for(int i = start; i < end; i++)
+            if(end - start == 1)
             {
-                Console.WriteLine($@"[{i.ToString().PadLeft(padLength1)}, {(-(Common.Resuls.Count - i)).ToString().PadLeft(padLength2)}] = {Common.Resuls[i].Result}{(options.Verbose ? $" ({Common.Resuls[i].Expression})" : null)}");
+                Console.WriteLine($@"{Common.Resuls[start].Result}{(options.Verbose ? $" ({Common.Resuls[start].Expression})" : null)}");
+            }
+            else
+            {
+                int padLength1 = (Common.Resuls.Count - 1).Length();
+                int padLength2 = Common.Resuls.Count.Length() + 1;
+                for(int i = start; i < end; i++)
+                {
+                    Console.WriteLine($@"[{i.ToString().PadLeft(padLength1)}, {(-(Common.Resuls.Count - i)).ToString().PadLeft(padLength2)}] = {Common.Resuls[i].Result}{(options.Verbose ? $" ({Common.Resuls[i].Expression})" : null)}");
+                }
             }
 
             return null;
@@ -261,9 +290,8 @@ namespace kalk
             { "seed", Seed },
             { "seedstr", SeedString },
 
-            { "ans", (args) => Common.Ans(args) },
+            { "ans", Ans },
             { "nans", (args) => Common.Resuls.Count },
-            { "lsans", PrintAnsContent },
 
             { "list", PrintInfo },
         };
