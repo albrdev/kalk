@@ -1,7 +1,9 @@
 ﻿using System;
 using Math.Gmp.Native;
 using Math.Mpfr.Native;
+using NDesk.Options;
 using Libs.Text.Parsing;
+using Libs.Extensions;
 
 namespace kalk
 {
@@ -147,6 +149,65 @@ namespace kalk
                 return MPFR.RandomState;
         }
 
+        private static object PrintAnsContent(params string[] args)
+        {
+            (int StartIndex, int EndIndex, int Count, bool Verbose) options = (int.MinValue, int.MinValue, int.MinValue, false);
+
+            var optionSet = new OptionSet()
+            {
+                { "s=", "Start index",  (int v) => options.StartIndex = v },
+                { "e=", "End index",    (int v) => options.EndIndex = v },
+                { "n=", "Count",        (int v) => options.Count = v },
+                { "v",  "Verbose",      v => options.Verbose = true },
+                { "<>",                 (int v) => options.EndIndex = options.StartIndex = v }
+            };
+
+            try
+            {
+                optionSet.Parse(args);
+            }
+            catch(OptionException e)
+            {
+                Console.WriteLine($@"{e.Message}");
+                return null;
+            }
+
+            int start = 0;
+            int end = Common.Resuls.Count;
+
+            if(options.StartIndex != int.MinValue)
+            {
+                start = options.StartIndex < 0 ? (Common.Resuls.Count + options.StartIndex) : options.StartIndex;
+            }
+
+            if(options.EndIndex != int.MinValue)
+            {
+                end = (options.EndIndex < 0 ? (Common.Resuls.Count + options.EndIndex) : options.EndIndex) + 1;
+            }
+
+            if(options.Count >= 0)
+            {
+                end = start + options.Count;
+            }
+
+            if(end > Common.Resuls.Count)
+                end = Common.Resuls.Count;
+
+            if(start < 0)
+                start = 0;
+            else if(start > end)
+                start = end;
+
+            int padLength1 = (Common.Resuls.Count - 1).Length();
+            int padLength2 = Common.Resuls.Count.Length() + 1;
+            for(int i = start; i < end; i++)
+            {
+                Console.WriteLine($@"[{i.ToString().PadLeft(padLength1)}, {(-(Common.Resuls.Count - i)).ToString().PadLeft(padLength2)}] = {Common.Resuls[i].Result}{(options.Verbose ? $" ({Common.Resuls[i].Expression})" : null)}");
+            }
+
+            return null;
+        }
+
         private static object PrintInfo(params string[] args)
         {
             Program.PrintInfo(args.Length > 0 ? args[0] : null);
@@ -202,6 +263,7 @@ namespace kalk
 
             { "ans", (args) => Common.Ans(args) },
             { "nans", (args) => Common.Resuls.Count },
+            { "lsans", PrintAnsContent },
 
             { "list", PrintInfo },
         };

@@ -18,7 +18,7 @@ namespace kalk
                 throw new System.IndexOutOfRangeException($@"List contains no elements");
 
             if(!args.Any())
-                return Resuls.Last();
+                return Resuls.Last().Result;
 
             int index = System.Convert.ToInt32(args[0]);
             if(index < 0)
@@ -27,7 +27,7 @@ namespace kalk
             if(index < 0 || index >= Resuls.Count)
                 throw new System.IndexOutOfRangeException($@"Index out of range (Count: {Resuls.Count})");
 
-            return Resuls[index];
+            return Resuls[index].Result;
         }
         #endregion
 
@@ -39,6 +39,6 @@ namespace kalk
         internal static EscapeSequenceFormatter EscapeSequenceFormatter { get; } = new ExtendedNativeEscapeSequenceFormatter();
 
         internal static Dictionary<string, Variable> CustomVariables { get; } = new Dictionary<string, Variable>();
-        internal static List<object> Resuls { get; } = new List<object>();
+        internal static List<(string Expression, object Result)> Resuls { get; } = new List<(string Expression, object Result)>();
     }
 }

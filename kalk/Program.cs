@@ -158,7 +158,7 @@ namespace kalk
             {
                 var result = CurrentParser.Evaluate(expr);
                 if(!options.InteractiveMode)
-                    Common.Resuls.Add(result);
+                    Common.Resuls.Add((expr, result));
 
                 Console.WriteLine($"{result}");
             }
@@ -192,7 +192,7 @@ namespace kalk
                         try
                         {
                             result = CurrentParser.Evaluate(input);
-                            Common.Resuls.Add(result);
+                            Common.Resuls.Add((input, result));
                         }
                         catch(Exception e)
                         {
