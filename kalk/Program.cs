@@ -14,7 +14,7 @@ namespace kalk
 {
     class Program
     {
-        internal static VersionData Version { get; } = new VersionData(1, 0, 0, VersionData.RevisionType.r);
+        internal static VersionData Version { get; } = new VersionData(1, 0, 0);
 
         internal static mpfr_rnd_t ParseRoundingMode(string value)
         {
