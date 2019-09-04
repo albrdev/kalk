@@ -90,7 +90,7 @@ namespace kalk
 
         static int Main(string[] args)
         {
-            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int OutputPrecision, int OutputBase, int InputBase, string Seed, string SeedString, bool BinaryMode, bool InteractiveMode, (bool Flag, string Pattern) PrintInfo, bool PrintUsage, bool PrintVersion) options = (new List<string>(), 1024, default, 128, 10, 10, null, null, false, false, (false, null), false, false);
+            (List<string> Expressions, mpfr_prec_t Precision, mpfr_rnd_t RoundingMode, int OutputPrecision, int OutputBase, int InputBase, string Seed, string SeedString, bool BinaryMode, bool InteractiveMode, (bool Flag, string Pattern) PrintInfo, bool PrintUsage, bool PrintVersion) options = (new List<string>(), 1024, default, 32, 10, 10, null, null, false, false, (false, null), false, false);
 
             var optionSet = new OptionSet()
             {
