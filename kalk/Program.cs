@@ -107,7 +107,7 @@ namespace kalk
                 { "i|interactive",  "Interactive mode",                                 v => options.InteractiveMode = true },
                 { "l|list:",        "Prints info about available variables/functions",  v => options.PrintInfo = (true, v) },
                 { "h|help",         "Prints usage",                                     v => options.PrintUsage = true },
-                { "version",        "Prints version information",                       v => options.PrintVersion = true },
+                { "V|version",      "Prints version information",                       v => options.PrintVersion = true },
                 { "<>",                                                                 v => options.Expressions.Add(v) }
             };
 
