@@ -157,8 +157,7 @@ namespace kalk
             foreach(var expr in options.Expressions)
             {
                 var result = CurrentParser.Evaluate(expr);
-                if(!options.InteractiveMode)
-                    Common.Resuls.Add((expr, result));
+                Common.Resuls.Add((expr, result));
 
                 Console.WriteLine($"{result}");
             }
