@@ -131,6 +131,7 @@ namespace kalk
         private static readonly ExtendedDictionary<string, Function> Functions = new ExtendedDictionary<string, Function>((value) => value.Identifier)
         {
             ( "ans",    0, 1,   Common.Ans ),
+            ( "bconv",  2,      (args) => new MPFR((string)args[0], (int)(MPFR)args[1]) ),
 
             ( "trunc",  1,      (args) => MPFR.Trunc((MPFR)args[0]) ),
             ( "abs",    1,      (args) => MPFR.Abs((MPFR)args[0]) ),
@@ -237,6 +238,7 @@ namespace kalk
         internal static (string Identifier, string Name, string Description)[] FunctionInfo { get; } =
         {
             ( "ans",    @"Answer/Result",               @"Result of a previous calculation" ),
+            ( "bconv",  @"Base convert",                @"Convert from a specific numeric base" ),
 
             ( "trunc",  @"Truncation",                  @"Truncates the fractional part" ),
             ( "abs",    @"Absolute value",              @"+x" ),

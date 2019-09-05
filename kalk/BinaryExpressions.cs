@@ -93,6 +93,7 @@ namespace kalk
         private static readonly ExtendedDictionary<string, Function> Functions = new ExtendedDictionary<string, Function>((value) => value.Identifier)
         {
             ( "ans",    0, 1,   Common.Ans ),
+            ( "bconv",  2,      (args) => new MPZ((string)args[0], (int)(MPZ)args[1]) ),
 
             ( "rnd",    1, 2,   Random ),
             ( "rndi",   1, 2,   RandomInclusive ),
@@ -126,6 +127,7 @@ namespace kalk
         internal static (string Identifier, string Name, string Description)[] FunctionInfo { get; } =
         {
             ( "ans",    @"Answer/Result",       @"Result of a previous calculation" ),
+            ( "bconv",  @"Base convert",        @"Convert from a specific numeric base" ),
 
             ( "rnd",    @"Random",              @"Uniform random value (min <= x < max)" ),
             ( "rndi",   @"Inclusive random",    @"Uniform random value (min <= x <= max)" ),
