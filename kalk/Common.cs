@@ -31,7 +31,7 @@ namespace kalk
         }
         #endregion
 
-        internal static object ParseMPFR(string value) => new MPFR(value);
+        internal static object ParseMPFR(string value) => new MPFR(value, InputBase);
         internal static object ParseMPZ(string value) => new MPZ(value, InputBase);
         internal static int InputBase { get; set; } = 10;
 
