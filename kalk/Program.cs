@@ -66,8 +66,6 @@ namespace kalk
 
             Console.WriteLine("Functions (Binary):");
             PrintInfoSection(BinaryExpressions.FunctionInfo, regex);
-
-            Console.ReadLine();
         }
 
         private static string ApplicationName
