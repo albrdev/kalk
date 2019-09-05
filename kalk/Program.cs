@@ -143,6 +143,7 @@ namespace kalk
             else
                 MPZ.RandomState = MPFR.RandomState = Environment.TickCount;
 
+            mpfr_lib.mpfr_set_default_prec(options.Precision);
             MPFR.DefaultPrecision = options.Precision;
             MPFR.RoundingMode = options.RoundingMode;
             MPFR.OutputPrecision = options.OutputPrecision;
