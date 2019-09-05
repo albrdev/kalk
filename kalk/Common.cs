@@ -34,6 +34,11 @@ namespace kalk
         internal static object ParseMPFR(string value) => new MPFR(value, InputBase);
         internal static object ParseMPZ(string value) => new MPZ(value, InputBase);
         internal static int InputBase { get; set; } = 10;
+        internal static int OutputBase
+        {
+            get { return MPZ.OutputBase; /*return MPFR.OutputBase;*/ }
+            set { MPFR.OutputBase = MPZ.OutputBase = value; }
+        }
 
         internal static BinaryOperator AssignmentOperator { get; } = ("=", 1, AssociativityType.Right, (lhs, rhs) => (((Variable)lhs).Value = rhs));
         internal static EscapeSequenceFormatter EscapeSequenceFormatter { get; } = new ExtendedNativeEscapeSequenceFormatter();

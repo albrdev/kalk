@@ -96,12 +96,12 @@ namespace kalk
             {
                 int value = System.Convert.ToInt32(args[0]);
                 if(value >= 2)
-                    MPZ.OutputBase = MPFR.OutputBase = value;
+                    Common.OutputBase = value;
 
                 return null;
             }
             else
-                return MPZ.OutputBase;
+                return Common.OutputBase;
         }
 
         private static object Base(params string[] args)
@@ -119,7 +119,7 @@ namespace kalk
                 return null;
             }
             else
-                return $"{Common.InputBase}, {MPZ.OutputBase}";
+                return $"{Common.InputBase}, {Common.OutputBase}";
         }
 
         private static object RoundingMode(params string[] args)

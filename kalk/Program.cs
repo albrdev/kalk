@@ -148,7 +148,7 @@ namespace kalk
             MPFR.RoundingMode = options.RoundingMode;
             MPFR.OutputPrecision = options.OutputPrecision;
             Common.InputBase = options.InputBase;
-            MPZ.OutputBase = MPFR.OutputBase = options.OutputBase;
+            Common.OutputBase = options.OutputBase;
 
             if(options.BinaryMode)
                 SwitchMode();
