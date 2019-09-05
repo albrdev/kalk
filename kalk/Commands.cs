@@ -96,7 +96,7 @@ namespace kalk
             {
                 int value = System.Convert.ToInt32(args[0]);
                 if(value >= 2)
-                    MPZ.OutputBase = value;
+                    MPZ.OutputBase = MPFR.OutputBase = value;
 
                 return null;
             }
