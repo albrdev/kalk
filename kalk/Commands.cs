@@ -106,7 +106,13 @@ namespace kalk
 
         private static object Base(params string[] args)
         {
-            if(args.Length > 0)
+            if(args.Length >= 2)
+            {
+                InputBase(args[0]);
+                OutputBase(args[1]);
+                return null;
+            }
+            else if(args.Length == 1)
             {
                 InputBase(args);
                 OutputBase(args);
