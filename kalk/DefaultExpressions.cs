@@ -114,7 +114,7 @@ namespace kalk
             ( "math.ln2",   MPFR.LN2 ),
             ( "math.e",     new MPFR(1024, "2.71828182846") ),
 
-            ( "phys.NA",    new MPFR(79, "602214085700000000000000") ),
+            ( "phys.N",     new MPFR(79, "602214085700000000000000") ),
             ( "phys.au",    new MPFR(38, "149597870700") ),
             ( "phys.D",     new MPFR(17, "86400") ),
             ( "phys.M",     new MPFR(101, "1988920000000000000000000000000") ),
