@@ -1,6 +1,6 @@
 #include <vector>
 #include <mpreal.h>
-#include "expression/ExpressionParser.hpp"
+#include "text/expression/ExpressionParser.hpp"
 
 using KalkArithmeticType = mpfr::mpreal;
 using KalkValueType      = ExpressionParser<KalkArithmeticType>::ValueType;

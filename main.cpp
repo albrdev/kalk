@@ -14,7 +14,7 @@
 #include <boost/preprocessor.hpp>
 #include <gmpxx.h>
 #include <mpreal.h>
-#include "expression/ExpressionParser.hpp"
+#include "text/expression/ExpressionParser.hpp"
 #include "ExpressionParserSetup.hpp"
 
 #define STRINGIFY(X) #X
