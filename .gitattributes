@@ -1,0 +1,26 @@
+*   text=auto
+
+# Git
+.gitattributes  text
+.gitignore      text
+
+# C/C++
+*.h     text diff=cpp
+*.c     text diff=cpp
+*.hpp   text diff=cpp
+*.cpp   text diff=cpp
+*.hh    text diff=cpp
+*.cc    text diff=cpp
+*.h++   text diff=cpp
+*.c++   text diff=cpp
+*.tpp   text diff=cpp
+*.cxx   text diff=cpp
+
+# Clang
+.clang-format   text
+
+# Custom
+*.txt           text
+*.md            text
+/Makefile       text
+/LICENSE.txt    text
