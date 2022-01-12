@@ -1,0 +1,90 @@
+---
+Language: Cpp
+Standard: Cpp11
+
+ColumnLimit: 160 # Line length before wrap
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+IndentCaseLabels: true
+NamespaceIndentation: All
+
+PointerAlignment: Left
+BitFieldColonSpacing: Both
+
+AlignAfterOpenBracket: Align
+BinPackArguments: false # Arguments on separate lines
+BinPackParameters: false # Parameters on separate lines
+AllowAllArgumentsOnNextLine: false # Override BinPackArguments when too long
+AllowAllParametersOfDeclarationOnNextLine : false # Override BinPackParameters when too long
+
+AccessModifierOffset: 0 # public, protected, private
+
+AlignConsecutiveMacros: true
+AlignConsecutiveAssignments: AcrossComments
+AlignConsecutiveDeclarations: false
+AlignConsecutiveBitFields: AcrossEmptyLinesAndComments
+AlignConsecutiveMacros: Consecutive
+AlignOperands: AlignAfterOperator
+AlignEscapedNewlines: Left # Escaped new lines in macros
+AlignTrailingComments: true
+
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: Never
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+CompactNamespaces: false
+Cpp11BracedListStyle: true
+
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Always
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
+AlwaysBreakBeforeMultilineStrings: true
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: false
+BreakStringLiterals: false
+BreakConstructorInitializers: BeforeComma
+#PackConstructorInitializers: Never
+
+KeepEmptyLinesAtTheStartOfBlocks: false
+ReflowComments: false
+SortIncludes: false
+SortUsingDeclarations: false
+
+...
