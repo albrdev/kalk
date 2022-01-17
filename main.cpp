@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
   mpfr::mpreal::set_default_prec(options.precision);
   mpfr::mpreal::set_default_rnd(options.roundingMode);
 
-  ExpressionParser<KalkArithmeticType> expressionParser(numberConverter);
+  ExpressionParser<KalkArithmeticType, boost::gregorian::date, boost::gregorian::date_duration> expressionParser(numberConverter);
   InitDefault(expressionParser);
 
   if(vm.count("expr") > 0u)

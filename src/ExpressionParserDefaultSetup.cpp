@@ -5,12 +5,12 @@
 #include <gmpxx.h>
 #include <mpreal.h>
 
-static KalkValueType* numberConverter(const std::string& value)
+static KalkValueType2* numberConverter(const std::string& value)
 {
   std::istringstream iss(value);
   KalkArithmeticType result;
   iss >> result;
-  return new KalkValueType(result);
+  return new KalkValueType2(result);
 }
 
 struct GreaterComparer
@@ -104,8 +104,16 @@ static KalkValueType* BinaryOperator_Addition(KalkValueType* lhs, KalkValueType*
 }
 static KalkValueType* BinaryOperator_Subtraction(KalkValueType* lhs, KalkValueType* rhs)
 {
-  return new KalkValueType(lhs->GetValue<KalkArithmeticType>() - rhs->GetValue<KalkArithmeticType>());
+  if(lhs->GetType() == typeid(boost::gregorian::date) && rhs->GetType() == typeid(boost::gregorian::date))
+  {
+    return new KalkValueType(lhs->GetValue<boost::gregorian::date>() - rhs->GetValue<boost::gregorian::date>());
+  }
+  else
+  {
+    return new KalkValueType(lhs->GetValue<KalkArithmeticType>() - rhs->GetValue<KalkArithmeticType>());
+  }
 }
+
 static KalkValueType* BinaryOperator_Multiplication(KalkValueType* lhs, KalkValueType* rhs)
 {
   if(lhs->GetType() == typeid(std::string) && rhs->GetType() == typeid(KalkArithmeticType))
@@ -150,6 +158,10 @@ static KalkValueType* BinaryOperator_VariableAssignment(KalkValueType* lhs, Kalk
   {
     (*variable) = rhs->GetValue<KalkArithmeticType>();
   }
+  else if(rhs->GetType() == typeid(boost::gregorian::date))
+  {
+    (*variable) = rhs->GetValue<boost::gregorian::date>();
+  }
   else if(rhs->GetType() == typeid(std::string))
   {
     (*variable) = rhs->GetValue<std::string>();
@@ -166,7 +178,7 @@ static KalkValueType* BinaryOperator_VariableAssignment(KalkValueType* lhs, Kalk
   return variable;
 }
 
-static KalkValueType* Function_ToStr(const std::vector<KalkValueType*>& args) { return new KalkValueType(args[0]->ToString()); }
+static KalkValueType* Function_Str(const std::vector<KalkValueType*>& args) { return new KalkValueType(args[0]->ToString()); }
 
 static KalkValueType* Function_StrLen(const std::vector<KalkValueType*>& args)
 {
@@ -433,6 +445,18 @@ static KalkValueType* Function_Mode(const std::vector<KalkValueType*>& args)
   return new KalkValueType(mode->GetValue<KalkArithmeticType>());
 }
 
+static KalkValueType* Function_Date(const std::vector<KalkValueType*>& args)
+{
+  if(args.size() == 0u)
+  {
+    return new KalkValueType(boost::gregorian::day_clock::local_day());
+  }
+  else
+  {
+    return new KalkValueType(boost::gregorian::from_simple_string(args[0]->GetValue<std::string>()));
+  }
+}
+
 static KalkValueType* Function_Ans(const std::vector<KalkValueType*>& args)
 {
   if(results.empty())
@@ -470,10 +494,10 @@ static ExpressionParser<KalkArithmeticType> chemicalExpressionParser(numberConve
 
 static KalkValueType* Function_MolarMass(const std::vector<KalkValueType*>& args)
 {
-  return new KalkValueType(chemicalExpressionParser.Evaluate(makeCompoundString(args[0]->GetValue<std::string>())));
+  return new KalkValueType(chemicalExpressionParser.Evaluate(makeCompoundString(args[0]->GetValue<std::string>())).GetValue<KalkArithmeticType>());
 }
 
-void InitDefault(ExpressionParser<KalkArithmeticType>& instance)
+void InitDefault(ExpressionParser<KalkArithmeticType, boost::gregorian::date, boost::gregorian::date_duration>& instance)
 {
   instance.AddUnaryOperator(UnaryOperator_Not, '!', 4, Associativity::Right);
   instance.AddUnaryOperator(UnaryOperator_Plus, '+', 4, Associativity::Right);
@@ -562,8 +586,10 @@ void InitDefault(ExpressionParser<KalkArithmeticType>& instance)
   instance.AddFunction(Function_Median, "math.q2", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
   instance.AddFunction(Function_Quartile_Upper, "math.q3", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
 
-  instance.AddFunction(Function_ToStr, "tostr", 1u, 1u);
+  instance.AddFunction(Function_Str, "str", 1u, 1u);
   instance.AddFunction(Function_StrLen, "strlen", 1u, 1u);
+
+  instance.AddFunction(Function_Date, "date", 0u, 1u);
 
   InitChemical(chemicalExpressionParser);
   instance.AddFunction(Function_MolarMass, "chem.M", 1u, 1u);

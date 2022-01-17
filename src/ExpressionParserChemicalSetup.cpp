@@ -1,14 +1,14 @@
 #include "ExpressionParserSetup.hpp"
 #include <mpreal.h>
 
-static KalkValueType* BinaryOperator_Addition(KalkValueType* lhs, KalkValueType* rhs)
+static KalkValueType2* BinaryOperator_Addition(KalkValueType2* lhs, KalkValueType2* rhs)
 {
-  return new KalkValueType(lhs->GetValue<KalkArithmeticType>() + rhs->GetValue<KalkArithmeticType>());
+  return new KalkValueType2(lhs->GetValue<KalkArithmeticType>() + rhs->GetValue<KalkArithmeticType>());
 }
 
-static KalkValueType* BinaryOperator_Multiplication(KalkValueType* lhs, KalkValueType* rhs)
+static KalkValueType2* BinaryOperator_Multiplication(KalkValueType2* lhs, KalkValueType2* rhs)
 {
-  return new KalkValueType(lhs->GetValue<KalkArithmeticType>() * rhs->GetValue<KalkArithmeticType>());
+  return new KalkValueType2(lhs->GetValue<KalkArithmeticType>() * rhs->GetValue<KalkArithmeticType>());
 }
 
 void InitChemical(ExpressionParser<KalkArithmeticType>& instance)
