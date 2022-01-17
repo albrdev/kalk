@@ -1,8 +1,17 @@
 #include "ExpressionParserSetup.hpp"
 #include <string>
+#include <sstream>
 #include <boost/format.hpp>
 #include <gmpxx.h>
 #include <mpreal.h>
+
+static KalkValueType* numberConverter(const std::string& value)
+{
+  std::istringstream iss(value);
+  KalkArithmeticType result;
+  iss >> result;
+  return new KalkValueType(result);
+}
 
 struct GreaterComparer
 {
@@ -457,7 +466,7 @@ static KalkValueType* Function_BConv(const std::vector<KalkValueType*>& args)
                                         static_cast<int>(mpfr::trunc(args[1]->GetValue<KalkArithmeticType>()).toLong())));
 }
 
-static ExpressionParser<KalkArithmeticType> chemicalExpressionParser;
+static ExpressionParser<KalkArithmeticType> chemicalExpressionParser(numberConverter);
 
 static KalkValueType* Function_MolarMass(const std::vector<KalkValueType*>& args)
 {

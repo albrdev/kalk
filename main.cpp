@@ -160,9 +160,9 @@ static struct
   bool printUsage;
 } options {};
 
-static KalkArithmeticType numberConverter(const std::string& value)
+static KalkValueType* numberConverter(const std::string& value)
 {
-  return mpfr::mpreal(value, mpfr::mpreal::get_default_prec(), options.input_base, mpfr::mpreal::get_default_rnd());
+  return new KalkValueType(mpfr::mpreal(value, mpfr::mpreal::get_default_prec(), options.input_base, mpfr::mpreal::get_default_rnd()));
 }
 
 static void printResult(const KalkValueType& value)
@@ -239,8 +239,7 @@ int main(int argc, char* argv[])
   mpfr::mpreal::set_default_prec(options.precision);
   mpfr::mpreal::set_default_rnd(options.roundingMode);
 
-  ExpressionParser<KalkArithmeticType> expressionParser;
-  expressionParser.SetNumberConverter(numberConverter);
+  ExpressionParser<KalkArithmeticType> expressionParser(numberConverter);
   InitDefault(expressionParser);
 
   if(vm.count("expr") > 0u)
