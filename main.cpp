@@ -1,3 +1,4 @@
+#include <ctime>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -234,7 +235,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  std::srand(options.seed == 0u ? static_cast<unsigned int>(std::time(nullptr)) : options.seed);
+  mpfr::random(options.seed == 0u ? static_cast<unsigned int>(std::time(nullptr)) : options.seed);
 
   mpfr::mpreal::set_default_prec(options.precision);
   mpfr::mpreal::set_default_rnd(options.roundingMode);

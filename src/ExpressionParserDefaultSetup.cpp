@@ -654,8 +654,19 @@ static DefaultValueType* Function_Dur(const std::vector<DefaultValueType*>& args
 #ifndef __REGION__FUNCTIONS__MISC
 static DefaultValueType* Function_Random(const std::vector<DefaultValueType*>& args)
 {
-  static_cast<void>(args);
-  return new DefaultValueType(static_cast<DefaultArithmeticType>(std::rand()));
+  if(args.size() == 0u)
+  {
+    return new DefaultValueType(mpfr::random());
+  }
+  else if(args.size() == 1u)
+  {
+    return new DefaultValueType(mpfr::random() * args[0]->GetValue<DefaultArithmeticType>());
+  }
+  else
+  {
+    const auto diff = args[1]->GetValue<DefaultArithmeticType>() - args[0]->GetValue<DefaultArithmeticType>();
+    return new DefaultValueType(args[0]->GetValue<DefaultArithmeticType>() + (mpfr::random() * diff));
+  }
 }
 
 static DefaultValueType* Function_Trunc(const std::vector<DefaultValueType*>& args)
@@ -735,7 +746,7 @@ void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptim
   instance.AddFunction(Function_Ans, "ans", 0, 1);
   instance.AddFunction(Function_BConv, "bconv", 2u, 2u);
 
-  instance.AddFunction(Function_Random, "random", 0, 0);
+  instance.AddFunction(Function_Random, "random", 0, 2);
 
   instance.AddFunction(Function_Trunc, "trunc", 1u, 1u);
   instance.AddFunction(Function_Sgn, "sgn", 1u, 1u);
