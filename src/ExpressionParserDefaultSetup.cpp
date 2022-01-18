@@ -314,6 +314,16 @@ static DefaultValueType* Function_Neg2(const std::vector<DefaultValueType*>& arg
   return new DefaultValueType(-mpfr::abs(args[0]->GetValue<DefaultArithmeticType>()));
 }
 
+static DefaultValueType* Function_Mod(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::fmod(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
+}
+
+static DefaultValueType* Function_Rem(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::remainder(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
+}
+
 static DefaultValueType* Function_Pow(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
@@ -754,6 +764,8 @@ void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptim
   instance.AddFunction(Function_Neg, "neg", 1u, 1u);
   instance.AddFunction(Function_Neg2, "neg2", 1u, 1u);
 
+  instance.AddFunction(Function_Mod, "math.mod", 2u, 2u);
+  instance.AddFunction(Function_Rem, "math.rem", 2u, 2u);
   instance.AddFunction(Function_Pow, "math.pow", 2u, 2u);
   instance.AddFunction(Function_Sqr, "math.sqr", 1u, 1u);
   instance.AddFunction(Function_Cb, "math.cb", 1u, 1u);
