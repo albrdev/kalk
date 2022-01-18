@@ -1,17 +1,17 @@
 #include "ExpressionParserSetup.hpp"
 #include <mpreal.h>
 
-static KalkValueType2* BinaryOperator_Addition(KalkValueType2* lhs, KalkValueType2* rhs)
+static ChemValueType* BinaryOperator_Addition(ChemValueType* lhs, ChemValueType* rhs)
 {
-  return new KalkValueType2(lhs->GetValue<KalkArithmeticType>() + rhs->GetValue<KalkArithmeticType>());
+  return new ChemValueType(lhs->GetValue<ChemArithmeticType>() + rhs->GetValue<ChemArithmeticType>());
 }
 
-static KalkValueType2* BinaryOperator_Multiplication(KalkValueType2* lhs, KalkValueType2* rhs)
+static ChemValueType* BinaryOperator_Multiplication(ChemValueType* lhs, ChemValueType* rhs)
 {
-  return new KalkValueType2(lhs->GetValue<KalkArithmeticType>() * rhs->GetValue<KalkArithmeticType>());
+  return new ChemValueType(lhs->GetValue<ChemArithmeticType>() * rhs->GetValue<ChemArithmeticType>());
 }
 
-void InitChemical(ExpressionParser<KalkArithmeticType>& instance)
+void InitChemical(ExpressionParser<ChemArithmeticType>& instance)
 {
   instance.AddBinaryOperator(BinaryOperator_Addition, "+", 1, Associativity::Left);
   instance.AddBinaryOperator(BinaryOperator_Multiplication, "*", 2, Associativity::Left);

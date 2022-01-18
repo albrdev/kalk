@@ -160,16 +160,16 @@ static struct
   bool printUsage;
 } options {};
 
-static KalkValueType* numberConverter(const std::string& value)
+static DefaultValueType* numberConverter(const std::string& value)
 {
-  return new KalkValueType(mpfr::mpreal(value, mpfr::mpreal::get_default_prec(), options.input_base, mpfr::mpreal::get_default_rnd()));
+  return new DefaultValueType(mpfr::mpreal(value, mpfr::mpreal::get_default_prec(), options.input_base, mpfr::mpreal::get_default_rnd()));
 }
 
-static void printResult(const KalkValueType& value)
+static void printResult(const DefaultValueType& value)
 {
-  if(value.GetType() == typeid(KalkArithmeticType))
+  if(value.GetType() == typeid(DefaultArithmeticType))
   {
-    std::cout << value.GetValue<KalkArithmeticType>().toString(options.digits, options.output_base, mpfr::mpreal::get_default_rnd()) << std::endl;
+    std::cout << value.GetValue<DefaultArithmeticType>().toString(options.digits, options.output_base, mpfr::mpreal::get_default_rnd()) << std::endl;
   }
   else
   {
@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
   mpfr::mpreal::set_default_prec(options.precision);
   mpfr::mpreal::set_default_rnd(options.roundingMode);
 
-  ExpressionParser<KalkArithmeticType, boost::gregorian::date, boost::gregorian::date_duration> expressionParser(numberConverter);
+  ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration> expressionParser(numberConverter);
   InitDefault(expressionParser);
 
   if(vm.count("expr") > 0u)

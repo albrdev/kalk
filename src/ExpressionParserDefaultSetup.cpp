@@ -5,17 +5,17 @@
 #include <gmpxx.h>
 #include <mpreal.h>
 
-static KalkValueType2* numberConverter(const std::string& value)
+static ChemValueType* numberConverter(const std::string& value)
 {
   std::istringstream iss(value);
-  KalkArithmeticType result;
+  ChemArithmeticType result;
   iss >> result;
-  return new KalkValueType2(result);
+  return new ChemValueType(result);
 }
 
 struct GreaterComparer
 {
-  bool operator()(KalkValueType* a, KalkValueType* b) const { return a->GetValue<KalkArithmeticType>() < b->GetValue<KalkArithmeticType>(); }
+  bool operator()(DefaultValueType* a, DefaultValueType* b) const { return a->GetValue<DefaultArithmeticType>() < b->GetValue<DefaultArithmeticType>(); }
 };
 
 static std::string operator*(const std::string& lhs, std::size_t rhs)
@@ -68,25 +68,21 @@ static std::string makeCompoundString(std::string text)
   return result;
 }
 
-static KalkValueType* UnaryOperator_Not(KalkValueType* rhs) { return new KalkValueType(!rhs->GetValue<KalkArithmeticType>()); }
-static KalkValueType* UnaryOperator_Plus(KalkValueType* rhs) { return new KalkValueType(mpfr::abs(rhs->GetValue<KalkArithmeticType>())); }
-static KalkValueType* UnaryOperator_Minus(KalkValueType* rhs) { return new KalkValueType(-rhs->GetValue<KalkArithmeticType>()); }
-static KalkValueType* UnaryOperator_OnesComplement(KalkValueType* rhs)
+static DefaultValueType* UnaryOperator_Not(DefaultValueType* rhs) { return new DefaultValueType(!rhs->GetValue<DefaultArithmeticType>()); }
+static DefaultValueType* UnaryOperator_Plus(DefaultValueType* rhs) { return new DefaultValueType(mpfr::abs(rhs->GetValue<DefaultArithmeticType>())); }
+static DefaultValueType* UnaryOperator_Minus(DefaultValueType* rhs) { return new DefaultValueType(-rhs->GetValue<DefaultArithmeticType>()); }
+static DefaultValueType* UnaryOperator_OnesComplement(DefaultValueType* rhs)
 {
   mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(rhs->GetValue<KalkArithmeticType>()).toString(), 10);
+  tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = ~tmpRhs;
-  return new KalkValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
 
-static KalkValueType* BinaryOperator_Addition(KalkValueType* lhs, KalkValueType* rhs)
+static DefaultValueType* BinaryOperator_Addition(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  if(lhs->GetType() == typeid(KalkArithmeticType) && rhs->GetType() == typeid(KalkArithmeticType))
-  {
-    return new KalkValueType(lhs->GetValue<KalkArithmeticType>() + rhs->GetValue<KalkArithmeticType>());
-  }
-  else
+  if(lhs->GetType() == typeid(std::string) || rhs->GetType() == typeid(std::string))
   {
     std::string tmpString;
     if(lhs->GetType() != typeid(std::nullptr_t))
@@ -99,68 +95,80 @@ static KalkValueType* BinaryOperator_Addition(KalkValueType* lhs, KalkValueType*
       tmpString += rhs->ToString();
     }
 
-    return new KalkValueType(tmpString);
+    return new DefaultValueType(tmpString);
   }
-}
-static KalkValueType* BinaryOperator_Subtraction(KalkValueType* lhs, KalkValueType* rhs)
-{
-  if(lhs->GetType() == typeid(boost::gregorian::date) && rhs->GetType() == typeid(boost::gregorian::date))
+  else if(lhs->GetType() == typeid(boost::posix_time::ptime) && rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
-    return new KalkValueType(lhs->GetValue<boost::gregorian::date>() - rhs->GetValue<boost::gregorian::date>());
+    return new DefaultValueType(lhs->GetValue<boost::posix_time::ptime>() + rhs->GetValue<boost::posix_time::time_duration>());
   }
   else
   {
-    return new KalkValueType(lhs->GetValue<KalkArithmeticType>() - rhs->GetValue<KalkArithmeticType>());
+    return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() + rhs->GetValue<DefaultArithmeticType>());
   }
 }
-
-static KalkValueType* BinaryOperator_Multiplication(KalkValueType* lhs, KalkValueType* rhs)
+static DefaultValueType* BinaryOperator_Subtraction(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  if(lhs->GetType() == typeid(std::string) && rhs->GetType() == typeid(KalkArithmeticType))
+  if(lhs->GetType() == typeid(boost::posix_time::ptime) && rhs->GetType() == typeid(boost::posix_time::ptime))
   {
-    return new KalkValueType(lhs->GetValue<std::string>() * static_cast<std::size_t>(rhs->GetValue<KalkArithmeticType>()));
+    return new DefaultValueType(lhs->GetValue<boost::posix_time::ptime>() - rhs->GetValue<boost::posix_time::ptime>());
   }
   else
   {
-    return new KalkValueType(lhs->GetValue<KalkArithmeticType>() * rhs->GetValue<KalkArithmeticType>());
+    return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() - rhs->GetValue<DefaultArithmeticType>());
   }
 }
-static KalkValueType* BinaryOperator_Division(KalkValueType* lhs, KalkValueType* rhs)
+
+static DefaultValueType* BinaryOperator_Multiplication(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  return new KalkValueType(lhs->GetValue<KalkArithmeticType>() / rhs->GetValue<KalkArithmeticType>());
+  if(lhs->GetType() == typeid(std::string) && rhs->GetType() == typeid(DefaultArithmeticType))
+  {
+    return new DefaultValueType(lhs->GetValue<std::string>() * static_cast<std::size_t>(rhs->GetValue<DefaultArithmeticType>()));
+  }
+  else
+  {
+    return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() * rhs->GetValue<DefaultArithmeticType>());
+  }
 }
-static KalkValueType* BinaryOperator_TruncatedDivision(KalkValueType* lhs, KalkValueType* rhs)
+static DefaultValueType* BinaryOperator_Division(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  return new KalkValueType(mpfr::trunc(lhs->GetValue<KalkArithmeticType>() / rhs->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() / rhs->GetValue<DefaultArithmeticType>());
 }
-static KalkValueType* BinaryOperator_Modulo(KalkValueType* lhs, KalkValueType* rhs)
+static DefaultValueType* BinaryOperator_TruncatedDivision(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  return new KalkValueType(mpfr::fmod(lhs->GetValue<KalkArithmeticType>(), rhs->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>() / rhs->GetValue<DefaultArithmeticType>()));
 }
-static KalkValueType* BinaryOperator_Exponentiation(KalkValueType* lhs, KalkValueType* rhs)
+static DefaultValueType* BinaryOperator_Modulo(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  return new KalkValueType(mpfr::pow(lhs->GetValue<KalkArithmeticType>(), rhs->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(mpfr::fmod(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
 }
-static KalkValueType* BinaryOperator_Exponentiation2(KalkValueType* lhs, KalkValueType* rhs)
+static DefaultValueType* BinaryOperator_Exponentiation(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  return new KalkValueType(mpfr::pow(lhs->GetValue<KalkArithmeticType>(), rhs->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(mpfr::pow(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* BinaryOperator_Exponentiation2(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  return new DefaultValueType(mpfr::pow(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
 }
 
-static KalkValueType* BinaryOperator_VariableAssignment(KalkValueType* lhs, KalkValueType* rhs)
+static DefaultValueType* BinaryOperator_VariableAssignment(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  KalkVariableType* variable = dynamic_cast<KalkVariableType*>(lhs);
+  DefaultVariableType* variable = dynamic_cast<DefaultVariableType*>(lhs);
   if(variable == nullptr)
   {
     throw SyntaxException((boost::format("Assignment of non-variable type: %1% (%2%)") % lhs->ToString() % lhs->GetType().name()).str());
   }
 
-  if(rhs->GetType() == typeid(KalkArithmeticType))
+  if(rhs->GetType() == typeid(DefaultArithmeticType))
   {
-    (*variable) = rhs->GetValue<KalkArithmeticType>();
+    (*variable) = rhs->GetValue<DefaultArithmeticType>();
   }
-  else if(rhs->GetType() == typeid(boost::gregorian::date))
+  else if(rhs->GetType() == typeid(boost::posix_time::ptime))
   {
-    (*variable) = rhs->GetValue<boost::gregorian::date>();
+    (*variable) = rhs->GetValue<boost::posix_time::ptime>();
+  }
+  else if(rhs->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    (*variable) = rhs->GetValue<boost::posix_time::time_duration>();
   }
   else if(rhs->GetType() == typeid(std::string))
   {
@@ -178,225 +186,309 @@ static KalkValueType* BinaryOperator_VariableAssignment(KalkValueType* lhs, Kalk
   return variable;
 }
 
-static KalkValueType* Function_Str(const std::vector<KalkValueType*>& args) { return new KalkValueType(args[0]->ToString()); }
+static DefaultValueType* Function_Str(const std::vector<DefaultValueType*>& args) { return new DefaultValueType(args[0]->ToString()); }
 
-static KalkValueType* Function_StrLen(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_StrLen(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(static_cast<KalkArithmeticType>(args[0]->GetValue<std::string>().length()));
+  return new DefaultValueType(static_cast<DefaultArithmeticType>(args[0]->GetValue<std::string>().length()));
 }
 
-static KalkValueType* Function_Random(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Random(const std::vector<DefaultValueType*>& args)
 {
   static_cast<void>(args);
-  return new KalkValueType(static_cast<KalkArithmeticType>(std::rand()));
+  return new DefaultValueType(static_cast<DefaultArithmeticType>(std::rand()));
 }
 
-static KalkValueType* Function_Trunc(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Trunc(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(mpfr::trunc(args[0]->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()));
 }
-static KalkValueType* Function_Sgn(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Sgn(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType((args[0]->GetValue<KalkArithmeticType>() > 0) - (args[0]->GetValue<KalkArithmeticType>() < 0));
+  return new DefaultValueType((args[0]->GetValue<DefaultArithmeticType>() > 0) - (args[0]->GetValue<DefaultArithmeticType>() < 0));
 }
-static KalkValueType* Function_Abs(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::abs(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Neg(const std::vector<KalkValueType*>& args) { return new KalkValueType(-args[0]->GetValue<KalkArithmeticType>()); }
-static KalkValueType* Function_Neg2(const std::vector<KalkValueType*>& args) { return new KalkValueType(-mpfr::abs(args[0]->GetValue<KalkArithmeticType>())); }
-
-static KalkValueType* Function_Pow(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Abs(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(mpfr::pow(args[0]->GetValue<KalkArithmeticType>(), args[1]->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(mpfr::abs(args[0]->GetValue<DefaultArithmeticType>()));
 }
-static KalkValueType* Function_Sqr(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::pow(args[0]->GetValue<KalkArithmeticType>(), 2)); }
-static KalkValueType* Function_Cb(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::pow(args[0]->GetValue<KalkArithmeticType>(), 3)); }
-static KalkValueType* Function_Root(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Neg(const std::vector<DefaultValueType*>& args) { return new DefaultValueType(-args[0]->GetValue<DefaultArithmeticType>()); }
+static DefaultValueType* Function_Neg2(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(mpfr::pow(args[0]->GetValue<KalkArithmeticType>(), 1 / args[1]->GetValue<KalkArithmeticType>()));
-}
-static KalkValueType* Function_Sqrt(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::sqrt(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Cbrt(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::cbrt(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Exp(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::exp(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Exp2(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::exp2(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Exp10(const std::vector<KalkValueType*>& args)
-{
-  return new KalkValueType(mpfr::pow(10, args[0]->GetValue<KalkArithmeticType>()));
-}
-static KalkValueType* Function_Log(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::log(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Log2(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::log2(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Log10(const std::vector<KalkValueType*>& args)
-{
-  return new KalkValueType(mpfr::log10(args[0]->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(-mpfr::abs(args[0]->GetValue<DefaultArithmeticType>()));
 }
 
-static KalkValueType* Function_Sin(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::sin(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Cos(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::cos(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Tan(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::tan(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Cot(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::cot(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Sec(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::sec(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_Csc(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::csc(args[0]->GetValue<KalkArithmeticType>())); }
-
-static KalkValueType* Function_ASin(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::asin(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_ACos(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::acos(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_ATan(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::atan(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_ATan2(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Pow(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(mpfr::atan2(args[0]->GetValue<KalkArithmeticType>(), args[1]->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Sqr(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), 2));
+}
+static DefaultValueType* Function_Cb(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), 3));
+}
+static DefaultValueType* Function_Root(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), 1 / args[1]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Sqrt(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::sqrt(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Cbrt(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::cbrt(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Exp(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::exp(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Exp2(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::exp2(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Exp10(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::pow(10, args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Log(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::log(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Log2(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::log2(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Log10(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::log10(args[0]->GetValue<DefaultArithmeticType>()));
+}
+
+static DefaultValueType* Function_Sin(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::sin(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Cos(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::cos(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Tan(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::tan(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Cot(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::cot(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Sec(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::sec(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_Csc(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::csc(args[0]->GetValue<DefaultArithmeticType>()));
+}
+
+static DefaultValueType* Function_ASin(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::asin(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_ACos(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::acos(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_ATan(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::atan(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_ATan2(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::atan2(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
 } //*
-static KalkValueType* Function_ACot(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::acot(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_ASec(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::asec(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_ACsc(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::acsc(args[0]->GetValue<KalkArithmeticType>())); }
-
-static KalkValueType* Function_SinH(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::sinh(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_CosH(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::cosh(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_TanH(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::tanh(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_CotH(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::coth(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_SecH(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::sech(args[0]->GetValue<KalkArithmeticType>())); }
-static KalkValueType* Function_CscH(const std::vector<KalkValueType*>& args) { return new KalkValueType(mpfr::csch(args[0]->GetValue<KalkArithmeticType>())); }
-
-static KalkValueType* Function_ASinH(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_ACot(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(mpfr::asinh(args[0]->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(mpfr::acot(args[0]->GetValue<DefaultArithmeticType>()));
 }
-static KalkValueType* Function_ACosH(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_ASec(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(mpfr::acosh(args[0]->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(mpfr::asec(args[0]->GetValue<DefaultArithmeticType>()));
 }
-static KalkValueType* Function_ATanH(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_ACsc(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(mpfr::atanh(args[0]->GetValue<KalkArithmeticType>()));
-}
-static KalkValueType* Function_ACotH(const std::vector<KalkValueType*>& args)
-{
-  return new KalkValueType(mpfr::acoth(args[0]->GetValue<KalkArithmeticType>()));
-}
-static KalkValueType* Function_ASecH(const std::vector<KalkValueType*>& args)
-{
-  return new KalkValueType(mpfr::asech(args[0]->GetValue<KalkArithmeticType>()));
-}
-static KalkValueType* Function_ACscH(const std::vector<KalkValueType*>& args)
-{
-  return new KalkValueType(mpfr::acsch(args[0]->GetValue<KalkArithmeticType>()));
+  return new DefaultValueType(mpfr::acsc(args[0]->GetValue<DefaultArithmeticType>()));
 }
 
-static KalkValueType* Function_Or(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_SinH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::sinh(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_CosH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::cosh(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_TanH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::tanh(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_CotH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::coth(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_SecH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::sech(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_CscH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::csch(args[0]->GetValue<DefaultArithmeticType>()));
+}
+
+static DefaultValueType* Function_ASinH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::asinh(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_ACosH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::acosh(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_ATanH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::atanh(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_ACotH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::acoth(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_ASecH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::asech(args[0]->GetValue<DefaultArithmeticType>()));
+}
+static DefaultValueType* Function_ACscH(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::acsch(args[0]->GetValue<DefaultArithmeticType>()));
+}
+
+static DefaultValueType* Function_Or(const std::vector<DefaultValueType*>& args)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<KalkArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
   mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(args[1]->GetValue<KalkArithmeticType>()).toString(), 10);
+  tmpRhs.set_str(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs | tmpRhs;
-  return new KalkValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
 
-static KalkValueType* Function_And(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_And(const std::vector<DefaultValueType*>& args)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<KalkArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
   mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(args[1]->GetValue<KalkArithmeticType>()).toString(), 10);
+  tmpRhs.set_str(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs & tmpRhs;
-  return new KalkValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
-static KalkValueType* Function_Xor(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Xor(const std::vector<DefaultValueType*>& args)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<KalkArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
   mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(args[1]->GetValue<KalkArithmeticType>()).toString(), 10);
+  tmpRhs.set_str(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs ^ tmpRhs;
-  return new KalkValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
-static KalkValueType* Function_LShift(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_LShift(const std::vector<DefaultValueType*>& args)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<KalkArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
 
-  mpz_class tmpResult = tmpLhs << args[1]->GetValue<KalkArithmeticType>().toULLong();
-  return new KalkValueType(mpfr::mpreal(tmpResult.get_str()));
+  mpz_class tmpResult = tmpLhs << args[1]->GetValue<DefaultArithmeticType>().toULLong();
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
-static KalkValueType* Function_RShift(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_RShift(const std::vector<DefaultValueType*>& args)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<KalkArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
 
-  mpz_class tmpResult = tmpLhs >> args[1]->GetValue<KalkArithmeticType>().toULLong();
-  return new KalkValueType(mpfr::mpreal(tmpResult.get_str()));
+  mpz_class tmpResult = tmpLhs >> args[1]->GetValue<DefaultArithmeticType>().toULLong();
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
 
-static KalkValueType* Function_Min(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Min(const std::vector<DefaultValueType*>& args)
 {
-  auto result = std::numeric_limits<KalkArithmeticType>::max();
+  auto result = std::numeric_limits<DefaultArithmeticType>::max();
   for(const auto& i : args)
   {
-    auto tmpValue = i->GetValue<KalkArithmeticType>();
+    auto tmpValue = i->GetValue<DefaultArithmeticType>();
     if(tmpValue < result)
     {
       result = tmpValue;
     }
   }
 
-  return new KalkValueType(result);
+  return new DefaultValueType(result);
 }
-static KalkValueType* Function_Max(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Max(const std::vector<DefaultValueType*>& args)
 {
-  auto result = std::numeric_limits<KalkArithmeticType>::min();
+  auto result = std::numeric_limits<DefaultArithmeticType>::min();
   for(const auto& i : args)
   {
-    auto tmpValue = i->GetValue<KalkArithmeticType>();
+    auto tmpValue = i->GetValue<DefaultArithmeticType>();
     if(tmpValue > result)
     {
       result = tmpValue;
     }
   }
 
-  return new KalkValueType(result);
+  return new DefaultValueType(result);
 }
 
-static KalkValueType* Function_Mean(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Mean(const std::vector<DefaultValueType*>& args)
 {
-  KalkArithmeticType result = 0;
+  DefaultArithmeticType result = 0;
   for(const auto& i : args)
   {
-    result += i->GetValue<KalkArithmeticType>();
+    result += i->GetValue<DefaultArithmeticType>();
   }
 
-  return new KalkValueType(result / static_cast<KalkArithmeticType>(args.size()));
+  return new DefaultValueType(result / static_cast<DefaultArithmeticType>(args.size()));
 }
 
-static KalkValueType* Function_Median(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Median(const std::vector<DefaultValueType*>& args)
 {
   auto tmpArgs = args;
   std::sort(tmpArgs.begin(), tmpArgs.end(), GreaterComparer());
   std::size_t middle = tmpArgs.size() / 2u;
   if(tmpArgs.size() % 2 == 0)
   {
-    return new KalkValueType((tmpArgs[middle - 1u]->GetValue<KalkArithmeticType>() + tmpArgs[middle]->GetValue<KalkArithmeticType>()) / 2);
+    return new DefaultValueType((tmpArgs[middle - 1u]->GetValue<DefaultArithmeticType>() + tmpArgs[middle]->GetValue<DefaultArithmeticType>()) / 2);
   }
   else
   {
-    return new KalkValueType(tmpArgs[middle]->GetValue<KalkArithmeticType>());
+    return new DefaultValueType(tmpArgs[middle]->GetValue<DefaultArithmeticType>());
   }
 }
 
-static KalkValueType* Function_Quartile_Lower(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Quartile_Lower(const std::vector<DefaultValueType*>& args)
 {
   auto tmpArgs = args;
   std::sort(tmpArgs.begin(), tmpArgs.end(), GreaterComparer());
   std::size_t middle = tmpArgs.size() / 4u;
   if(middle % 2 == 0)
   {
-    return new KalkValueType((tmpArgs[middle - 1u]->GetValue<KalkArithmeticType>() + tmpArgs[middle]->GetValue<KalkArithmeticType>()) / 2);
+    return new DefaultValueType((tmpArgs[middle - 1u]->GetValue<DefaultArithmeticType>() + tmpArgs[middle]->GetValue<DefaultArithmeticType>()) / 2);
   }
   else
   {
-    return new KalkValueType(tmpArgs[middle]->GetValue<KalkArithmeticType>());
+    return new DefaultValueType(tmpArgs[middle]->GetValue<DefaultArithmeticType>());
   }
 }
 
-static KalkValueType* Function_Quartile_Upper(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Quartile_Upper(const std::vector<DefaultValueType*>& args)
 {
   auto tmpArgs = args;
   std::sort(tmpArgs.begin(), tmpArgs.end(), GreaterComparer());
@@ -405,15 +497,15 @@ static KalkValueType* Function_Quartile_Upper(const std::vector<KalkValueType*>&
   std::size_t tmpIndex = (middle + (tmpArgs.size() % 2 == 0 ? 0 : 1)) + q;
   if(middle % 2 == 0)
   {
-    return new KalkValueType((tmpArgs[tmpIndex - 1u]->GetValue<KalkArithmeticType>() + tmpArgs[tmpIndex]->GetValue<KalkArithmeticType>()) / 2);
+    return new DefaultValueType((tmpArgs[tmpIndex - 1u]->GetValue<DefaultArithmeticType>() + tmpArgs[tmpIndex]->GetValue<DefaultArithmeticType>()) / 2);
   }
   else
   {
-    return new KalkValueType(tmpArgs[tmpIndex]->GetValue<KalkArithmeticType>());
+    return new DefaultValueType(tmpArgs[tmpIndex]->GetValue<DefaultArithmeticType>());
   }
 }
 
-static KalkValueType* Function_Mode(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Mode(const std::vector<DefaultValueType*>& args)
 {
   auto tmpArgs = args;
   std::sort(tmpArgs.begin(), tmpArgs.end(), GreaterComparer());
@@ -425,7 +517,7 @@ static KalkValueType* Function_Mode(const std::vector<KalkValueType*>& args)
 
   for(std::size_t i = 1u; i < tmpArgs.size(); i++)
   {
-    if(tmpArgs[i]->GetValue<KalkArithmeticType>() == current->GetValue<KalkArithmeticType>())
+    if(tmpArgs[i]->GetValue<DefaultArithmeticType>() == current->GetValue<DefaultArithmeticType>())
     {
       currentCount++;
     }
@@ -442,22 +534,27 @@ static KalkValueType* Function_Mode(const std::vector<KalkValueType*>& args)
     }
   }
 
-  return new KalkValueType(mode->GetValue<KalkArithmeticType>());
+  return new DefaultValueType(mode->GetValue<DefaultArithmeticType>());
 }
 
-static KalkValueType* Function_Date(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Date(const std::vector<DefaultValueType*>& args)
 {
   if(args.size() == 0u)
   {
-    return new KalkValueType(boost::gregorian::day_clock::local_day());
+    return new DefaultValueType(boost::posix_time::second_clock::local_time());
   }
   else
   {
-    return new KalkValueType(boost::gregorian::from_simple_string(args[0]->GetValue<std::string>()));
+    return new DefaultValueType(boost::posix_time::time_from_string(args[0]->GetValue<std::string>()));
   }
 }
 
-static KalkValueType* Function_Ans(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_Dur(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(boost::posix_time::duration_from_string(args[0]->GetValue<std::string>()));
+}
+
+static DefaultValueType* Function_Ans(const std::vector<DefaultValueType*>& args)
 {
   if(results.empty())
   {
@@ -466,10 +563,10 @@ static KalkValueType* Function_Ans(const std::vector<KalkValueType*>& args)
 
   if(args.empty())
   {
-    return new KalkValueType(results.back());
+    return new DefaultValueType(results.back());
   }
 
-  int index = static_cast<int>(args[0]->GetValue<KalkArithmeticType>());
+  int index = static_cast<int>(args[0]->GetValue<DefaultArithmeticType>());
   if(index < 0)
   {
     index = static_cast<int>(results.size()) + index;
@@ -480,24 +577,24 @@ static KalkValueType* Function_Ans(const std::vector<KalkValueType*>& args)
     throw SyntaxException((boost::format("Results index out of range: %1%/%2%") % index % results.size()).str());
   }
 
-  return new KalkValueType(results.at(static_cast<std::size_t>(index)));
+  return new DefaultValueType(results.at(static_cast<std::size_t>(index)));
 }
 
-static KalkValueType* Function_BConv(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_BConv(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(mpfr::mpreal(args[0]->GetValue<std::string>(),
-                                        mpfr::mpreal::get_default_prec(),
-                                        static_cast<int>(mpfr::trunc(args[1]->GetValue<KalkArithmeticType>()).toLong())));
+  return new DefaultValueType(mpfr::mpreal(args[0]->GetValue<std::string>(),
+                                           mpfr::mpreal::get_default_prec(),
+                                           static_cast<int>(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toLong())));
 }
 
-static ExpressionParser<KalkArithmeticType> chemicalExpressionParser(numberConverter);
+static ExpressionParser<ChemArithmeticType> chemicalExpressionParser(numberConverter);
 
-static KalkValueType* Function_MolarMass(const std::vector<KalkValueType*>& args)
+static DefaultValueType* Function_MolarMass(const std::vector<DefaultValueType*>& args)
 {
-  return new KalkValueType(chemicalExpressionParser.Evaluate(makeCompoundString(args[0]->GetValue<std::string>())).GetValue<KalkArithmeticType>());
+  return new DefaultValueType(chemicalExpressionParser.Evaluate(makeCompoundString(args[0]->GetValue<std::string>())).GetValue<DefaultArithmeticType>());
 }
 
-void InitDefault(ExpressionParser<KalkArithmeticType, boost::gregorian::date, boost::gregorian::date_duration>& instance)
+void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>& instance)
 {
   instance.AddUnaryOperator(UnaryOperator_Not, '!', 4, Associativity::Right);
   instance.AddUnaryOperator(UnaryOperator_Plus, '+', 4, Associativity::Right);
@@ -576,20 +673,21 @@ void InitDefault(ExpressionParser<KalkArithmeticType, boost::gregorian::date, bo
   instance.AddFunction(Function_LShift, "lshift", 2u, 2u);
   instance.AddFunction(Function_RShift, "rshift", 2u, 2u);
 
-  instance.AddFunction(Function_Min, "min", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Max, "max", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
+  instance.AddFunction(Function_Min, "min", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  instance.AddFunction(Function_Max, "max", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
 
-  instance.AddFunction(Function_Mean, "math.mean", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Median, "math.median", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Mode, "math.mode", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Quartile_Lower, "math.q1", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Median, "math.q2", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Quartile_Upper, "math.q3", 1u, KalkFunctionType::GetArgumentCountMaxLimit());
+  instance.AddFunction(Function_Mean, "math.mean", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  instance.AddFunction(Function_Median, "math.median", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  instance.AddFunction(Function_Mode, "math.mode", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  instance.AddFunction(Function_Quartile_Lower, "math.q1", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  instance.AddFunction(Function_Median, "math.q2", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  instance.AddFunction(Function_Quartile_Upper, "math.q3", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
 
   instance.AddFunction(Function_Str, "str", 1u, 1u);
   instance.AddFunction(Function_StrLen, "strlen", 1u, 1u);
 
   instance.AddFunction(Function_Date, "date", 0u, 1u);
+  instance.AddFunction(Function_Dur, "dur", 1u, 1u);
 
   InitChemical(chemicalExpressionParser);
   instance.AddFunction(Function_MolarMass, "chem.M", 1u, 1u);
