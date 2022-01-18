@@ -189,7 +189,7 @@ static void printUsage(const boost::program_options::options_description& desc)
 int main(int argc, char* argv[])
 {
   boost::program_options::options_description desc_named("Options");
-  desc_named.add_options()("expr", boost::program_options::value<std::vector<std::string>>(), "Add an expression");
+  desc_named.add_options()("expr,x", boost::program_options::value<std::vector<std::string>>(), "Add an expression");
   desc_named.add_options()("prec,p", boost::program_options::value<mpfr_prec_t>(&options.precision)->default_value(128), "Set precision");
   desc_named.add_options()("digits,d", boost::program_options::value<int>(&options.digits)->default_value(30), "Set output precision (Number of digits)");
   desc_named.add_options()("rmode,r", boost::program_options::value<mpfr_rnd_t>(&options.roundingMode)->default_value(mpfr_rnd_t::MPFR_RNDN), "Rounding mode");
