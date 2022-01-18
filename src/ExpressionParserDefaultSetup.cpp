@@ -197,9 +197,55 @@ static DefaultValueType* BinaryOperator_Exponentiation(DefaultValueType* lhs, De
   return new DefaultValueType(mpfr::pow(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* BinaryOperator_Exponentiation2(DefaultValueType* lhs, DefaultValueType* rhs)
+static DefaultValueType* BinaryOperator_Or(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  return new DefaultValueType(mpfr::pow(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
+  mpz_class tmpLhs;
+  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  mpz_class tmpRhs;
+  tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+
+  mpz_class tmpResult = tmpLhs | tmpRhs;
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+}
+
+static DefaultValueType* BinaryOperator_And(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  mpz_class tmpLhs;
+  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  mpz_class tmpRhs;
+  tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+
+  mpz_class tmpResult = tmpLhs & tmpRhs;
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+}
+
+static DefaultValueType* BinaryOperator_Xor(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  mpz_class tmpLhs;
+  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  mpz_class tmpRhs;
+  tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+
+  mpz_class tmpResult = tmpLhs ^ tmpRhs;
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+}
+
+static DefaultValueType* BinaryOperator_LeftShift(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  mpz_class tmpLhs;
+  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+
+  mpz_class tmpResult = tmpLhs << rhs->GetValue<DefaultArithmeticType>().toULLong();
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+}
+
+static DefaultValueType* BinaryOperator_RightShift(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  mpz_class tmpLhs;
+  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+
+  mpz_class tmpResult = tmpLhs >> rhs->GetValue<DefaultArithmeticType>().toULLong();
+  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
 
 static DefaultValueType* BinaryOperator_VariableAssignment(DefaultValueType* lhs, DefaultValueType* rhs)
@@ -424,54 +470,6 @@ static DefaultValueType* Function_ACscH(const std::vector<DefaultValueType*>& ar
   return new DefaultValueType(mpfr::acsch(args[0]->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Or(const std::vector<DefaultValueType*>& args)
-{
-  mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
-  mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toString(), 10);
-
-  mpz_class tmpResult = tmpLhs | tmpRhs;
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
-}
-
-static DefaultValueType* Function_And(const std::vector<DefaultValueType*>& args)
-{
-  mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
-  mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toString(), 10);
-
-  mpz_class tmpResult = tmpLhs & tmpRhs;
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
-}
-static DefaultValueType* Function_Xor(const std::vector<DefaultValueType*>& args)
-{
-  mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
-  mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toString(), 10);
-
-  mpz_class tmpResult = tmpLhs ^ tmpRhs;
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
-}
-static DefaultValueType* Function_LShift(const std::vector<DefaultValueType*>& args)
-{
-  mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
-
-  mpz_class tmpResult = tmpLhs << args[1]->GetValue<DefaultArithmeticType>().toULLong();
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
-}
-static DefaultValueType* Function_RShift(const std::vector<DefaultValueType*>& args)
-{
-  mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()).toString(), 10);
-
-  mpz_class tmpResult = tmpLhs >> args[1]->GetValue<DefaultArithmeticType>().toULLong();
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
-}
-
 static DefaultValueType* Function_Min(const std::vector<DefaultValueType*>& args)
 {
   auto result = std::numeric_limits<DefaultArithmeticType>::max();
@@ -662,8 +660,14 @@ void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptim
   instance.AddBinaryOperator(BinaryOperator_Division, "/", 2, Associativity::Left);
   instance.AddBinaryOperator(BinaryOperator_TruncatedDivision, "//", 2, Associativity::Left);
   instance.AddBinaryOperator(BinaryOperator_Modulo, "%", 2, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_Exponentiation, "^", 3, Associativity::Right);
-  instance.AddBinaryOperator(BinaryOperator_Exponentiation2, "**", 3, Associativity::Right);
+  instance.AddBinaryOperator(BinaryOperator_Exponentiation, "**", 3, Associativity::Right);
+
+  instance.AddBinaryOperator(BinaryOperator_Or, "|", 1, Associativity::Left);
+  instance.AddBinaryOperator(BinaryOperator_And, "&", 1, Associativity::Left);
+  instance.AddBinaryOperator(BinaryOperator_Xor, "^", 1, Associativity::Left);
+  instance.AddBinaryOperator(BinaryOperator_LeftShift, "<<", 1, Associativity::Left);
+  instance.AddBinaryOperator(BinaryOperator_RightShift, ">>", 1, Associativity::Left);
+
   instance.AddBinaryOperator(BinaryOperator_VariableAssignment, "=", 4, Associativity::Right);
 
   instance.SetJuxtapositionOperator(BinaryOperator_Multiplication, 2, Associativity::Right);
@@ -721,12 +725,6 @@ void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptim
   instance.AddFunction(Function_ACotH, "math.acoth", 1u, 1u);
   instance.AddFunction(Function_ASecH, "math.asech", 1u, 1u);
   instance.AddFunction(Function_ACscH, "math.acsch", 1u, 1u);
-
-  instance.AddFunction(Function_Or, "or", 2u, 2u);
-  instance.AddFunction(Function_And, "and", 2u, 2u);
-  instance.AddFunction(Function_Xor, "xor", 2u, 2u);
-  instance.AddFunction(Function_LShift, "lshift", 2u, 2u);
-  instance.AddFunction(Function_RShift, "rshift", 2u, 2u);
 
   instance.AddFunction(Function_Min, "min", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
   instance.AddFunction(Function_Max, "max", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
