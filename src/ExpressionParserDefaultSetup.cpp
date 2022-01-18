@@ -68,12 +68,15 @@ static std::string makeCompoundString(std::string text)
   return result;
 }
 
-#ifndef __REGION__UNARY_OPERATORS
-static DefaultValueType* UnaryOperator_Not(DefaultValueType* rhs) { return new DefaultValueType(!rhs->GetValue<DefaultArithmeticType>()); }
-
+#ifndef __REGION__UNOPS
+#ifndef __REGION__UNOPS__COMMON
 static DefaultValueType* UnaryOperator_Plus(DefaultValueType* rhs) { return new DefaultValueType(mpfr::abs(rhs->GetValue<DefaultArithmeticType>())); }
 
 static DefaultValueType* UnaryOperator_Minus(DefaultValueType* rhs) { return new DefaultValueType(-rhs->GetValue<DefaultArithmeticType>()); }
+#endif // __REGION__UNOPS__COMMON
+
+#ifndef __REGION__UNOPS__BITWISE
+static DefaultValueType* UnaryOperator_Not(DefaultValueType* rhs) { return new DefaultValueType(!rhs->GetValue<DefaultArithmeticType>()); }
 
 static DefaultValueType* UnaryOperator_OnesComplement(DefaultValueType* rhs)
 {
@@ -83,9 +86,11 @@ static DefaultValueType* UnaryOperator_OnesComplement(DefaultValueType* rhs)
   mpz_class tmpResult = ~tmpRhs;
   return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
-#endif
+#endif // __REGION__UNOPS__BITWISE
+#endif // __REGION__UNOPS
 
-#ifndef __REGION__BINARY_OPERATORS
+#ifndef __REGION__BINOPS
+#ifndef __REGION__BINOPS__COMMON
 static DefaultValueType* BinaryOperator_Addition(DefaultValueType* lhs, DefaultValueType* rhs)
 {
   if(lhs->GetType() == typeid(std::string) || rhs->GetType() == typeid(std::string))
@@ -196,7 +201,9 @@ static DefaultValueType* BinaryOperator_Exponentiation(DefaultValueType* lhs, De
 {
   return new DefaultValueType(mpfr::pow(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
 }
+#endif // __REGION__BINOPS__COMMON
 
+#ifndef __REGION__BINOPS__BITWISE
 static DefaultValueType* BinaryOperator_Or(DefaultValueType* lhs, DefaultValueType* rhs)
 {
   mpz_class tmpLhs;
@@ -247,7 +254,9 @@ static DefaultValueType* BinaryOperator_RightShift(DefaultValueType* lhs, Defaul
   mpz_class tmpResult = tmpLhs >> rhs->GetValue<DefaultArithmeticType>().toULLong();
   return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
+#endif // __REGION__BINOPS__BITWISE
 
+#ifndef __REGION__BINOPS__SPECIAL
 static DefaultValueType* BinaryOperator_VariableAssignment(DefaultValueType* lhs, DefaultValueType* rhs)
 {
   DefaultVariableType* variable = dynamic_cast<DefaultVariableType*>(lhs);
@@ -283,35 +292,23 @@ static DefaultValueType* BinaryOperator_VariableAssignment(DefaultValueType* lhs
 
   return variable;
 }
-#endif // __REGION__BINARY_OPERATORS
+#endif // __REGION__BINOPS__SPECIAL
+#endif // __REGION__BINOPS
 
 #ifndef __REGION__FUNCTIONS
-static DefaultValueType* Function_Str(const std::vector<DefaultValueType*>& args) { return new DefaultValueType(args[0]->ToString()); }
-
-static DefaultValueType* Function_StrLen(const std::vector<DefaultValueType*>& args)
-{
-  return new DefaultValueType(static_cast<DefaultArithmeticType>(args[0]->GetValue<std::string>().length()));
-}
-
-static DefaultValueType* Function_Random(const std::vector<DefaultValueType*>& args)
-{
-  static_cast<void>(args);
-  return new DefaultValueType(static_cast<DefaultArithmeticType>(std::rand()));
-}
-
-static DefaultValueType* Function_Trunc(const std::vector<DefaultValueType*>& args)
-{
-  return new DefaultValueType(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()));
-}
+#ifndef __REGION__FUNCTIONS__COMMON
 static DefaultValueType* Function_Sgn(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType((args[0]->GetValue<DefaultArithmeticType>() > 0) - (args[0]->GetValue<DefaultArithmeticType>() < 0));
 }
+
 static DefaultValueType* Function_Abs(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::abs(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Neg(const std::vector<DefaultValueType*>& args) { return new DefaultValueType(-args[0]->GetValue<DefaultArithmeticType>()); }
+
 static DefaultValueType* Function_Neg2(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(-mpfr::abs(args[0]->GetValue<DefaultArithmeticType>()));
@@ -321,71 +318,89 @@ static DefaultValueType* Function_Pow(const std::vector<DefaultValueType*>& args
 {
   return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Sqr(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), 2));
 }
+
 static DefaultValueType* Function_Cb(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), 3));
 }
+
 static DefaultValueType* Function_Root(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), 1 / args[1]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Sqrt(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::sqrt(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Cbrt(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::cbrt(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Exp(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::exp(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Exp2(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::exp2(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Exp10(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::pow(10, args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Log(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::log(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Log2(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::log2(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Log10(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::log10(args[0]->GetValue<DefaultArithmeticType>()));
 }
+#endif // __REGION__FUNCTIONS__COMMON
 
+#ifndef __REGION__FUNCTIONS__TRIGONOMETRY
 static DefaultValueType* Function_Sin(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::sin(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Cos(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::cos(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Tan(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::tan(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Cot(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::cot(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Sec(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::sec(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_Csc(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::csc(args[0]->GetValue<DefaultArithmeticType>()));
@@ -395,26 +410,32 @@ static DefaultValueType* Function_ASin(const std::vector<DefaultValueType*>& arg
 {
   return new DefaultValueType(mpfr::asin(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ACos(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::acos(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ATan(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::atan(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ATan2(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::atan2(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
-} //*
+}
+
 static DefaultValueType* Function_ACot(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::acot(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ASec(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::asec(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ACsc(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::acsc(args[0]->GetValue<DefaultArithmeticType>()));
@@ -424,22 +445,27 @@ static DefaultValueType* Function_SinH(const std::vector<DefaultValueType*>& arg
 {
   return new DefaultValueType(mpfr::sinh(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_CosH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::cosh(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_TanH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::tanh(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_CotH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::coth(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_SecH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::sech(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_CscH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::csch(args[0]->GetValue<DefaultArithmeticType>()));
@@ -449,27 +475,34 @@ static DefaultValueType* Function_ASinH(const std::vector<DefaultValueType*>& ar
 {
   return new DefaultValueType(mpfr::asinh(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ACosH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::acosh(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ATanH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::atanh(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ACotH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::acoth(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ASecH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::asech(args[0]->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* Function_ACscH(const std::vector<DefaultValueType*>& args)
 {
   return new DefaultValueType(mpfr::acsch(args[0]->GetValue<DefaultArithmeticType>()));
 }
+#endif // __REGION__FUNCTIONS__TRIGONOMETRY
 
+#ifndef __REGION__FUNCTIONS__AGGREGATES
 static DefaultValueType* Function_Min(const std::vector<DefaultValueType*>& args)
 {
   auto result = std::numeric_limits<DefaultArithmeticType>::max();
@@ -588,7 +621,18 @@ static DefaultValueType* Function_Mode(const std::vector<DefaultValueType*>& arg
 
   return new DefaultValueType(mode->GetValue<DefaultArithmeticType>());
 }
+#endif // __REGION__FUNCTIONS__AGGREGATES
 
+#ifndef __REGION__FUNCTIONS__STRING
+static DefaultValueType* Function_Str(const std::vector<DefaultValueType*>& args) { return new DefaultValueType(args[0]->ToString()); }
+
+static DefaultValueType* Function_StrLen(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(static_cast<DefaultArithmeticType>(args[0]->GetValue<std::string>().length()));
+}
+#endif // #ifndef __REGION__FUNCTIONS__STRING
+
+#ifndef __REGION__FUNCTIONS__DATE_TIME
 static DefaultValueType* Function_Date(const std::vector<DefaultValueType*>& args)
 {
   if(args.size() == 0u)
@@ -605,12 +649,34 @@ static DefaultValueType* Function_Dur(const std::vector<DefaultValueType*>& args
 {
   return new DefaultValueType(boost::posix_time::duration_from_string(args[0]->GetValue<std::string>()));
 }
+#endif // __REGION__FUNCTIONS__DATE_TIME
 
+#ifndef __REGION__FUNCTIONS__MISC
+static DefaultValueType* Function_Random(const std::vector<DefaultValueType*>& args)
+{
+  static_cast<void>(args);
+  return new DefaultValueType(static_cast<DefaultArithmeticType>(std::rand()));
+}
+
+static DefaultValueType* Function_Trunc(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()));
+}
+
+static DefaultValueType* Function_BConv(const std::vector<DefaultValueType*>& args)
+{
+  return new DefaultValueType(mpfr::mpreal(args[0]->GetValue<std::string>(),
+                                           mpfr::mpreal::get_default_prec(),
+                                           static_cast<int>(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toLong())));
+}
+#endif // __REGION__FUNCTIONS__MISC
+
+#ifndef __REGION__FUNCTIONS__SPECIAL
 static DefaultValueType* Function_Ans(const std::vector<DefaultValueType*>& args)
 {
   if(results.empty())
   {
-    throw std::runtime_error("Accessing empty results container");
+    throw std::runtime_error("No results available");
   }
 
   if(args.empty())
@@ -631,13 +697,7 @@ static DefaultValueType* Function_Ans(const std::vector<DefaultValueType*>& args
 
   return new DefaultValueType(results.at(static_cast<std::size_t>(index)));
 }
-
-static DefaultValueType* Function_BConv(const std::vector<DefaultValueType*>& args)
-{
-  return new DefaultValueType(mpfr::mpreal(args[0]->GetValue<std::string>(),
-                                           mpfr::mpreal::get_default_prec(),
-                                           static_cast<int>(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toLong())));
-}
+#endif // __REGION__FUNCTIONS__SPECIAL
 
 static ExpressionParser<ChemArithmeticType> chemicalExpressionParser(numberConverter);
 
