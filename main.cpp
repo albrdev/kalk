@@ -192,7 +192,9 @@ int main(int argc, char* argv[])
   desc_named.add_options()("expr,x", boost::program_options::value<std::vector<std::string>>(), "Add an expression");
   desc_named.add_options()("prec,p", boost::program_options::value<mpfr_prec_t>(&options.precision)->default_value(128), "Set precision");
   desc_named.add_options()("digits,d", boost::program_options::value<int>(&options.digits)->default_value(30), "Set output precision (Number of digits)");
-  desc_named.add_options()("rmode,r", boost::program_options::value<mpfr_rnd_t>(&options.roundingMode)->default_value(mpfr_rnd_t::MPFR_RNDN), "Rounding mode");
+  desc_named.add_options()("rmode,r",
+                           boost::program_options::value<mpfr_rnd_t>(&options.roundingMode)->default_value(mpfr_rnd_t::MPFR_RNDN),
+                           "Set rounding mode (N, Z, U, D, A, F, NA)");
   desc_named.add_options()("obase,b", boost::program_options::value<int>(&options.output_base), "Set output base");
   desc_named.add_options()("ibase,B", boost::program_options::value<int>(&options.input_base), "Set input base");
   desc_named.add_options()(
