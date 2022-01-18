@@ -68,9 +68,13 @@ static std::string makeCompoundString(std::string text)
   return result;
 }
 
+#ifndef __REGION__UNARY_OPERATORS
 static DefaultValueType* UnaryOperator_Not(DefaultValueType* rhs) { return new DefaultValueType(!rhs->GetValue<DefaultArithmeticType>()); }
+
 static DefaultValueType* UnaryOperator_Plus(DefaultValueType* rhs) { return new DefaultValueType(mpfr::abs(rhs->GetValue<DefaultArithmeticType>())); }
+
 static DefaultValueType* UnaryOperator_Minus(DefaultValueType* rhs) { return new DefaultValueType(-rhs->GetValue<DefaultArithmeticType>()); }
+
 static DefaultValueType* UnaryOperator_OnesComplement(DefaultValueType* rhs)
 {
   mpz_class tmpRhs;
@@ -79,7 +83,9 @@ static DefaultValueType* UnaryOperator_OnesComplement(DefaultValueType* rhs)
   mpz_class tmpResult = ~tmpRhs;
   return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
 }
+#endif
 
+#ifndef __REGION__BINARY_OPERATORS
 static DefaultValueType* BinaryOperator_Addition(DefaultValueType* lhs, DefaultValueType* rhs)
 {
   if(lhs->GetType() == typeid(std::string) || rhs->GetType() == typeid(std::string))
@@ -97,20 +103,35 @@ static DefaultValueType* BinaryOperator_Addition(DefaultValueType* lhs, DefaultV
 
     return new DefaultValueType(tmpString);
   }
-  else if(lhs->GetType() == typeid(boost::posix_time::ptime) && rhs->GetType() == typeid(boost::posix_time::time_duration))
+  else if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
-    return new DefaultValueType(lhs->GetValue<boost::posix_time::ptime>() + rhs->GetValue<boost::posix_time::time_duration>());
+    if(lhs->GetType() == typeid(boost::posix_time::ptime))
+    {
+      return new DefaultValueType(lhs->GetValue<boost::posix_time::ptime>() + rhs->GetValue<boost::posix_time::time_duration>());
+    }
+    else
+    {
+      return new DefaultValueType(lhs->GetValue<boost::posix_time::time_duration>() + rhs->GetValue<boost::posix_time::time_duration>());
+    }
   }
   else
   {
     return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() + rhs->GetValue<DefaultArithmeticType>());
   }
 }
+
 static DefaultValueType* BinaryOperator_Subtraction(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  if(lhs->GetType() == typeid(boost::posix_time::ptime) && rhs->GetType() == typeid(boost::posix_time::ptime))
+  if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
-    return new DefaultValueType(lhs->GetValue<boost::posix_time::ptime>() - rhs->GetValue<boost::posix_time::ptime>());
+    if(lhs->GetType() == typeid(boost::posix_time::ptime))
+    {
+      return new DefaultValueType(lhs->GetValue<boost::posix_time::ptime>() - rhs->GetValue<boost::posix_time::time_duration>());
+    }
+    else
+    {
+      return new DefaultValueType(lhs->GetValue<boost::posix_time::time_duration>() - rhs->GetValue<boost::posix_time::time_duration>());
+    }
   }
   else
   {
@@ -124,27 +145,58 @@ static DefaultValueType* BinaryOperator_Multiplication(DefaultValueType* lhs, De
   {
     return new DefaultValueType(lhs->GetValue<std::string>() * static_cast<std::size_t>(rhs->GetValue<DefaultArithmeticType>()));
   }
+  else if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    using nanoseconds = boost::date_time::subsecond_duration<boost::posix_time::time_duration, 1000000000l>;
+    if(lhs->GetType() == typeid(DefaultArithmeticType))
+    {
+      auto ticks = nanoseconds(static_cast<long>(static_cast<double>(rhs->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
+                                                 lhs->GetValue<DefaultArithmeticType>().toDouble()));
+      return new DefaultValueType(boost::posix_time::time_duration(ticks));
+    }
+    else
+    {
+      auto ticks = nanoseconds(static_cast<long>(static_cast<double>(lhs->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
+                                                 rhs->GetValue<DefaultArithmeticType>().toDouble()));
+      return new DefaultValueType(boost::posix_time::time_duration(ticks));
+    }
+  }
   else
   {
     return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() * rhs->GetValue<DefaultArithmeticType>());
   }
 }
+
 static DefaultValueType* BinaryOperator_Division(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() / rhs->GetValue<DefaultArithmeticType>());
+  if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(DefaultArithmeticType))
+  {
+    using nanoseconds = boost::date_time::subsecond_duration<boost::posix_time::time_duration, 1000000000l>;
+    auto ticks        = nanoseconds(static_cast<long>(static_cast<double>(lhs->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) /
+                                               rhs->GetValue<DefaultArithmeticType>().toDouble()));
+    return new DefaultValueType(boost::posix_time::time_duration(ticks));
+  }
+  else
+  {
+    return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() * rhs->GetValue<DefaultArithmeticType>());
+  }
 }
+
 static DefaultValueType* BinaryOperator_TruncatedDivision(DefaultValueType* lhs, DefaultValueType* rhs)
 {
   return new DefaultValueType(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>() / rhs->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* BinaryOperator_Modulo(DefaultValueType* lhs, DefaultValueType* rhs)
 {
   return new DefaultValueType(mpfr::fmod(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* BinaryOperator_Exponentiation(DefaultValueType* lhs, DefaultValueType* rhs)
 {
   return new DefaultValueType(mpfr::pow(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
 }
+
 static DefaultValueType* BinaryOperator_Exponentiation2(DefaultValueType* lhs, DefaultValueType* rhs)
 {
   return new DefaultValueType(mpfr::pow(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
@@ -185,7 +237,9 @@ static DefaultValueType* BinaryOperator_VariableAssignment(DefaultValueType* lhs
 
   return variable;
 }
+#endif // __REGION__BINARY_OPERATORS
 
+#ifndef __REGION__FUNCTIONS
 static DefaultValueType* Function_Str(const std::vector<DefaultValueType*>& args) { return new DefaultValueType(args[0]->ToString()); }
 
 static DefaultValueType* Function_StrLen(const std::vector<DefaultValueType*>& args)
@@ -593,6 +647,7 @@ static DefaultValueType* Function_MolarMass(const std::vector<DefaultValueType*>
 {
   return new DefaultValueType(chemicalExpressionParser.Evaluate(makeCompoundString(args[0]->GetValue<std::string>())).GetValue<DefaultArithmeticType>());
 }
+#endif // __REGION__FUNCTIONS
 
 void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>& instance)
 {
