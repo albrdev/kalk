@@ -1,6 +1,8 @@
 #include "ExpressionParserSetup.hpp"
 #include <string>
+#include <unordered_map>
 #include <sstream>
+#include <memory>
 #include <boost/format.hpp>
 #include <gmpxx.h>
 #include <mpreal.h>
@@ -65,6 +67,15 @@ static std::string makeCompoundString(std::string text)
     lastChar = i;
   }
 
+  return result;
+}
+
+DefaultValueType* addVariable(const std::string& identifier)
+{
+  auto variable                                 = std::make_unique<DefaultVariableType>(identifier);
+  auto result                                   = variable.get();
+  defaultUninitializedVariableCache[identifier] = std::move(variable);
+  defaultVariables[identifier]                  = result;
   return result;
 }
 
@@ -259,11 +270,13 @@ static DefaultValueType* BinaryOperator_RightShift(DefaultValueType* lhs, Defaul
 #ifndef __REGION__BINOPS__SPECIAL
 static DefaultValueType* BinaryOperator_VariableAssignment(DefaultValueType* lhs, DefaultValueType* rhs)
 {
-  DefaultVariableType* variable = dynamic_cast<DefaultVariableType*>(lhs);
+  DefaultVariableType* variable = lhs->AsPointer<DefaultVariableType>();
   if(variable == nullptr)
   {
     throw SyntaxException((boost::format("Assignment of non-variable type: %1% (%2%)") % lhs->ToString() % lhs->GetType().name()).str());
   }
+
+  bool isInitialAssignment = !variable->IsInitialized();
 
   if(rhs->GetType() == typeid(DefaultArithmeticType))
   {
@@ -288,6 +301,12 @@ static DefaultValueType* BinaryOperator_VariableAssignment(DefaultValueType* lhs
   else
   {
     throw SyntaxException((boost::format("Assignment from unsupported type: %1% (%2%)") % rhs->ToString() % rhs->GetType().name()).str());
+  }
+
+  if(isInitialAssignment)
+  {
+    auto variableIterator = defaultUninitializedVariableCache.extract(variable->GetIdentifier());
+    defaultInitializedVariableCache.insert(std::move(variableIterator));
   }
 
   return variable;
@@ -730,6 +749,9 @@ static DefaultValueType* Function_MolarMass(const std::vector<DefaultValueType*>
 
 void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>& instance)
 {
+  instance.SetVariables(&defaultVariables);
+  instance.SetOnUnknownIdentifierCallback(addVariable);
+
   instance.AddUnaryOperator(UnaryOperator_Not, '!', 4, Associativity::Right);
   instance.AddUnaryOperator(UnaryOperator_Plus, '+', 4, Associativity::Right);
   instance.AddUnaryOperator(UnaryOperator_Minus, '-', 4, Associativity::Right);

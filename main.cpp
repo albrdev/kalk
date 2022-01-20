@@ -1,19 +1,13 @@
 #include <ctime>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <iostream>
-#include <ratio>
-#include <limits>
 #include <regex>
 #include <exception>
 #include "readline/readline.h"
 #include "readline/history.h"
-#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
-#include <boost/preprocessor.hpp>
-#include <gmpxx.h>
 #include <mpreal.h>
 #include "text/expression/ExpressionParser.hpp"
 #include "ExpressionParserSetup.hpp"
@@ -262,6 +256,12 @@ int main(int argc, char* argv[])
       auto result = expressionParser.Evaluate(i);
       results.push_back(result);
       printResult(result);
+
+      if(!defaultUninitializedVariableCache.empty())
+      {
+        std::cout << "*** Warning: Uninitialized variable(s)" << std::endl;
+        defaultUninitializedVariableCache.clear();
+      }
     }
   }
 
@@ -277,6 +277,12 @@ int main(int argc, char* argv[])
       auto result = expressionParser.Evaluate(line);
       results.push_back(result);
       printResult(result);
+
+      if(!defaultUninitializedVariableCache.empty())
+      {
+        std::cout << "*** Warning: Uninitialized variable(s)" << std::endl;
+        defaultUninitializedVariableCache.clear();
+      }
 
       if(*line != '\0')
       {

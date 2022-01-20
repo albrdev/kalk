@@ -14,6 +14,10 @@ using ChemValueType      = ExpressionParser<DefaultArithmeticType>::ValueType;
 using ChemVariableType   = ExpressionParser<DefaultArithmeticType>::VariableType;
 using ChemFunctionType   = ExpressionParser<DefaultArithmeticType>::FunctionType;
 
+inline std::unordered_map<std::string, std::unique_ptr<DefaultVariableType>> defaultUninitializedVariableCache;
+inline std::unordered_map<std::string, std::unique_ptr<DefaultVariableType>> defaultInitializedVariableCache;
+inline std::unordered_map<std::string, DefaultVariableType*> defaultVariables;
+
 inline std::vector<DefaultValueType> results;
 
 void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>& instance);
