@@ -148,7 +148,7 @@ static std::istream& operator>>(std::istream& stream, mpfr_rnd_t& result)
   throw std::domain_error("Invalid rounding mode");
 }
 
-static struct
+struct kalk_options
 {
   mpfr_prec_t precision;
   mpfr_rnd_t roundingMode;
@@ -159,7 +159,10 @@ static struct
   bool interactive;
   bool printVersion;
   bool printUsage;
-} options {};
+};
+
+constexpr static kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, 0, false, false, false};
+static kalk_options options {};
 
 static DefaultValueType* numberConverter(const std::string& value)
 {
@@ -190,27 +193,34 @@ int main(int argc, char* argv[])
 {
   boost::program_options::options_description desc_named("Options");
   desc_named.add_options()("expr,x", boost::program_options::value<std::vector<std::string>>(), "Add an expression");
-  desc_named.add_options()("prec,p", boost::program_options::value<mpfr_prec_t>(&options.precision)->default_value(128), "Set precision");
-  desc_named.add_options()("digits,d", boost::program_options::value<int>(&options.digits)->default_value(30), "Set output precision (Number of digits)");
+  desc_named.add_options()("prec,p", boost::program_options::value<mpfr_prec_t>(&options.precision)->default_value(defaultOptions.precision), "Set precision");
   desc_named.add_options()("rmode,r",
-                           boost::program_options::value<mpfr_rnd_t>(&options.roundingMode)->default_value(mpfr_rnd_t::MPFR_RNDN),
+                           boost::program_options::value<mpfr_rnd_t>(&options.roundingMode)->default_value(defaultOptions.roundingMode),
                            "Set rounding mode (N, Z, U, D, A, F, NA)");
+  desc_named.add_options()("digits,d",
+                           boost::program_options::value<int>(&options.digits)->default_value(defaultOptions.digits),
+                           "Set output precision (Number of digits)");
   desc_named.add_options()("obase,b", boost::program_options::value<int>(&options.output_base), "Set output base");
   desc_named.add_options()("ibase,B", boost::program_options::value<int>(&options.input_base), "Set input base");
-  desc_named.add_options()(
-      "base",
-      boost::program_options::value<int>()->default_value(10)->notifier([](int value) { options.input_base = options.output_base = value; }),
-      "Set output and input base");
+  desc_named.add_options()("base",
+                           boost::program_options::value<int>()->default_value(defaultOptions.output_base)->notifier([](int value) {
+                             options.input_base = options.output_base = value;
+                           }),
+                           "Set output and input base");
   desc_named.add_options()("seed,z", boost::program_options::value<unsigned int>(&options.seed), "Set random seed (number)");
   desc_named.add_options()("seedstr,Z",
                            boost::program_options::value<std::string>()->notifier([](std::string value) {
                              std::hash<std::string> hasher;
-                             options.seed = value.empty() ? 0 : static_cast<unsigned int>(hasher(value));
+                             options.seed = value.empty() ? defaultOptions.seed : static_cast<unsigned int>(hasher(value));
                            }),
                            "Set random seed (string)");
-  desc_named.add_options()("interactive,i", boost::program_options::bool_switch(&options.interactive)->default_value(false), "Enable interactive mode");
-  desc_named.add_options()("version,V", boost::program_options::bool_switch(&options.printVersion)->default_value(false), "Print version");
-  desc_named.add_options()("help,h", boost::program_options::bool_switch(&options.printUsage)->default_value(false), "Print usage");
+  desc_named.add_options()("interactive,i",
+                           boost::program_options::bool_switch(&options.interactive)->default_value(defaultOptions.interactive),
+                           "Enable interactive mode");
+  desc_named.add_options()("version,V",
+                           boost::program_options::bool_switch(&options.printVersion)->default_value(defaultOptions.printVersion),
+                           "Print version");
+  desc_named.add_options()("help,h", boost::program_options::bool_switch(&options.printUsage)->default_value(defaultOptions.printUsage), "Print usage");
 
   boost::program_options::positional_options_description desc_pos;
   desc_pos.add("expr", -1);
