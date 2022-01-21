@@ -70,11 +70,48 @@ static std::string makeCompoundString(std::string text)
   return result;
 }
 
-DefaultValueType* addVariable(const std::string& identifier)
+static void addUnaryOperator(const DefaultUnaryOperatorType::CallbackType& callback, char identifier, int precedence, Associativity associativity)
 {
-  auto variable                                 = std::make_unique<DefaultVariableType>(identifier);
-  auto result                                   = variable.get();
-  defaultUninitializedVariableCache[identifier] = std::move(variable);
+  auto tmpNew                           = std::make_unique<DefaultUnaryOperatorType>(callback, identifier, precedence, associativity);
+  auto tmp                              = tmpNew.get();
+  defaultUnaryOperatorCache[identifier] = std::move(tmpNew);
+  defaultUnaryOperators[identifier]     = tmp;
+}
+
+static void
+addBinaryOperator(const DefaultBinaryOperatorType::CallbackType& callback, const std::string& identifier, int precedence, Associativity associativity)
+{
+  auto tmpNew                            = std::make_unique<DefaultBinaryOperatorType>(callback, identifier, precedence, associativity);
+  auto tmp                               = tmpNew.get();
+  defaultBinaryOperatorCache[identifier] = std::move(tmpNew);
+  defaultBinaryOperators[identifier]     = tmp;
+}
+
+static void addFunction(const DefaultFunctionType::CallbackType& callback,
+                        const std::string& identifier,
+                        std::size_t minArgs = 0u,
+                        std::size_t maxArgs = DefaultFunctionType::GetArgumentCountMaxLimit())
+{
+  auto tmpNew                      = std::make_unique<DefaultFunctionType>(callback, identifier, minArgs, maxArgs);
+  auto tmp                         = tmpNew.get();
+  defaultFunctionCache[identifier] = std::move(tmpNew);
+  defaultFunctions[identifier]     = tmp;
+}
+
+template<class T>
+static void addVariable(const T& value, const std::string& identifier)
+{
+  auto tmpNew                                 = std::make_unique<DefaultVariableType>(identifier, value);
+  auto tmp                                    = tmpNew.get();
+  defaultInitializedVariableCache[identifier] = std::move(tmpNew);
+  defaultVariables[identifier]                = tmp;
+}
+
+DefaultValueType* addNewVariable(const std::string& identifier)
+{
+  auto tmpNew                                   = std::make_unique<DefaultVariableType>(identifier);
+  auto result                                   = tmpNew.get();
+  defaultUninitializedVariableCache[identifier] = std::move(tmpNew);
   defaultVariables[identifier]                  = result;
   return result;
 }
@@ -749,158 +786,160 @@ static DefaultValueType* Function_MolarMass(const std::vector<DefaultValueType*>
 
 void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>& instance)
 {
+  instance.SetUnaryOperators(&defaultUnaryOperators);
+  instance.SetBinaryOperators(&defaultBinaryOperators);
+  instance.SetFunctions(&defaultFunctions);
   instance.SetVariables(&defaultVariables);
-  instance.SetOnUnknownIdentifierCallback(addVariable);
-
-  instance.AddUnaryOperator(UnaryOperator_Not, '!', 4, Associativity::Right);
-  instance.AddUnaryOperator(UnaryOperator_Plus, '+', 4, Associativity::Right);
-  instance.AddUnaryOperator(UnaryOperator_Minus, '-', 4, Associativity::Right);
-  instance.AddUnaryOperator(UnaryOperator_OnesComplement, '~', 4, Associativity::Right);
-
-  instance.AddBinaryOperator(BinaryOperator_Addition, "+", 1, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_Subtraction, "-", 1, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_Multiplication, "*", 2, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_Division, "/", 2, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_TruncatedDivision, "//", 2, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_Modulo, "%", 2, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_Exponentiation, "**", 3, Associativity::Right);
-
-  instance.AddBinaryOperator(BinaryOperator_Or, "|", 1, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_And, "&", 1, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_Xor, "^", 1, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_LeftShift, "<<", 1, Associativity::Left);
-  instance.AddBinaryOperator(BinaryOperator_RightShift, ">>", 1, Associativity::Left);
-
-  instance.AddBinaryOperator(BinaryOperator_VariableAssignment, "=", 4, Associativity::Right);
-
+  instance.SetOnUnknownIdentifierCallback(addNewVariable);
   instance.SetJuxtapositionOperator(BinaryOperator_Multiplication, 2, Associativity::Right);
 
-  instance.AddFunction(Function_Ans, "ans", 0, 1);
-  instance.AddFunction(Function_BConv, "bconv", 2u, 2u);
+  addUnaryOperator(UnaryOperator_Not, '!', 4, Associativity::Right);
+  addUnaryOperator(UnaryOperator_Plus, '+', 4, Associativity::Right);
+  addUnaryOperator(UnaryOperator_Minus, '-', 4, Associativity::Right);
+  addUnaryOperator(UnaryOperator_OnesComplement, '~', 4, Associativity::Right);
 
-  instance.AddFunction(Function_Random, "random", 0, 2);
+  addBinaryOperator(BinaryOperator_Addition, "+", 1, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Subtraction, "-", 1, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Multiplication, "*", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Division, "/", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Modulo, "%", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Exponentiation, "**", 3, Associativity::Right);
 
-  instance.AddFunction(Function_Trunc, "trunc", 1u, 1u);
-  instance.AddFunction(Function_Sgn, "sgn", 1u, 1u);
-  instance.AddFunction(Function_Abs, "abs", 1u, 1u);
-  instance.AddFunction(Function_Neg, "neg", 1u, 1u);
-  instance.AddFunction(Function_Neg2, "neg2", 1u, 1u);
+  addBinaryOperator(BinaryOperator_Or, "|", 1, Associativity::Left);
+  addBinaryOperator(BinaryOperator_And, "&", 1, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Xor, "^", 1, Associativity::Left);
+  addBinaryOperator(BinaryOperator_LeftShift, "<<", 1, Associativity::Left);
+  addBinaryOperator(BinaryOperator_RightShift, ">>", 1, Associativity::Left);
 
-  instance.AddFunction(Function_Mod, "math.mod", 2u, 2u);
-  instance.AddFunction(Function_Rem, "math.rem", 2u, 2u);
-  instance.AddFunction(Function_Pow, "math.pow", 2u, 2u);
-  instance.AddFunction(Function_Sqr, "math.sqr", 1u, 1u);
-  instance.AddFunction(Function_Cb, "math.cb", 1u, 1u);
-  instance.AddFunction(Function_Root, "math.root", 2u, 2u);
-  instance.AddFunction(Function_Sqrt, "math.sqrt", 1u, 1u);
-  instance.AddFunction(Function_Cbrt, "math.cbrt", 1u, 1u);
+  addBinaryOperator(BinaryOperator_VariableAssignment, "=", 4, Associativity::Right);
 
-  instance.AddFunction(Function_Exp, "math.exp", 1u, 1u);
-  instance.AddFunction(Function_Exp2, "math.exp2", 1u, 1u);
-  instance.AddFunction(Function_Exp10, "math.exp10", 1u, 1u);
-  instance.AddFunction(Function_Log, "math.log", 1u, 1u);
-  instance.AddFunction(Function_Log2, "math.log2", 1u, 1u);
-  instance.AddFunction(Function_Log10, "math.log10", 1u, 1u);
+  addFunction(Function_Ans, "ans", 0, 1);
+  addFunction(Function_BConv, "bconv", 2u, 2u);
 
-  instance.AddFunction(Function_Sin, "math.sin", 1u, 1u);
-  instance.AddFunction(Function_Cos, "math.cos", 1u, 1u);
-  instance.AddFunction(Function_Tan, "math.tan", 1u, 1u);
-  instance.AddFunction(Function_Cot, "math.cot", 1u, 1u);
-  instance.AddFunction(Function_Sec, "math.sec", 1u, 1u);
-  instance.AddFunction(Function_Csc, "math.csc", 1u, 1u);
+  addFunction(Function_Random, "random", 0, 2);
 
-  instance.AddFunction(Function_ASin, "math.asin", 1u, 1u);
-  instance.AddFunction(Function_ACos, "math.acos", 1u, 1u);
-  instance.AddFunction(Function_ATan, "math.atan", 1u, 1u);
-  instance.AddFunction(Function_ATan2, "math.atan2", 2u, 2u);
-  instance.AddFunction(Function_ACot, "math.acot", 1u, 1u);
-  instance.AddFunction(Function_ASec, "math.asec", 1u, 1u);
-  instance.AddFunction(Function_ACsc, "math.acsc", 1u, 1u);
+  addFunction(Function_Trunc, "trunc", 1u, 1u);
+  addFunction(Function_Sgn, "sgn", 1u, 1u);
+  addFunction(Function_Abs, "abs", 1u, 1u);
+  addFunction(Function_Neg, "neg", 1u, 1u);
+  addFunction(Function_Neg2, "neg2", 1u, 1u);
 
-  instance.AddFunction(Function_SinH, "math.sinh", 1u, 1u);
-  instance.AddFunction(Function_CosH, "math.cosh", 1u, 1u);
-  instance.AddFunction(Function_TanH, "math.tanh", 1u, 1u);
-  instance.AddFunction(Function_CotH, "math.coth", 1u, 1u);
-  instance.AddFunction(Function_SecH, "math.sech", 1u, 1u);
-  instance.AddFunction(Function_CscH, "math.csch", 1u, 1u);
+  addFunction(Function_Mod, "math.mod", 2u, 2u);
+  addFunction(Function_Rem, "math.rem", 2u, 2u);
+  addFunction(Function_Pow, "math.pow", 2u, 2u);
+  addFunction(Function_Sqr, "math.sqr", 1u, 1u);
+  addFunction(Function_Cb, "math.cb", 1u, 1u);
+  addFunction(Function_Root, "math.root", 2u, 2u);
+  addFunction(Function_Sqrt, "math.sqrt", 1u, 1u);
+  addFunction(Function_Cbrt, "math.cbrt", 1u, 1u);
 
-  instance.AddFunction(Function_ASinH, "math.asinh", 1u, 1u);
-  instance.AddFunction(Function_ACosH, "math.acosh", 1u, 1u);
-  instance.AddFunction(Function_ATanH, "math.atanh", 1u, 1u);
-  instance.AddFunction(Function_ACotH, "math.acoth", 1u, 1u);
-  instance.AddFunction(Function_ASecH, "math.asech", 1u, 1u);
-  instance.AddFunction(Function_ACscH, "math.acsch", 1u, 1u);
+  addFunction(Function_Exp, "math.exp", 1u, 1u);
+  addFunction(Function_Exp2, "math.exp2", 1u, 1u);
+  addFunction(Function_Exp10, "math.exp10", 1u, 1u);
+  addFunction(Function_Log, "math.log", 1u, 1u);
+  addFunction(Function_Log2, "math.log2", 1u, 1u);
+  addFunction(Function_Log10, "math.log10", 1u, 1u);
 
-  instance.AddFunction(Function_Min, "min", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Max, "max", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_Sin, "math.sin", 1u, 1u);
+  addFunction(Function_Cos, "math.cos", 1u, 1u);
+  addFunction(Function_Tan, "math.tan", 1u, 1u);
+  addFunction(Function_Cot, "math.cot", 1u, 1u);
+  addFunction(Function_Sec, "math.sec", 1u, 1u);
+  addFunction(Function_Csc, "math.csc", 1u, 1u);
 
-  instance.AddFunction(Function_Mean, "math.mean", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Median, "math.median", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Mode, "math.mode", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Quartile_Lower, "math.q1", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Median, "math.q2", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  instance.AddFunction(Function_Quartile_Upper, "math.q3", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_ASin, "math.asin", 1u, 1u);
+  addFunction(Function_ACos, "math.acos", 1u, 1u);
+  addFunction(Function_ATan, "math.atan", 1u, 1u);
+  addFunction(Function_ATan2, "math.atan2", 2u, 2u);
+  addFunction(Function_ACot, "math.acot", 1u, 1u);
+  addFunction(Function_ASec, "math.asec", 1u, 1u);
+  addFunction(Function_ACsc, "math.acsc", 1u, 1u);
 
-  instance.AddFunction(Function_Str, "str", 1u, 1u);
-  instance.AddFunction(Function_StrLen, "strlen", 1u, 1u);
+  addFunction(Function_SinH, "math.sinh", 1u, 1u);
+  addFunction(Function_CosH, "math.cosh", 1u, 1u);
+  addFunction(Function_TanH, "math.tanh", 1u, 1u);
+  addFunction(Function_CotH, "math.coth", 1u, 1u);
+  addFunction(Function_SecH, "math.sech", 1u, 1u);
+  addFunction(Function_CscH, "math.csch", 1u, 1u);
 
-  instance.AddFunction(Function_Date, "date", 0u, 1u);
-  instance.AddFunction(Function_Dur, "dur", 1u, 1u);
+  addFunction(Function_ASinH, "math.asinh", 1u, 1u);
+  addFunction(Function_ACosH, "math.acosh", 1u, 1u);
+  addFunction(Function_ATanH, "math.atanh", 1u, 1u);
+  addFunction(Function_ACotH, "math.acoth", 1u, 1u);
+  addFunction(Function_ASecH, "math.asech", 1u, 1u);
+  addFunction(Function_ACscH, "math.acsch", 1u, 1u);
+
+  addFunction(Function_Min, "min", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_Max, "max", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+
+  addFunction(Function_Mean, "math.mean", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_Median, "math.median", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_Mode, "math.mode", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_Quartile_Lower, "math.q1", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_Median, "math.q2", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_Quartile_Upper, "math.q3", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+
+  addFunction(Function_Str, "str", 1u, 1u);
+  addFunction(Function_StrLen, "strlen", 1u, 1u);
+
+  addFunction(Function_Date, "date", 0u, 1u);
+  addFunction(Function_Dur, "dur", 1u, 1u);
 
   InitChemical(chemicalExpressionParser);
-  instance.AddFunction(Function_MolarMass, "chem.M", 1u, 1u);
+  addFunction(Function_MolarMass, "chem.M", 1u, 1u);
 
-  instance.AddConstant(nullptr, "null");
+  addVariable(nullptr, "null");
 
-  instance.AddConstant(mpfr::const_infinity(), "inf");
+  addVariable(mpfr::const_infinity(), "inf");
   mpfr::mpreal tmpValue;
-  instance.AddConstant(tmpValue.setNan(), "nan");
+  addVariable(tmpValue.setNan(), "nan");
 
-  instance.AddConstant(mpfr::mpreal("1000000000000000000000000"), "Y");
-  instance.AddConstant(mpfr::mpreal("1000000000000000000000"), "Z");
-  instance.AddConstant(mpfr::mpreal("1000000000000000000"), "E");
-  instance.AddConstant(mpfr::mpreal("1000000000000000"), "P");
-  instance.AddConstant(mpfr::mpreal("1000000000000"), "T");
-  instance.AddConstant(mpfr::mpreal("1000000000"), "G");
-  instance.AddConstant(mpfr::mpreal("1000000"), "M");
-  instance.AddConstant(mpfr::mpreal("1000"), "k");
-  instance.AddConstant(mpfr::mpreal("100"), "h");
-  instance.AddConstant(mpfr::mpreal("10"), "da");
-  instance.AddConstant(mpfr::mpreal("0.1"), "d");
-  instance.AddConstant(mpfr::mpreal("0.01"), "c");
-  instance.AddConstant(mpfr::mpreal("0.001"), "m");
-  instance.AddConstant(mpfr::mpreal("0.000001"), "u");
-  instance.AddConstant(mpfr::mpreal("0.000000001"), "n");
-  instance.AddConstant(mpfr::mpreal("0.000000000001"), "p");
-  instance.AddConstant(mpfr::mpreal("0.000000000000001"), "f");
-  instance.AddConstant(mpfr::mpreal("0.000000000000000001"), "a");
-  instance.AddConstant(mpfr::mpreal("0.000000000000000000001"), "z");
-  instance.AddConstant(mpfr::mpreal("0.000000000000000000000001"), "y");
+  addVariable(mpfr::mpreal("1000000000000000000000000"), "Y");
+  addVariable(mpfr::mpreal("1000000000000000000000"), "Z");
+  addVariable(mpfr::mpreal("1000000000000000000"), "E");
+  addVariable(mpfr::mpreal("1000000000000000"), "P");
+  addVariable(mpfr::mpreal("1000000000000"), "T");
+  addVariable(mpfr::mpreal("1000000000"), "G");
+  addVariable(mpfr::mpreal("1000000"), "M");
+  addVariable(mpfr::mpreal("1000"), "k");
+  addVariable(mpfr::mpreal("100"), "h");
+  addVariable(mpfr::mpreal("10"), "da");
+  addVariable(mpfr::mpreal("0.1"), "d");
+  addVariable(mpfr::mpreal("0.01"), "c");
+  addVariable(mpfr::mpreal("0.001"), "m");
+  addVariable(mpfr::mpreal("0.000001"), "u");
+  addVariable(mpfr::mpreal("0.000000001"), "n");
+  addVariable(mpfr::mpreal("0.000000000001"), "p");
+  addVariable(mpfr::mpreal("0.000000000000001"), "f");
+  addVariable(mpfr::mpreal("0.000000000000000001"), "a");
+  addVariable(mpfr::mpreal("0.000000000000000000001"), "z");
+  addVariable(mpfr::mpreal("0.000000000000000000000001"), "y");
 
-  instance.AddConstant(mpfr::mpreal("0.01"), "pc");
-  instance.AddConstant(mpfr::mpreal("0.001"), "pm");
-  instance.AddConstant(mpfr::mpreal("0.0001"), "ptt");
-  instance.AddConstant(mpfr::mpreal("0.000001"), "ppm");
-  instance.AddConstant(mpfr::mpreal("0.000000001"), "ppb");
-  instance.AddConstant(mpfr::mpreal("0.000000000001"), "ppt");
-  instance.AddConstant(mpfr::mpreal("0.000000000000001"), "ppq");
+  addVariable(mpfr::mpreal("0.01"), "pc");
+  addVariable(mpfr::mpreal("0.001"), "pm");
+  addVariable(mpfr::mpreal("0.0001"), "ptt");
+  addVariable(mpfr::mpreal("0.000001"), "ppm");
+  addVariable(mpfr::mpreal("0.000000001"), "ppb");
+  addVariable(mpfr::mpreal("0.000000000001"), "ppt");
+  addVariable(mpfr::mpreal("0.000000000000001"), "ppq");
 
-  instance.AddConstant(mpfr::const_pi(), "math.pi");
-  instance.AddConstant(mpfr::const_euler(), "math.E");
-  instance.AddConstant(mpfr::const_catalan(), "math.catalan");
+  addVariable(mpfr::const_pi(), "math.pi");
+  addVariable(mpfr::const_euler(), "math.E");
+  addVariable(mpfr::const_catalan(), "math.catalan");
 
-  instance.AddConstant(mpfr::mpreal("2.71828182846"), "math.e");
+  addVariable(mpfr::mpreal("2.71828182846"), "math.e");
 
-  instance.AddConstant(mpfr::mpreal("602214085700000000000000"), "phys.N");
-  instance.AddConstant(mpfr::mpreal("299792458"), "phys.c");
-  instance.AddConstant(mpfr::mpreal("149597870700"), "phys.au");
-  instance.AddConstant(mpfr::mpreal("86400"), "phys.D");
-  instance.AddConstant(mpfr::mpreal("1988920000000000000000000000000"), "phys.M");
-  instance.AddConstant(mpfr::mpreal("9460730472580800"), "phys.ly");
-  instance.AddConstant(mpfr::mpreal("30856775814913700"), "phys.pc");
-  instance.AddConstant(mpfr::mpreal("0.00000000006674"), "phys.G");
-  instance.AddConstant(mpfr::mpreal("9.80665"), "phys.g");
-  instance.AddConstant(mpfr::mpreal("8.3144626181532"), "phys.R");
+  addVariable(mpfr::mpreal("602214085700000000000000"), "phys.N");
+  addVariable(mpfr::mpreal("299792458"), "phys.c");
+  addVariable(mpfr::mpreal("149597870700"), "phys.au");
+  addVariable(mpfr::mpreal("86400"), "phys.D");
+  addVariable(mpfr::mpreal("1988920000000000000000000000000"), "phys.M");
+  addVariable(mpfr::mpreal("9460730472580800"), "phys.ly");
+  addVariable(mpfr::mpreal("30856775814913700"), "phys.pc");
+  addVariable(mpfr::mpreal("0.00000000006674"), "phys.G");
+  addVariable(mpfr::mpreal("9.80665"), "phys.g");
+  addVariable(mpfr::mpreal("8.3144626181532"), "phys.R");
 
-  instance.AddConstant(mpfr::mpreal("10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"), "googol");
+  addVariable(mpfr::mpreal("10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"), "googol");
 }
