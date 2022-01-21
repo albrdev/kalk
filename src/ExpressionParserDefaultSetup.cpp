@@ -107,6 +107,13 @@ static void addVariable(const T& value, const std::string& identifier)
   defaultVariables[identifier]                = tmp;
 }
 
+static void removeVariable(const std::string& identifier)
+{
+  defaultVariables.erase(identifier);
+  defaultInitializedVariableCache.erase(identifier);
+  defaultUninitializedVariableCache.erase(identifier);
+}
+
 DefaultValueType* addNewVariable(const std::string& identifier)
 {
   auto tmpNew                                   = std::make_unique<DefaultVariableType>(identifier);
@@ -774,6 +781,24 @@ static DefaultValueType* Function_Ans(const std::vector<DefaultValueType*>& args
 
   return new DefaultValueType(results.at(static_cast<std::size_t>(index)));
 }
+
+static DefaultValueType* Function_Del(const std::vector<DefaultValueType*>& args)
+{
+  const std::string identifier = args[0]->GetValue<std::string>();
+  auto iter                    = defaultInitializedVariableCache.find(identifier);
+  if(iter == defaultInitializedVariableCache.end())
+  {
+    iter = defaultUninitializedVariableCache.find(identifier);
+    if(iter == defaultUninitializedVariableCache.end())
+    {
+      throw SyntaxException("Deletion of nonexistent variable: " + identifier);
+    }
+  }
+
+  auto result = new DefaultValueType(*dynamic_cast<DefaultValueType*>(iter->second.get()));
+  removeVariable(identifier);
+  return result;
+}
 #endif // __REGION__FUNCTIONS__SPECIAL
 
 static ExpressionParser<ChemArithmeticType> chemicalExpressionParser(numberConverter);
@@ -814,7 +839,8 @@ void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptim
 
   addBinaryOperator(BinaryOperator_VariableAssignment, "=", 4, Associativity::Right);
 
-  addFunction(Function_Ans, "ans", 0, 1);
+  addFunction(Function_Ans, "ans", 0u, 1u);
+  addFunction(Function_Del, "del", 1u, 1u);
   addFunction(Function_BConv, "bconv", 2u, 2u);
 
   addFunction(Function_Random, "random", 0, 2);
