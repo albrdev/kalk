@@ -110,8 +110,10 @@ static void addVariable(const T& value, const std::string& identifier)
 static void removeVariable(const std::string& identifier)
 {
   defaultVariables.erase(identifier);
-  defaultInitializedVariableCache.erase(identifier);
-  defaultUninitializedVariableCache.erase(identifier);
+  if(defaultInitializedVariableCache.erase(identifier) == 0u)
+  {
+    defaultUninitializedVariableCache.erase(identifier);
+  }
 }
 
 DefaultValueType* addNewVariable(const std::string& identifier)
