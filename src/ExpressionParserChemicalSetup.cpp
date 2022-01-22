@@ -1,11 +1,14 @@
 #include "ExpressionParserSetup.hpp"
+#include <string>
+#include <unordered_map>
+#include <memory>
 #include <mpreal.h>
 
-inline std::unordered_map<std::string, std::unique_ptr<ChemBinaryOperatorType>> chemBinaryOperatorCache;
-inline std::unordered_map<std::string, ChemBinaryOperatorType*> chemBinaryOperators;
+static std::unordered_map<std::string, std::unique_ptr<ChemBinaryOperatorType>> chemBinaryOperatorCache;
+static std::unordered_map<std::string, ChemBinaryOperatorType*> chemBinaryOperators;
 
-inline std::unordered_map<std::string, std::unique_ptr<ChemVariableType>> chemInitializedVariableCache;
-inline std::unordered_map<std::string, ChemVariableType*> chemVariables;
+static std::unordered_map<std::string, std::unique_ptr<ChemVariableType>> chemInitializedVariableCache;
+static std::unordered_map<std::string, ChemVariableType*> chemVariables;
 
 static void addBinaryOperator(const ChemBinaryOperatorType::CallbackType& callback, const std::string& identifier, int precedence, Associativity associativity)
 {

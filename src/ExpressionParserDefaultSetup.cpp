@@ -878,7 +878,7 @@ static ExpressionParser<ChemArithmeticType> chemicalExpressionParser(numberConve
 
 static DefaultValueType* Function_MolarMass(const std::vector<DefaultValueType*>& args)
 {
-  return new DefaultValueType(chemicalExpressionParser.Evaluate(makeCompoundString(args[0]->GetValue<std::string>())).GetValue<DefaultArithmeticType>());
+  return new DefaultValueType(chemicalExpressionParser.Evaluate(makeCompoundString(args[0]->GetValue<std::string>())).GetValue<ChemArithmeticType>());
 }
 #endif // __REGION__FUNCTIONS
 
