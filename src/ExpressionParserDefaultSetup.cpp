@@ -32,6 +32,36 @@ static std::string operator*(const std::string& lhs, std::size_t rhs)
   return result;
 }
 
+int compare(const DefaultValueType* a, const DefaultValueType* b)
+{
+  if(a->GetType() == typeid(std::string) && b->GetType() == typeid(std::string))
+  {
+    return a->GetValue<std::string>().compare(b->GetValue<std::string>());
+  }
+  if(a->GetType() == typeid(boost::posix_time::ptime) && b->GetType() == typeid(boost::posix_time::ptime))
+  {
+    return a->GetValue<boost::posix_time::ptime>() < b->GetValue<boost::posix_time::ptime>() ?
+             -1 :
+             (a->GetValue<boost::posix_time::ptime>() > b->GetValue<boost::posix_time::ptime>() ? 1 : 0);
+  }
+  if(a->GetType() == typeid(boost::posix_time::time_duration) && b->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    return a->GetValue<boost::posix_time::time_duration>() < b->GetValue<boost::posix_time::time_duration>() ?
+             -1 :
+             (a->GetValue<boost::posix_time::time_duration>() > b->GetValue<boost::posix_time::time_duration>() ? 1 : 0);
+  }
+  else if(a->GetType() == typeid(std::nullptr_t) && b->GetType() == typeid(std::nullptr_t))
+  {
+    return 0;
+  }
+  else
+  {
+    return a->GetValue<DefaultArithmeticType>() < b->GetValue<DefaultArithmeticType>() ?
+             -1 :
+             (a->GetValue<DefaultArithmeticType>() > b->GetValue<DefaultArithmeticType>() ? 1 : 0);
+  }
+}
+
 static std::string makeCompoundString(std::string text)
 {
   if(text.empty() || std::isdigit(text.front()) != 0)
@@ -141,12 +171,53 @@ static DefaultValueType* UnaryOperator_OnesComplement(DefaultValueType* rhs)
   tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = ~tmpRhs;
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 #endif // __REGION__UNOPS__BITWISE
 #endif // __REGION__UNOPS
 
 #ifndef __REGION__BINOPS
+#ifndef __REGION__BINOPS__COMPARISON
+static DefaultValueType* BinaryOperator_Equals(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) == 0));
+}
+
+static DefaultValueType* BinaryOperator_NotEquals(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) != 0));
+}
+
+static DefaultValueType* BinaryOperator_Lesser(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) < 0));
+}
+
+static DefaultValueType* BinaryOperator_Greater(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) > 0));
+}
+
+static DefaultValueType* BinaryOperator_LesserOrEquals(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) <= 0));
+}
+
+static DefaultValueType* BinaryOperator_GreaterOrEquals(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) >= 0));
+}
+
+static DefaultValueType* BinaryOperator_LogicalOr(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() || rhs->GetValue<DefaultArithmeticType>());
+}
+
+static DefaultValueType* BinaryOperator_LogicalAnd(DefaultValueType* lhs, DefaultValueType* rhs)
+{
+  return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() && rhs->GetValue<DefaultArithmeticType>());
+}
+#endif // __REGION__BINOPS__COMPARISON
 #ifndef __REGION__BINOPS__COMMON
 static DefaultValueType* BinaryOperator_Addition(DefaultValueType* lhs, DefaultValueType* rhs)
 {
@@ -269,7 +340,7 @@ static DefaultValueType* BinaryOperator_Or(DefaultValueType* lhs, DefaultValueTy
   tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs | tmpRhs;
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
 static DefaultValueType* BinaryOperator_And(DefaultValueType* lhs, DefaultValueType* rhs)
@@ -280,7 +351,7 @@ static DefaultValueType* BinaryOperator_And(DefaultValueType* lhs, DefaultValueT
   tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs & tmpRhs;
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
 static DefaultValueType* BinaryOperator_Xor(DefaultValueType* lhs, DefaultValueType* rhs)
@@ -291,7 +362,7 @@ static DefaultValueType* BinaryOperator_Xor(DefaultValueType* lhs, DefaultValueT
   tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs ^ tmpRhs;
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
 static DefaultValueType* BinaryOperator_LeftShift(DefaultValueType* lhs, DefaultValueType* rhs)
@@ -300,7 +371,7 @@ static DefaultValueType* BinaryOperator_LeftShift(DefaultValueType* lhs, Default
   tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs << rhs->GetValue<DefaultArithmeticType>().toULLong();
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
 static DefaultValueType* BinaryOperator_RightShift(DefaultValueType* lhs, DefaultValueType* rhs)
@@ -309,7 +380,7 @@ static DefaultValueType* BinaryOperator_RightShift(DefaultValueType* lhs, Defaul
   tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs >> rhs->GetValue<DefaultArithmeticType>().toULLong();
-  return new DefaultValueType(mpfr::mpreal(tmpResult.get_str()));
+  return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 #endif // __REGION__BINOPS__BITWISE
 
@@ -820,26 +891,36 @@ void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptim
   instance.SetOnUnknownIdentifierCallback(addNewVariable);
   instance.SetJuxtapositionOperator(BinaryOperator_Multiplication, 2, Associativity::Right);
 
-  addUnaryOperator(UnaryOperator_Not, '!', 4, Associativity::Right);
-  addUnaryOperator(UnaryOperator_Plus, '+', 4, Associativity::Right);
-  addUnaryOperator(UnaryOperator_Minus, '-', 4, Associativity::Right);
-  addUnaryOperator(UnaryOperator_OnesComplement, '~', 4, Associativity::Right);
+  addUnaryOperator(UnaryOperator_Not, '!', 7, Associativity::Right);
+  addUnaryOperator(UnaryOperator_Plus, '+', 7, Associativity::Right);
+  addUnaryOperator(UnaryOperator_Minus, '-', 7, Associativity::Right);
+  addUnaryOperator(UnaryOperator_OnesComplement, '~', 7, Associativity::Right);
 
-  addBinaryOperator(BinaryOperator_Addition, "+", 1, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Subtraction, "-", 1, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Multiplication, "*", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Division, "/", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Modulo, "%", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Exponentiation, "**", 3, Associativity::Right);
+  addBinaryOperator(BinaryOperator_Equals, "==", 3, Associativity::Left);
+  addBinaryOperator(BinaryOperator_NotEquals, "!=", 3, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Lesser, "<", 3, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Greater, ">", 3, Associativity::Left);
+  addBinaryOperator(BinaryOperator_LesserOrEquals, "<=", 3, Associativity::Left);
+  addBinaryOperator(BinaryOperator_GreaterOrEquals, ">=", 3, Associativity::Left);
 
-  addBinaryOperator(BinaryOperator_Or, "|", 1, Associativity::Left);
-  addBinaryOperator(BinaryOperator_And, "&", 1, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Xor, "^", 1, Associativity::Left);
-  addBinaryOperator(BinaryOperator_LeftShift, "<<", 1, Associativity::Left);
-  addBinaryOperator(BinaryOperator_RightShift, ">>", 1, Associativity::Left);
+  addBinaryOperator(BinaryOperator_LogicalOr, "||", 1, Associativity::Left);
+  addBinaryOperator(BinaryOperator_LogicalAnd, "&&", 1, Associativity::Left);
 
-  addBinaryOperator(BinaryOperator_VariableAssignment, "=", 4, Associativity::Right);
+  addBinaryOperator(BinaryOperator_Addition, "+", 4, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Subtraction, "-", 4, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Multiplication, "*", 5, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Division, "/", 5, Associativity::Left);
+  addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 5, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Modulo, "%", 5, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Exponentiation, "**", 6, Associativity::Right);
+
+  addBinaryOperator(BinaryOperator_Or, "|", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_And, "&", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Xor, "^", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_LeftShift, "<<", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_RightShift, ">>", 2, Associativity::Left);
+
+  addBinaryOperator(BinaryOperator_VariableAssignment, "=", 7, Associativity::Right);
 
   addFunction(Function_Ans, "ans", 0u, 1u);
   addFunction(Function_Del, "del", 1u, 1u);
