@@ -142,27 +142,6 @@ static std::istream& operator>>(std::istream& stream, mpfr_rnd_t& result)
   throw std::domain_error("Invalid rounding mode");
 }
 
-struct kalk_options
-{
-  mpfr_prec_t precision;
-  mpfr_rnd_t roundingMode;
-  int digits;
-  int output_base;
-  int input_base;
-  unsigned int seed;
-  bool interactive;
-  bool printVersion;
-  bool printUsage;
-};
-
-constexpr static kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, 0, false, false, false};
-static kalk_options options {};
-
-static DefaultValueType* numberConverter(const std::string& value)
-{
-  return new DefaultValueType(mpfr::mpreal(value, mpfr::mpreal::get_default_prec(), options.input_base, mpfr::mpreal::get_default_rnd()));
-}
-
 static void printResult(const DefaultValueType& value)
 {
   if(value.GetType() == typeid(DefaultArithmeticType))
@@ -246,7 +225,7 @@ int main(int argc, char* argv[])
   mpfr::mpreal::set_default_prec(options.precision);
   mpfr::mpreal::set_default_rnd(options.roundingMode);
 
-  ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration> expressionParser(numberConverter);
+  ExpressionParser expressionParser;
   InitDefault(expressionParser);
 
   if(vm.count("expr") > 0u)
@@ -254,8 +233,8 @@ int main(int argc, char* argv[])
     for(auto& i : vm["expr"].as<std::vector<std::string>>())
     {
       auto result = expressionParser.Evaluate(i);
-      results.push_back(result);
-      printResult(result);
+      results.push_back(*result->AsPointer<DefaultValueType>());
+      printResult(results.back());
 
       if(!defaultUninitializedVariableCache.empty())
       {
@@ -275,8 +254,8 @@ int main(int argc, char* argv[])
       auto tmpPtr = std::unique_ptr<char, decltype(std::free)*>(line, std::free);
 
       auto result = expressionParser.Evaluate(line);
-      results.push_back(result);
-      printResult(result);
+      results.push_back(*result->AsPointer<DefaultValueType>());
+      printResult(results.back());
 
       if(!defaultUninitializedVariableCache.empty())
       {

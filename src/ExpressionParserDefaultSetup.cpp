@@ -7,17 +7,19 @@
 #include <gmpxx.h>
 #include <mpreal.h>
 
-static ChemValueType* numberConverter(const std::string& value)
+static IValueToken* numberConverter(const std::string& value)
 {
-  std::istringstream iss(value);
-  ChemArithmeticType result;
-  iss >> result;
-  return new ChemValueType(result);
+  return new DefaultValueType(mpfr::mpreal(value, mpfr::mpreal::get_default_prec(), options.input_base, mpfr::mpreal::get_default_rnd()));
 }
+
+static IValueToken* stringConverter(const std::string& value) { return new DefaultValueType(value); }
 
 struct GreaterComparer
 {
-  bool operator()(DefaultValueType* a, DefaultValueType* b) const { return a->GetValue<DefaultArithmeticType>() < b->GetValue<DefaultArithmeticType>(); }
+  bool operator()(IValueToken* a, IValueToken* b) const
+  {
+    return a->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() < b->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>();
+  }
 };
 
 static std::string operator*(const std::string& lhs, std::size_t rhs)
@@ -32,23 +34,25 @@ static std::string operator*(const std::string& lhs, std::size_t rhs)
   return result;
 }
 
-int compare(const DefaultValueType* a, const DefaultValueType* b)
+int compare(const IValueToken* a, const IValueToken* b)
 {
+  auto aValye = a->AsPointer<DefaultValueType>();
+  auto bValue = b->AsPointer<DefaultValueType>();
   if(a->GetType() == typeid(std::string) && b->GetType() == typeid(std::string))
   {
-    return a->GetValue<std::string>().compare(b->GetValue<std::string>());
+    return aValye->GetValue<std::string>().compare(bValue->GetValue<std::string>());
   }
   if(a->GetType() == typeid(boost::posix_time::ptime) && b->GetType() == typeid(boost::posix_time::ptime))
   {
-    return a->GetValue<boost::posix_time::ptime>() < b->GetValue<boost::posix_time::ptime>() ?
+    return aValye->GetValue<boost::posix_time::ptime>() < bValue->GetValue<boost::posix_time::ptime>() ?
              -1 :
-             (a->GetValue<boost::posix_time::ptime>() > b->GetValue<boost::posix_time::ptime>() ? 1 : 0);
+             (aValye->GetValue<boost::posix_time::ptime>() > bValue->GetValue<boost::posix_time::ptime>() ? 1 : 0);
   }
-  if(a->GetType() == typeid(boost::posix_time::time_duration) && b->GetType() == typeid(boost::posix_time::time_duration))
+  if(a->GetType() == typeid(boost::posix_time::time_duration) && bValue->GetType() == typeid(boost::posix_time::time_duration))
   {
-    return a->GetValue<boost::posix_time::time_duration>() < b->GetValue<boost::posix_time::time_duration>() ?
+    return aValye->GetValue<boost::posix_time::time_duration>() < bValue->GetValue<boost::posix_time::time_duration>() ?
              -1 :
-             (a->GetValue<boost::posix_time::time_duration>() > b->GetValue<boost::posix_time::time_duration>() ? 1 : 0);
+             (aValye->GetValue<boost::posix_time::time_duration>() > bValue->GetValue<boost::posix_time::time_duration>() ? 1 : 0);
   }
   else if(a->GetType() == typeid(std::nullptr_t) && b->GetType() == typeid(std::nullptr_t))
   {
@@ -56,9 +60,10 @@ int compare(const DefaultValueType* a, const DefaultValueType* b)
   }
   else
   {
-    return a->GetValue<DefaultArithmeticType>() < b->GetValue<DefaultArithmeticType>() ?
+    return a->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() < b->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() ?
              -1 :
-             (a->GetValue<DefaultArithmeticType>() > b->GetValue<DefaultArithmeticType>() ? 1 : 0);
+             (a->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() > b->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() ? 1 :
+                                                                                                                                                          0);
   }
 }
 
@@ -100,29 +105,28 @@ static std::string makeCompoundString(std::string text)
   return result;
 }
 
-static void addUnaryOperator(const DefaultUnaryOperatorType::CallbackType& callback, char identifier, int precedence, Associativity associativity)
+static void addUnaryOperator(const UnaryOperatorToken::CallbackType& callback, char identifier, int precedence, Associativity associativity)
 {
-  auto tmpNew                           = std::make_unique<DefaultUnaryOperatorType>(callback, identifier, precedence, associativity);
+  auto tmpNew                           = std::make_unique<UnaryOperatorToken>(callback, identifier, precedence, associativity);
   auto tmp                              = tmpNew.get();
   defaultUnaryOperatorCache[identifier] = std::move(tmpNew);
   defaultUnaryOperators[identifier]     = tmp;
 }
 
-static void
-addBinaryOperator(const DefaultBinaryOperatorType::CallbackType& callback, const std::string& identifier, int precedence, Associativity associativity)
+static void addBinaryOperator(const BinaryOperatorToken::CallbackType& callback, const std::string& identifier, int precedence, Associativity associativity)
 {
-  auto tmpNew                            = std::make_unique<DefaultBinaryOperatorType>(callback, identifier, precedence, associativity);
+  auto tmpNew                            = std::make_unique<BinaryOperatorToken>(callback, identifier, precedence, associativity);
   auto tmp                               = tmpNew.get();
   defaultBinaryOperatorCache[identifier] = std::move(tmpNew);
   defaultBinaryOperators[identifier]     = tmp;
 }
 
-static void addFunction(const DefaultFunctionType::CallbackType& callback,
+static void addFunction(const FunctionToken::CallbackType& callback,
                         const std::string& identifier,
                         std::size_t minArgs = 0u,
-                        std::size_t maxArgs = DefaultFunctionType::GetArgumentCountMaxLimit())
+                        std::size_t maxArgs = FunctionToken::GetArgumentCountMaxLimit())
 {
-  auto tmpNew                      = std::make_unique<DefaultFunctionType>(callback, identifier, minArgs, maxArgs);
+  auto tmpNew                      = std::make_unique<FunctionToken>(callback, identifier, minArgs, maxArgs);
   auto tmp                         = tmpNew.get();
   defaultFunctionCache[identifier] = std::move(tmpNew);
   defaultFunctions[identifier]     = tmp;
@@ -157,18 +161,24 @@ DefaultValueType* addNewVariable(const std::string& identifier)
 
 #ifndef __REGION__UNOPS
 #ifndef __REGION__UNOPS__COMMON
-static DefaultValueType* UnaryOperator_Plus(DefaultValueType* rhs) { return new DefaultValueType(mpfr::abs(rhs->GetValue<DefaultArithmeticType>())); }
+static IValueToken* UnaryOperator_Plus(IValueToken* rhs)
+{
+  return new DefaultValueType(mpfr::abs(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+}
 
-static DefaultValueType* UnaryOperator_Minus(DefaultValueType* rhs) { return new DefaultValueType(-rhs->GetValue<DefaultArithmeticType>()); }
+static IValueToken* UnaryOperator_Minus(IValueToken* rhs)
+{
+  return new DefaultValueType(-rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
+}
 #endif // __REGION__UNOPS__COMMON
 
 #ifndef __REGION__UNOPS__BITWISE
-static DefaultValueType* UnaryOperator_Not(DefaultValueType* rhs) { return new DefaultValueType(!rhs->GetValue<DefaultArithmeticType>()); }
+static IValueToken* UnaryOperator_Not(IValueToken* rhs) { return new DefaultValueType(!rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()); }
 
-static DefaultValueType* UnaryOperator_OnesComplement(DefaultValueType* rhs)
+static IValueToken* UnaryOperator_OnesComplement(IValueToken* rhs)
 {
   mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  tmpRhs.set_str(mpfr::trunc(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = ~tmpRhs;
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
@@ -178,49 +188,41 @@ static DefaultValueType* UnaryOperator_OnesComplement(DefaultValueType* rhs)
 
 #ifndef __REGION__BINOPS
 #ifndef __REGION__BINOPS__COMPARISON
-static DefaultValueType* BinaryOperator_Equals(DefaultValueType* lhs, DefaultValueType* rhs)
-{
-  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) == 0));
-}
+static IValueToken* BinaryOperator_Equals(IValueToken* lhs, IValueToken* rhs) { return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) == 0)); }
 
-static DefaultValueType* BinaryOperator_NotEquals(DefaultValueType* lhs, DefaultValueType* rhs)
-{
-  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) != 0));
-}
+static IValueToken* BinaryOperator_NotEquals(IValueToken* lhs, IValueToken* rhs) { return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) != 0)); }
 
-static DefaultValueType* BinaryOperator_Lesser(DefaultValueType* lhs, DefaultValueType* rhs)
-{
-  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) < 0));
-}
+static IValueToken* BinaryOperator_Lesser(IValueToken* lhs, IValueToken* rhs) { return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) < 0)); }
 
-static DefaultValueType* BinaryOperator_Greater(DefaultValueType* lhs, DefaultValueType* rhs)
-{
-  return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) > 0));
-}
+static IValueToken* BinaryOperator_Greater(IValueToken* lhs, IValueToken* rhs) { return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) > 0)); }
 
-static DefaultValueType* BinaryOperator_LesserOrEquals(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_LesserOrEquals(IValueToken* lhs, IValueToken* rhs)
 {
   return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) <= 0));
 }
 
-static DefaultValueType* BinaryOperator_GreaterOrEquals(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_GreaterOrEquals(IValueToken* lhs, IValueToken* rhs)
 {
   return new DefaultValueType(DefaultArithmeticType(compare(lhs, rhs) >= 0));
 }
 
-static DefaultValueType* BinaryOperator_LogicalOr(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_LogicalOr(IValueToken* lhs, IValueToken* rhs)
 {
-  return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() || rhs->GetValue<DefaultArithmeticType>());
+  return new DefaultValueType(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() ||
+                              rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
 }
 
-static DefaultValueType* BinaryOperator_LogicalAnd(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_LogicalAnd(IValueToken* lhs, IValueToken* rhs)
 {
-  return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() && rhs->GetValue<DefaultArithmeticType>());
+  return new DefaultValueType(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() &&
+                              rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
 }
 #endif // __REGION__BINOPS__COMPARISON
 #ifndef __REGION__BINOPS__COMMON
-static DefaultValueType* BinaryOperator_Addition(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_Addition(IValueToken* lhs, IValueToken* rhs)
 {
+  auto lhsValue = lhs->AsPointer<DefaultValueType>();
+  auto rhsValue = rhs->AsPointer<DefaultValueType>();
   if(lhs->GetType() == typeid(std::string) || rhs->GetType() == typeid(std::string))
   {
     std::string tmpString;
@@ -240,180 +242,190 @@ static DefaultValueType* BinaryOperator_Addition(DefaultValueType* lhs, DefaultV
   {
     if(lhs->GetType() == typeid(boost::posix_time::ptime))
     {
-      return new DefaultValueType(lhs->GetValue<boost::posix_time::ptime>() + rhs->GetValue<boost::posix_time::time_duration>());
+      return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() + rhsValue->GetValue<boost::posix_time::time_duration>());
     }
     else
     {
-      return new DefaultValueType(lhs->GetValue<boost::posix_time::time_duration>() + rhs->GetValue<boost::posix_time::time_duration>());
+      return new DefaultValueType(lhsValue->GetValue<boost::posix_time::time_duration>() + rhsValue->GetValue<boost::posix_time::time_duration>());
     }
   }
   else
   {
-    return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() + rhs->GetValue<DefaultArithmeticType>());
+    return new DefaultValueType(lhsValue->GetValue<DefaultArithmeticType>() + rhsValue->GetValue<DefaultArithmeticType>());
   }
 }
 
-static DefaultValueType* BinaryOperator_Subtraction(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_Subtraction(IValueToken* lhs, IValueToken* rhs)
 {
+  auto lhsValue = lhs->AsPointer<DefaultValueType>();
+  auto rhsValue = rhs->AsPointer<DefaultValueType>();
   if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
     if(lhs->GetType() == typeid(boost::posix_time::ptime))
     {
-      return new DefaultValueType(lhs->GetValue<boost::posix_time::ptime>() - rhs->GetValue<boost::posix_time::time_duration>());
+      return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() - rhsValue->GetValue<boost::posix_time::time_duration>());
     }
     else
     {
-      return new DefaultValueType(lhs->GetValue<boost::posix_time::time_duration>() - rhs->GetValue<boost::posix_time::time_duration>());
+      return new DefaultValueType(lhsValue->GetValue<boost::posix_time::time_duration>() - rhsValue->GetValue<boost::posix_time::time_duration>());
     }
   }
   else
   {
-    return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() - rhs->GetValue<DefaultArithmeticType>());
+    return new DefaultValueType(lhsValue->GetValue<DefaultArithmeticType>() - rhsValue->GetValue<DefaultArithmeticType>());
   }
 }
 
-static DefaultValueType* BinaryOperator_Multiplication(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_Multiplication(IValueToken* lhs, IValueToken* rhs)
 {
+  auto lhsValue = lhs->AsPointer<DefaultValueType>();
+  auto rhsValue = rhs->AsPointer<DefaultValueType>();
   if(lhs->GetType() == typeid(std::string) && rhs->GetType() == typeid(DefaultArithmeticType))
   {
-    return new DefaultValueType(lhs->GetValue<std::string>() * static_cast<std::size_t>(rhs->GetValue<DefaultArithmeticType>()));
+    return new DefaultValueType(lhsValue->GetValue<std::string>() * static_cast<std::size_t>(rhsValue->GetValue<DefaultArithmeticType>()));
   }
   else if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
     using nanoseconds = boost::date_time::subsecond_duration<boost::posix_time::time_duration, 1000000000l>;
     if(lhs->GetType() == typeid(DefaultArithmeticType))
     {
-      auto ticks = nanoseconds(static_cast<long>(static_cast<double>(rhs->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
-                                                 lhs->GetValue<DefaultArithmeticType>().toDouble()));
+      auto ticks = nanoseconds(static_cast<long>(static_cast<double>(rhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
+                                                 lhsValue->GetValue<DefaultArithmeticType>().toDouble()));
       return new DefaultValueType(boost::posix_time::time_duration(ticks));
     }
     else
     {
-      auto ticks = nanoseconds(static_cast<long>(static_cast<double>(lhs->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
-                                                 rhs->GetValue<DefaultArithmeticType>().toDouble()));
+      auto ticks = nanoseconds(static_cast<long>(static_cast<double>(lhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
+                                                 rhsValue->GetValue<DefaultArithmeticType>().toDouble()));
       return new DefaultValueType(boost::posix_time::time_duration(ticks));
     }
   }
   else
   {
-    return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() * rhs->GetValue<DefaultArithmeticType>());
+    return new DefaultValueType(lhsValue->GetValue<DefaultArithmeticType>() * rhsValue->GetValue<DefaultArithmeticType>());
   }
 }
 
-static DefaultValueType* BinaryOperator_Division(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_Division(IValueToken* lhs, IValueToken* rhs)
 {
+  auto lhsValue = lhs->AsPointer<DefaultValueType>();
+  auto rhsValue = rhs->AsPointer<DefaultValueType>();
   if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(DefaultArithmeticType))
   {
     using nanoseconds = boost::date_time::subsecond_duration<boost::posix_time::time_duration, 1000000000l>;
-    auto ticks        = nanoseconds(static_cast<long>(static_cast<double>(lhs->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) /
-                                               rhs->GetValue<DefaultArithmeticType>().toDouble()));
+    auto ticks        = nanoseconds(static_cast<long>(static_cast<double>(lhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) /
+                                               rhsValue->GetValue<DefaultArithmeticType>().toDouble()));
     return new DefaultValueType(boost::posix_time::time_duration(ticks));
   }
   else
   {
-    return new DefaultValueType(lhs->GetValue<DefaultArithmeticType>() * rhs->GetValue<DefaultArithmeticType>());
+    return new DefaultValueType(lhsValue->GetValue<DefaultArithmeticType>() * rhsValue->GetValue<DefaultArithmeticType>());
   }
 }
 
-static DefaultValueType* BinaryOperator_TruncatedDivision(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_TruncatedDivision(IValueToken* lhs, IValueToken* rhs)
 {
-  return new DefaultValueType(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>() / rhs->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() /
+                                          rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* BinaryOperator_Modulo(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_Modulo(IValueToken* lhs, IValueToken* rhs)
 {
-  return new DefaultValueType(mpfr::fmod(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(
+      mpfr::fmod(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(), rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* BinaryOperator_Exponentiation(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_Exponentiation(IValueToken* lhs, IValueToken* rhs)
 {
-  return new DefaultValueType(mpfr::pow(lhs->GetValue<DefaultArithmeticType>(), rhs->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(
+      mpfr::pow(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(), rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 #endif // __REGION__BINOPS__COMMON
 
 #ifndef __REGION__BINOPS__BITWISE
-static DefaultValueType* BinaryOperator_Or(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_Or(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
   mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  tmpRhs.set_str(mpfr::trunc(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs | tmpRhs;
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
-static DefaultValueType* BinaryOperator_And(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_And(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
   mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  tmpRhs.set_str(mpfr::trunc(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs & tmpRhs;
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
-static DefaultValueType* BinaryOperator_Xor(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_Xor(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
   mpz_class tmpRhs;
-  tmpRhs.set_str(mpfr::trunc(rhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  tmpRhs.set_str(mpfr::trunc(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
 
   mpz_class tmpResult = tmpLhs ^ tmpRhs;
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
-static DefaultValueType* BinaryOperator_LeftShift(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_LeftShift(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
 
-  mpz_class tmpResult = tmpLhs << rhs->GetValue<DefaultArithmeticType>().toULLong();
+  mpz_class tmpResult = tmpLhs << rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>().toULLong();
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
-static DefaultValueType* BinaryOperator_RightShift(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_RightShift(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
-  tmpLhs.set_str(mpfr::trunc(lhs->GetValue<DefaultArithmeticType>()).toString(), 10);
+  tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
 
-  mpz_class tmpResult = tmpLhs >> rhs->GetValue<DefaultArithmeticType>().toULLong();
+  mpz_class tmpResult = tmpLhs >> rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>().toULLong();
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 #endif // __REGION__BINOPS__BITWISE
 
 #ifndef __REGION__BINOPS__SPECIAL
-static DefaultValueType* BinaryOperator_VariableAssignment(DefaultValueType* lhs, DefaultValueType* rhs)
+static IValueToken* BinaryOperator_VariableAssignment(IValueToken* lhs, IValueToken* rhs)
 {
   DefaultVariableType* variable = lhs->AsPointer<DefaultVariableType>();
   if(variable == nullptr)
   {
-    throw SyntaxException((boost::format("Assignment of non-variable type: %1% (%2%)") % lhs->ToString() % lhs->GetType().name()).str());
+    throw SyntaxException((boost::format("Assignment of non-variable type: %1% (%2%)") % lhs->ToString() % lhs->GetTypeInfo().name()).str());
   }
 
   bool isInitialAssignment = !variable->IsInitialized();
 
+  auto rhsValue = rhs->AsPointer<DefaultValueType>();
   if(rhs->GetType() == typeid(DefaultArithmeticType))
   {
-    (*variable) = rhs->GetValue<DefaultArithmeticType>();
+    (*variable) = rhsValue->GetValue<DefaultArithmeticType>();
   }
   else if(rhs->GetType() == typeid(boost::posix_time::ptime))
   {
-    (*variable) = rhs->GetValue<boost::posix_time::ptime>();
+    (*variable) = rhsValue->GetValue<boost::posix_time::ptime>();
   }
   else if(rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
-    (*variable) = rhs->GetValue<boost::posix_time::time_duration>();
+    (*variable) = rhsValue->GetValue<boost::posix_time::time_duration>();
   }
   else if(rhs->GetType() == typeid(std::string))
   {
-    (*variable) = rhs->GetValue<std::string>();
+    (*variable) = rhsValue->GetValue<std::string>();
   }
   else if(rhs->GetType() == typeid(std::nullptr_t))
   {
-    (*variable) = rhs->GetValue<std::nullptr_t>();
+    (*variable) = rhsValue->GetValue<std::nullptr_t>();
   }
   else
   {
@@ -433,228 +445,237 @@ static DefaultValueType* BinaryOperator_VariableAssignment(DefaultValueType* lhs
 
 #ifndef __REGION__FUNCTIONS
 #ifndef __REGION__FUNCTIONS__COMMON
-static DefaultValueType* Function_Sgn(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Sgn(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType((args[0]->GetValue<DefaultArithmeticType>() > 0) - (args[0]->GetValue<DefaultArithmeticType>() < 0));
+  return new DefaultValueType((args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() > 0) -
+                              (args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() < 0));
 }
 
-static DefaultValueType* Function_Abs(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Abs(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::abs(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::abs(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Neg(const std::vector<DefaultValueType*>& args) { return new DefaultValueType(-args[0]->GetValue<DefaultArithmeticType>()); }
-
-static DefaultValueType* Function_Neg2(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Neg(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(-mpfr::abs(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(-args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
 }
 
-static DefaultValueType* Function_Mod(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Neg2(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::fmod(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(-mpfr::abs(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Rem(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Mod(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::remainder(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::fmod(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
+                                         args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Pow(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Rem(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::remainder(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
+                                              args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Sqr(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Pow(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), 2));
+  return new DefaultValueType(mpfr::pow(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
+                                        args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Cb(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Sqr(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), 3));
+  return new DefaultValueType(mpfr::pow(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(), 2));
 }
 
-static DefaultValueType* Function_Root(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Cb(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::pow(args[0]->GetValue<DefaultArithmeticType>(), 1 / args[1]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::pow(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(), 3));
 }
 
-static DefaultValueType* Function_Sqrt(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Root(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::sqrt(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::pow(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
+                                        1 / args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Cbrt(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Sqrt(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::cbrt(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::sqrt(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Exp(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Cbrt(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::exp(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::cbrt(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Exp2(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Exp(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::exp2(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::exp(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Exp10(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Exp2(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::pow(10, args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::exp2(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Log(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Exp10(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::log(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::pow(10, args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Log2(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Log(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::log2(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::log(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Log10(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Log2(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::log10(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::log2(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+}
+
+static IValueToken* Function_Log10(const std::vector<IValueToken*>& args)
+{
+  return new DefaultValueType(mpfr::log10(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 #endif // __REGION__FUNCTIONS__COMMON
 
 #ifndef __REGION__FUNCTIONS__TRIGONOMETRY
-static DefaultValueType* Function_Sin(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Sin(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::sin(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::sin(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Cos(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Cos(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::cos(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::cos(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Tan(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Tan(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::tan(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::tan(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Cot(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Cot(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::cot(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::cot(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Sec(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Sec(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::sec(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::sec(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_Csc(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Csc(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::csc(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::csc(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ASin(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ASin(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::asin(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::asin(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ACos(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ACos(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::acos(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::acos(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ATan(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ATan(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::atan(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::atan(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ATan2(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ATan2(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::atan2(args[0]->GetValue<DefaultArithmeticType>(), args[1]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::atan2(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
+                                          args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ACot(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ACot(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::acot(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::acot(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ASec(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ASec(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::asec(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::asec(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ACsc(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ACsc(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::acsc(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::acsc(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_SinH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_SinH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::sinh(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::sinh(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_CosH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_CosH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::cosh(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::cosh(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_TanH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_TanH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::tanh(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::tanh(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_CotH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_CotH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::coth(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::coth(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_SecH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_SecH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::sech(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::sech(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_CscH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_CscH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::csch(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::csch(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ASinH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ASinH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::asinh(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::asinh(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ACosH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ACosH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::acosh(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::acosh(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ATanH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ATanH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::atanh(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::atanh(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ACotH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ACotH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::acoth(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::acoth(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ASecH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ASecH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::asech(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::asech(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_ACscH(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_ACscH(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::acsch(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::acsch(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 #endif // __REGION__FUNCTIONS__TRIGONOMETRY
 
 #ifndef __REGION__FUNCTIONS__AGGREGATES
-static DefaultValueType* Function_Min(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Min(const std::vector<IValueToken*>& args)
 {
   auto result = std::numeric_limits<DefaultArithmeticType>::max();
   for(const auto& i : args)
   {
-    auto tmpValue = i->GetValue<DefaultArithmeticType>();
+    auto tmpValue = i->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>();
     if(tmpValue < result)
     {
       result = tmpValue;
@@ -663,12 +684,12 @@ static DefaultValueType* Function_Min(const std::vector<DefaultValueType*>& args
 
   return new DefaultValueType(result);
 }
-static DefaultValueType* Function_Max(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Max(const std::vector<IValueToken*>& args)
 {
   auto result = std::numeric_limits<DefaultArithmeticType>::min();
   for(const auto& i : args)
   {
-    auto tmpValue = i->GetValue<DefaultArithmeticType>();
+    auto tmpValue = i->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>();
     if(tmpValue > result)
     {
       result = tmpValue;
@@ -678,48 +699,52 @@ static DefaultValueType* Function_Max(const std::vector<DefaultValueType*>& args
   return new DefaultValueType(result);
 }
 
-static DefaultValueType* Function_Mean(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Mean(const std::vector<IValueToken*>& args)
 {
   DefaultArithmeticType result = 0;
   for(const auto& i : args)
   {
-    result += i->GetValue<DefaultArithmeticType>();
+    result += i->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>();
   }
 
   return new DefaultValueType(result / static_cast<DefaultArithmeticType>(args.size()));
 }
 
-static DefaultValueType* Function_Median(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Median(const std::vector<IValueToken*>& args)
 {
   auto tmpArgs = args;
   std::sort(tmpArgs.begin(), tmpArgs.end(), GreaterComparer());
   std::size_t middle = tmpArgs.size() / 2u;
   if(tmpArgs.size() % 2 == 0)
   {
-    return new DefaultValueType((tmpArgs[middle - 1u]->GetValue<DefaultArithmeticType>() + tmpArgs[middle]->GetValue<DefaultArithmeticType>()) / 2);
+    return new DefaultValueType((tmpArgs[middle - 1u]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() +
+                                 tmpArgs[middle]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()) /
+                                2);
   }
   else
   {
-    return new DefaultValueType(tmpArgs[middle]->GetValue<DefaultArithmeticType>());
+    return new DefaultValueType(tmpArgs[middle]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
   }
 }
 
-static DefaultValueType* Function_Quartile_Lower(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Quartile_Lower(const std::vector<IValueToken*>& args)
 {
   auto tmpArgs = args;
   std::sort(tmpArgs.begin(), tmpArgs.end(), GreaterComparer());
   std::size_t middle = tmpArgs.size() / 4u;
   if(middle % 2 == 0)
   {
-    return new DefaultValueType((tmpArgs[middle - 1u]->GetValue<DefaultArithmeticType>() + tmpArgs[middle]->GetValue<DefaultArithmeticType>()) / 2);
+    return new DefaultValueType((tmpArgs[middle - 1u]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() +
+                                 tmpArgs[middle]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()) /
+                                2);
   }
   else
   {
-    return new DefaultValueType(tmpArgs[middle]->GetValue<DefaultArithmeticType>());
+    return new DefaultValueType(tmpArgs[middle]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
   }
 }
 
-static DefaultValueType* Function_Quartile_Upper(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Quartile_Upper(const std::vector<IValueToken*>& args)
 {
   auto tmpArgs = args;
   std::sort(tmpArgs.begin(), tmpArgs.end(), GreaterComparer());
@@ -728,15 +753,17 @@ static DefaultValueType* Function_Quartile_Upper(const std::vector<DefaultValueT
   std::size_t tmpIndex = (middle + (tmpArgs.size() % 2 == 0 ? 0 : 1)) + q;
   if(middle % 2 == 0)
   {
-    return new DefaultValueType((tmpArgs[tmpIndex - 1u]->GetValue<DefaultArithmeticType>() + tmpArgs[tmpIndex]->GetValue<DefaultArithmeticType>()) / 2);
+    return new DefaultValueType((tmpArgs[tmpIndex - 1u]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() +
+                                 tmpArgs[tmpIndex]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()) /
+                                2);
   }
   else
   {
-    return new DefaultValueType(tmpArgs[tmpIndex]->GetValue<DefaultArithmeticType>());
+    return new DefaultValueType(tmpArgs[tmpIndex]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
   }
 }
 
-static DefaultValueType* Function_Mode(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Mode(const std::vector<IValueToken*>& args)
 {
   auto tmpArgs = args;
   std::sort(tmpArgs.begin(), tmpArgs.end(), GreaterComparer());
@@ -748,7 +775,8 @@ static DefaultValueType* Function_Mode(const std::vector<DefaultValueType*>& arg
 
   for(std::size_t i = 1u; i < tmpArgs.size(); i++)
   {
-    if(tmpArgs[i]->GetValue<DefaultArithmeticType>() == current->GetValue<DefaultArithmeticType>())
+    if(tmpArgs[i]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() ==
+       current->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>())
     {
       currentCount++;
     }
@@ -765,21 +793,21 @@ static DefaultValueType* Function_Mode(const std::vector<DefaultValueType*>& arg
     }
   }
 
-  return new DefaultValueType(mode->GetValue<DefaultArithmeticType>());
+  return new DefaultValueType(mode->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
 }
 #endif // __REGION__FUNCTIONS__AGGREGATES
 
 #ifndef __REGION__FUNCTIONS__STRING
-static DefaultValueType* Function_Str(const std::vector<DefaultValueType*>& args) { return new DefaultValueType(args[0]->ToString()); }
+static IValueToken* Function_Str(const std::vector<IValueToken*>& args) { return new DefaultValueType(args[0]->ToString()); }
 
-static DefaultValueType* Function_StrLen(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_StrLen(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(static_cast<DefaultArithmeticType>(args[0]->GetValue<std::string>().length()));
+  return new DefaultValueType(static_cast<DefaultArithmeticType>(args[0]->AsPointer<DefaultValueType>()->GetValue<std::string>().length()));
 }
 #endif // #ifndef __REGION__FUNCTIONS__STRING
 
 #ifndef __REGION__FUNCTIONS__DATE_TIME
-static DefaultValueType* Function_Date(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Date(const std::vector<IValueToken*>& args)
 {
   if(args.size() == 0u)
   {
@@ -787,18 +815,18 @@ static DefaultValueType* Function_Date(const std::vector<DefaultValueType*>& arg
   }
   else
   {
-    return new DefaultValueType(boost::posix_time::time_from_string(args[0]->GetValue<std::string>()));
+    return new DefaultValueType(boost::posix_time::time_from_string(args[0]->AsPointer<DefaultValueType>()->GetValue<std::string>()));
   }
 }
 
-static DefaultValueType* Function_Dur(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Dur(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(boost::posix_time::duration_from_string(args[0]->GetValue<std::string>()));
+  return new DefaultValueType(boost::posix_time::duration_from_string(args[0]->AsPointer<DefaultValueType>()->GetValue<std::string>()));
 }
 #endif // __REGION__FUNCTIONS__DATE_TIME
 
 #ifndef __REGION__FUNCTIONS__MISC
-static DefaultValueType* Function_Random(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Random(const std::vector<IValueToken*>& args)
 {
   if(args.size() == 0u)
   {
@@ -806,30 +834,31 @@ static DefaultValueType* Function_Random(const std::vector<DefaultValueType*>& a
   }
   else if(args.size() == 1u)
   {
-    return new DefaultValueType(mpfr::random() * args[0]->GetValue<DefaultArithmeticType>());
+    return new DefaultValueType(mpfr::random() * args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
   }
   else
   {
-    const auto diff = args[1]->GetValue<DefaultArithmeticType>() - args[0]->GetValue<DefaultArithmeticType>();
-    return new DefaultValueType(args[0]->GetValue<DefaultArithmeticType>() + (mpfr::random() * diff));
+    const auto diff =
+        args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() - args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>();
+    return new DefaultValueType(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() + (mpfr::random() * diff));
   }
 }
 
-static DefaultValueType* Function_Trunc(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Trunc(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::trunc(args[0]->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::trunc(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static DefaultValueType* Function_BConv(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_BConv(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::mpreal(args[0]->GetValue<std::string>(),
+  return new DefaultValueType(mpfr::mpreal(args[0]->AsPointer<DefaultValueType>()->GetValue<std::string>(),
                                            mpfr::mpreal::get_default_prec(),
-                                           static_cast<int>(mpfr::trunc(args[1]->GetValue<DefaultArithmeticType>()).toLong())));
+                                           static_cast<int>(mpfr::trunc(args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toLong())));
 }
 #endif // __REGION__FUNCTIONS__MISC
 
 #ifndef __REGION__FUNCTIONS__SPECIAL
-static DefaultValueType* Function_Ans(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Ans(const std::vector<IValueToken*>& args)
 {
   if(results.empty())
   {
@@ -841,7 +870,7 @@ static DefaultValueType* Function_Ans(const std::vector<DefaultValueType*>& args
     return new DefaultValueType(results.back());
   }
 
-  int index = static_cast<int>(args[0]->GetValue<DefaultArithmeticType>());
+  int index = static_cast<int>(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
   if(index < 0)
   {
     index = static_cast<int>(results.size()) + index;
@@ -855,9 +884,9 @@ static DefaultValueType* Function_Ans(const std::vector<DefaultValueType*>& args
   return new DefaultValueType(results.at(static_cast<std::size_t>(index)));
 }
 
-static DefaultValueType* Function_Del(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_Del(const std::vector<IValueToken*>& args)
 {
-  const std::string identifier = args[0]->GetValue<std::string>();
+  const std::string identifier = args[0]->AsPointer<DefaultValueType>()->GetValue<std::string>();
   auto iter                    = defaultInitializedVariableCache.find(identifier);
   if(iter == defaultInitializedVariableCache.end())
   {
@@ -874,22 +903,29 @@ static DefaultValueType* Function_Del(const std::vector<DefaultValueType*>& args
 }
 #endif // __REGION__FUNCTIONS__SPECIAL
 
-static ExpressionParser<ChemArithmeticType> chemicalExpressionParser(numberConverter);
+static ExpressionParser chemicalExpressionParser;
 
-static DefaultValueType* Function_MolarMass(const std::vector<DefaultValueType*>& args)
+static IValueToken* Function_MolarMass(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(chemicalExpressionParser.Evaluate(makeCompoundString(args[0]->GetValue<std::string>())).GetValue<ChemArithmeticType>());
+  return new DefaultValueType(chemicalExpressionParser.Evaluate(makeCompoundString(args[0]->AsPointer<DefaultValueType>()->GetValue<std::string>()))
+                                  ->AsPointer<ChemValueType>()
+                                  ->GetValue<ChemArithmeticType>());
 }
 #endif // __REGION__FUNCTIONS
 
-void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>& instance)
+static BinaryOperatorToken juxtapositionOperator(BinaryOperator_Multiplication, "*", 5, Associativity::Right);
+
+void InitDefault(ExpressionParser& instance)
 {
+  instance.SetOnParseNumberCallback(numberConverter);
+  instance.SetOnParseStringCallback(stringConverter);
+  instance.SetOnUnknownIdentifierCallback(addNewVariable);
+  instance.SetJuxtapositionOperator(&juxtapositionOperator);
+
   instance.SetUnaryOperators(&defaultUnaryOperators);
   instance.SetBinaryOperators(&defaultBinaryOperators);
   instance.SetFunctions(&defaultFunctions);
   instance.SetVariables(&defaultVariables);
-  instance.SetOnUnknownIdentifierCallback(addNewVariable);
-  instance.SetJuxtapositionOperator(BinaryOperator_Multiplication, 2, Associativity::Right);
 
   addUnaryOperator(UnaryOperator_Not, '!', 7, Associativity::Right);
   addUnaryOperator(UnaryOperator_Plus, '+', 7, Associativity::Right);
@@ -979,15 +1015,15 @@ void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptim
   addFunction(Function_ASecH, "math.asech", 1u, 1u);
   addFunction(Function_ACscH, "math.acsch", 1u, 1u);
 
-  addFunction(Function_Min, "min", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  addFunction(Function_Max, "max", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_Min, "min", 1u, FunctionToken::GetArgumentCountMaxLimit());
+  addFunction(Function_Max, "max", 1u, FunctionToken::GetArgumentCountMaxLimit());
 
-  addFunction(Function_Mean, "math.mean", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  addFunction(Function_Median, "math.median", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  addFunction(Function_Mode, "math.mode", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  addFunction(Function_Quartile_Lower, "math.q1", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  addFunction(Function_Median, "math.q2", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
-  addFunction(Function_Quartile_Upper, "math.q3", 1u, DefaultFunctionType::GetArgumentCountMaxLimit());
+  addFunction(Function_Mean, "math.mean", 1u, FunctionToken::GetArgumentCountMaxLimit());
+  addFunction(Function_Median, "math.median", 1u, FunctionToken::GetArgumentCountMaxLimit());
+  addFunction(Function_Mode, "math.mode", 1u, FunctionToken::GetArgumentCountMaxLimit());
+  addFunction(Function_Quartile_Lower, "math.q1", 1u, FunctionToken::GetArgumentCountMaxLimit());
+  addFunction(Function_Median, "math.q2", 1u, FunctionToken::GetArgumentCountMaxLimit());
+  addFunction(Function_Quartile_Upper, "math.q3", 1u, FunctionToken::GetArgumentCountMaxLimit());
 
   addFunction(Function_Str, "str", 1u, 1u);
   addFunction(Function_StrLen, "strlen", 1u, 1u);

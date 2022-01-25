@@ -4,34 +4,44 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "text/expression/ExpressionParser.hpp"
 
-using DefaultArithmeticType     = mpfr::mpreal;
-using DefaultValueType          = ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>::ValueType;
-using DefaultVariableType       = ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>::VariableType;
-using DefaultUnaryOperatorType  = ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>::UnaryOperatorType;
-using DefaultBinaryOperatorType = ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>::BinaryOperatorType;
-using DefaultFunctionType       = ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>::FunctionType;
+using DefaultArithmeticType = mpfr::mpreal;
+using DefaultValueType      = ValueToken<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>;
+using DefaultVariableType   = VariableToken<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>;
 
-using ChemArithmeticType     = mpfr::mpreal;
-using ChemValueType          = ExpressionParser<ChemArithmeticType>::ValueType;
-using ChemVariableType       = ExpressionParser<ChemArithmeticType>::VariableType;
-using ChemUnaryOperatorType  = ExpressionParser<ChemArithmeticType>::UnaryOperatorType;
-using ChemBinaryOperatorType = ExpressionParser<ChemArithmeticType>::BinaryOperatorType;
-using ChemFunctionType       = ExpressionParser<ChemArithmeticType>::FunctionType;
+using ChemArithmeticType = mpfr::mpreal;
+using ChemValueType      = ValueToken<ChemArithmeticType>;
+using ChemVariableType   = VariableToken<ChemArithmeticType>;
 
-inline std::unordered_map<char, std::unique_ptr<DefaultUnaryOperatorType>> defaultUnaryOperatorCache;
-inline std::unordered_map<char, DefaultUnaryOperatorType*> defaultUnaryOperators;
+inline std::unordered_map<char, std::unique_ptr<UnaryOperatorToken>> defaultUnaryOperatorCache;
+inline std::unordered_map<char, IUnaryOperatorToken*> defaultUnaryOperators;
 
-inline std::unordered_map<std::string, std::unique_ptr<DefaultBinaryOperatorType>> defaultBinaryOperatorCache;
-inline std::unordered_map<std::string, DefaultBinaryOperatorType*> defaultBinaryOperators;
+inline std::unordered_map<std::string, std::unique_ptr<BinaryOperatorToken>> defaultBinaryOperatorCache;
+inline std::unordered_map<std::string, IBinaryOperatorToken*> defaultBinaryOperators;
 
-inline std::unordered_map<std::string, std::unique_ptr<DefaultFunctionType>> defaultFunctionCache;
-inline std::unordered_map<std::string, DefaultFunctionType*> defaultFunctions;
+inline std::unordered_map<std::string, std::unique_ptr<FunctionToken>> defaultFunctionCache;
+inline std::unordered_map<std::string, IFunctionToken*> defaultFunctions;
 
 inline std::unordered_map<std::string, std::unique_ptr<DefaultVariableType>> defaultUninitializedVariableCache;
 inline std::unordered_map<std::string, std::unique_ptr<DefaultVariableType>> defaultInitializedVariableCache;
-inline std::unordered_map<std::string, DefaultVariableType*> defaultVariables;
+inline std::unordered_map<std::string, IVariableToken*> defaultVariables;
 
 inline std::vector<DefaultValueType> results;
 
-void InitDefault(ExpressionParser<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>& instance);
-void InitChemical(ExpressionParser<ChemArithmeticType>& instance);
+struct kalk_options
+{
+  mpfr_prec_t precision;
+  mpfr_rnd_t roundingMode;
+  int digits;
+  int output_base;
+  int input_base;
+  unsigned int seed;
+  bool interactive;
+  bool printVersion;
+  bool printUsage;
+};
+
+constexpr static kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, 0, false, false, false};
+inline kalk_options options {};
+
+void InitDefault(ExpressionParser& instance);
+void InitChemical(ExpressionParser& instance);

@@ -4,15 +4,23 @@
 #include <memory>
 #include <mpreal.h>
 
-static std::unordered_map<std::string, std::unique_ptr<ChemBinaryOperatorType>> chemBinaryOperatorCache;
-static std::unordered_map<std::string, ChemBinaryOperatorType*> chemBinaryOperators;
+static IValueToken* numberConverter(const std::string& value)
+{
+  std::istringstream iss(value);
+  ChemArithmeticType result;
+  iss >> result;
+  return new ChemValueType(result);
+}
+
+static std::unordered_map<std::string, std::unique_ptr<BinaryOperatorToken>> chemBinaryOperatorCache;
+static std::unordered_map<std::string, IBinaryOperatorToken*> chemBinaryOperators;
 
 static std::unordered_map<std::string, std::unique_ptr<ChemVariableType>> chemInitializedVariableCache;
-static std::unordered_map<std::string, ChemVariableType*> chemVariables;
+static std::unordered_map<std::string, IVariableToken*> chemVariables;
 
-static void addBinaryOperator(const ChemBinaryOperatorType::CallbackType& callback, const std::string& identifier, int precedence, Associativity associativity)
+static void addBinaryOperator(const BinaryOperatorToken::CallbackType& callback, const std::string& identifier, int precedence, Associativity associativity)
 {
-  auto tmpNew                         = std::make_unique<ChemBinaryOperatorType>(callback, identifier, precedence, associativity);
+  auto tmpNew                         = std::make_unique<BinaryOperatorToken>(callback, identifier, precedence, associativity);
   auto tmp                            = tmpNew.get();
   chemBinaryOperatorCache[identifier] = std::move(tmpNew);
   chemBinaryOperators[identifier]     = tmp;
@@ -27,21 +35,25 @@ static void addVariable(const T& value, const std::string& identifier)
   chemVariables[identifier]                = tmp;
 }
 
-static ChemValueType* BinaryOperator_Addition(ChemValueType* lhs, ChemValueType* rhs)
+static IValueToken* BinaryOperator_Addition(IValueToken* lhs, IValueToken* rhs)
 {
-  return new ChemValueType(lhs->GetValue<ChemArithmeticType>() + rhs->GetValue<ChemArithmeticType>());
+  return new ChemValueType(lhs->AsPointer<ChemValueType>()->GetValue<ChemArithmeticType>() + rhs->AsPointer<ChemValueType>()->GetValue<ChemArithmeticType>());
 }
 
-static ChemValueType* BinaryOperator_Multiplication(ChemValueType* lhs, ChemValueType* rhs)
+static IValueToken* BinaryOperator_Multiplication(IValueToken* lhs, IValueToken* rhs)
 {
-  return new ChemValueType(lhs->GetValue<ChemArithmeticType>() * rhs->GetValue<ChemArithmeticType>());
+  return new ChemValueType(lhs->AsPointer<ChemValueType>()->GetValue<ChemArithmeticType>() * rhs->AsPointer<ChemValueType>()->GetValue<ChemArithmeticType>());
 }
 
-void InitChemical(ExpressionParser<ChemArithmeticType>& instance)
+static BinaryOperatorToken juxtapositionOperator(BinaryOperator_Multiplication, "*", 2, Associativity::Right);
+
+void InitChemical(ExpressionParser& instance)
 {
+  instance.SetOnParseNumberCallback(numberConverter);
+  instance.SetJuxtapositionOperator(&juxtapositionOperator);
+
   instance.SetBinaryOperators(&chemBinaryOperators);
   instance.SetVariables(&chemVariables);
-  instance.SetJuxtapositionOperator(BinaryOperator_Multiplication, 2, Associativity::Right);
 
   addBinaryOperator(BinaryOperator_Addition, "+", 1, Associativity::Left);
   addBinaryOperator(BinaryOperator_Multiplication, "*", 2, Associativity::Left);
