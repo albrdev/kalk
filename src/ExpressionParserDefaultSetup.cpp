@@ -310,7 +310,7 @@ static IValueToken* BinaryOperator_Division(IValueToken* lhs, IValueToken* rhs)
 {
   auto lhsValue = lhs->AsPointer<DefaultValueType>();
   auto rhsValue = rhs->AsPointer<DefaultValueType>();
-  if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(DefaultArithmeticType))
+  if(lhs->GetType() == typeid(boost::posix_time::time_duration) && rhs->GetType() == typeid(DefaultArithmeticType))
   {
     using nanoseconds = boost::date_time::subsecond_duration<boost::posix_time::time_duration, 1000000000l>;
     auto ticks        = nanoseconds(static_cast<long>(static_cast<double>(lhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) /
@@ -319,7 +319,7 @@ static IValueToken* BinaryOperator_Division(IValueToken* lhs, IValueToken* rhs)
   }
   else
   {
-    return new DefaultValueType(lhsValue->GetValue<DefaultArithmeticType>() * rhsValue->GetValue<DefaultArithmeticType>());
+    return new DefaultValueType(lhsValue->GetValue<DefaultArithmeticType>() / rhsValue->GetValue<DefaultArithmeticType>());
   }
 }
 
