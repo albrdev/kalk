@@ -917,9 +917,9 @@ static std::unique_ptr<BinaryOperatorToken> juxtapositionOperator;
 
 void InitDefault(ExpressionParser& instance)
 {
-  if(options.jp_associativity != AssociativityOption::None)
+  if(options.jpo_precedence != 0)
   {
-    juxtapositionOperator = std::make_unique<BinaryOperatorToken>(BinaryOperator_Multiplication, "*", 5, static_cast<Associativity>(options.jp_associativity));
+    juxtapositionOperator = std::make_unique<BinaryOperatorToken>(BinaryOperator_Multiplication, "*", 6 + options.jpo_precedence, Associativity::Left);
   }
 
   instance.SetOnParseNumberCallback(numberConverter);
@@ -932,10 +932,10 @@ void InitDefault(ExpressionParser& instance)
   instance.SetFunctions(&defaultFunctions);
   instance.SetVariables(&defaultVariables);
 
-  addUnaryOperator(UnaryOperator_Not, '!', 7, Associativity::Right);
-  addUnaryOperator(UnaryOperator_Plus, '+', 7, Associativity::Right);
-  addUnaryOperator(UnaryOperator_Minus, '-', 7, Associativity::Right);
-  addUnaryOperator(UnaryOperator_OnesComplement, '~', 7, Associativity::Right);
+  addUnaryOperator(UnaryOperator_Not, '!', 9, Associativity::Right);
+  addUnaryOperator(UnaryOperator_Plus, '+', 9, Associativity::Right);
+  addUnaryOperator(UnaryOperator_Minus, '-', 9, Associativity::Right);
+  addUnaryOperator(UnaryOperator_OnesComplement, '~', 9, Associativity::Right);
 
   addBinaryOperator(BinaryOperator_Equals, "==", 3, Associativity::Left);
   addBinaryOperator(BinaryOperator_NotEquals, "!=", 3, Associativity::Left);
@@ -949,11 +949,11 @@ void InitDefault(ExpressionParser& instance)
 
   addBinaryOperator(BinaryOperator_Addition, "+", 4, Associativity::Left);
   addBinaryOperator(BinaryOperator_Subtraction, "-", 4, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Multiplication, "*", 5, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Division, "/", 5, Associativity::Left);
-  addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 5, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Modulo, "%", 5, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Exponentiation, "**", 6, Associativity::Right);
+  addBinaryOperator(BinaryOperator_Multiplication, "*", 6, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Division, "/", 6, Associativity::Left);
+  addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 6, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Modulo, "%", 6, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Exponentiation, "**", 8, Associativity::Right);
 
   addBinaryOperator(BinaryOperator_Or, "|", 2, Associativity::Left);
   addBinaryOperator(BinaryOperator_And, "&", 2, Associativity::Left);
@@ -961,7 +961,7 @@ void InitDefault(ExpressionParser& instance)
   addBinaryOperator(BinaryOperator_LeftShift, "<<", 2, Associativity::Left);
   addBinaryOperator(BinaryOperator_RightShift, ">>", 2, Associativity::Left);
 
-  addBinaryOperator(BinaryOperator_VariableAssignment, "=", 7, Associativity::Right);
+  addBinaryOperator(BinaryOperator_VariableAssignment, "=", 9, Associativity::Right);
 
   addFunction(Function_Ans, "ans", 0u, 1u);
   addFunction(Function_Del, "del", 1u, 1u);

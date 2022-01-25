@@ -142,33 +142,10 @@ static std::istream& operator>>(std::istream& stream, mpfr_rnd_t& result)
   throw std::domain_error("Invalid rounding mode");
 }
 
-static std::istream& operator>>(std::istream& stream, AssociativityOption& result)
+template<class T>
+int sgn(T value)
 {
-  std::string value;
-  stream >> value;
-
-  boost::to_lower(value);
-  value.front() = static_cast<char>(std::toupper(value.front()));
-
-  if(value == "None")
-  {
-    result = AssociativityOption::None;
-    return stream;
-  }
-  else if(value == "Left")
-  {
-    result = AssociativityOption::Left;
-    return stream;
-  }
-  else if(value == "Right")
-  {
-    result = AssociativityOption::Right;
-    return stream;
-  }
-  else
-  {
-    throw std::domain_error("Invalid operator associativity");
-  }
+  return (value > static_cast<T>(0)) - (value < static_cast<T>(0));
 }
 
 static void printResult(const DefaultValueType& value)
@@ -209,9 +186,10 @@ int main(int argc, char* argv[])
                              options.input_base = options.output_base = value;
                            }),
                            "Set output and input base");
-  desc_named.add_options()("juxta,j",
-                           boost::program_options::value<AssociativityOption>(&options.jp_associativity)->default_value(defaultOptions.jp_associativity),
-                           "Set juxtaposition operator associativity (None, Left, Right)");
+  desc_named.add_options()(
+      "juxta,j",
+      boost::program_options::value<int>()->default_value(defaultOptions.jpo_precedence)->notifier([](int value) { options.jpo_precedence = sgn(value); }),
+      "Set juxtaposition operator precedence (-1, 0, 1)");
   desc_named.add_options()("seed,z", boost::program_options::value<unsigned int>(&options.seed), "Set random seed (number)");
   desc_named.add_options()("seedstr,Z",
                            boost::program_options::value<std::string>()->notifier([](std::string value) {
