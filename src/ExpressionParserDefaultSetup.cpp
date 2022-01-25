@@ -913,14 +913,19 @@ static IValueToken* Function_MolarMass(const std::vector<IValueToken*>& args)
 }
 #endif // __REGION__FUNCTIONS
 
-static BinaryOperatorToken juxtapositionOperator(BinaryOperator_Multiplication, "*", 5, Associativity::Left);
+static std::unique_ptr<BinaryOperatorToken> juxtapositionOperator;
 
 void InitDefault(ExpressionParser& instance)
 {
+  if(options.jp_associativity != AssociativityOption::None)
+  {
+    juxtapositionOperator = std::make_unique<BinaryOperatorToken>(BinaryOperator_Multiplication, "*", 5, static_cast<Associativity>(options.jp_associativity));
+  }
+
   instance.SetOnParseNumberCallback(numberConverter);
   instance.SetOnParseStringCallback(stringConverter);
   instance.SetOnUnknownIdentifierCallback(addNewVariable);
-  instance.SetJuxtapositionOperator(&juxtapositionOperator);
+  instance.SetJuxtapositionOperator(juxtapositionOperator.get());
 
   instance.SetUnaryOperators(&defaultUnaryOperators);
   instance.SetBinaryOperators(&defaultBinaryOperators);

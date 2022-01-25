@@ -1,4 +1,5 @@
 #include <vector>
+#include <type_traits>
 #include <mpreal.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -27,6 +28,14 @@ inline std::unordered_map<std::string, IVariableToken*> defaultVariables;
 
 inline std::vector<DefaultValueType> results;
 
+using AssociativityType = std::underlying_type<Associativity>::type;
+enum AssociativityOption : AssociativityType
+{
+  None  = static_cast<AssociativityType>(Associativity::Left) - 1u,
+  Left  = static_cast<AssociativityType>(Associativity::Left),
+  Right = static_cast<AssociativityType>(Associativity::Right)
+};
+
 struct kalk_options
 {
   mpfr_prec_t precision;
@@ -34,13 +43,14 @@ struct kalk_options
   int digits;
   int output_base;
   int input_base;
+  AssociativityOption jp_associativity;
   unsigned int seed;
   bool interactive;
   bool printVersion;
   bool printUsage;
 };
 
-constexpr static kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, 0, false, false, false};
+constexpr static kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, AssociativityOption::Left, 0, false, false, false};
 inline kalk_options options {};
 
 void InitDefault(ExpressionParser& instance);
