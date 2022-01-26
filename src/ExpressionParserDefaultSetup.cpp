@@ -1040,10 +1040,11 @@ void InitDefault(ExpressionParser& instance)
   addFunction(Function_MolarMass, "chem.M", 1u, 1u);
 
   addVariable(nullptr, "null");
-
   addVariable(mpfr::const_infinity(), "inf");
   mpfr::mpreal tmpValue;
   addVariable(tmpValue.setNan(), "nan");
+  addVariable(0, "false");
+  addVariable(1, "true");
 
   addVariable(mpfr::mpreal("1000000000000000000000000"), "Y");
   addVariable(mpfr::mpreal("1000000000000000000000"), "Z");
