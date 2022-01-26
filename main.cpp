@@ -142,6 +142,59 @@ static std::istream& operator>>(std::istream& stream, mpfr_rnd_t& result)
   throw std::domain_error("Invalid rounding mode");
 }
 
+void resolveEnvironmentVariables(std::vector<std::string>& result)
+{
+  const char* pTmp;
+
+  if((pTmp = std::getenv("KALK_PREC")) != nullptr)
+  {
+    result.push_back("KALK_PREC");
+    result.push_back(pTmp);
+  }
+
+  if((pTmp = std::getenv("KALK_RMODE")) != nullptr)
+  {
+    result.push_back("KALK_RMODE");
+    result.push_back(pTmp);
+  }
+
+  if((pTmp = std::getenv("KALK_DIGITS")) != nullptr)
+  {
+    result.push_back("KALK_DIGITS");
+    result.push_back(pTmp);
+  }
+
+  if((pTmp = std::getenv("KALK_OBASE")) != nullptr)
+  {
+    result.push_back("KALK_OBASE");
+    result.push_back(pTmp);
+  }
+
+  if((pTmp = std::getenv("KALK_IBASE")) != nullptr)
+  {
+    result.push_back("KALK_IBASE");
+    result.push_back(pTmp);
+  }
+
+  if((pTmp = std::getenv("KALK_BASE")) != nullptr)
+  {
+    result.push_back("KALK_BASE");
+    result.push_back(pTmp);
+  }
+
+  if((pTmp = std::getenv("KALK_JUXTA")) != nullptr)
+  {
+    result.push_back("KALK_JUXTA");
+    result.push_back(pTmp);
+  }
+
+  if((pTmp = std::getenv("KALK_INTERACTIVE")) != nullptr)
+  {
+    result.push_back("KALK_INTERACTIVE");
+    result.push_back(pTmp);
+  }
+}
+
 template<class T>
 int sgn(T value)
 {
@@ -164,67 +217,82 @@ static void printVersion() { std::cout << (boost::format("%1% v%2%") % PROJECT_N
 
 static void printUsage(const boost::program_options::options_description& desc)
 {
-  std::cout << (boost::format("%1% -[pdrbBzZiVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
+  std::cout << (boost::format("%1% -[prdbBjzZiVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
   std::cout << desc << std::endl;
 }
 
 int main(int argc, char* argv[])
 {
-  boost::program_options::options_description desc_named("Options");
-  desc_named.add_options()("expr,x", boost::program_options::value<std::vector<std::string>>(), "Add an expression");
-  desc_named.add_options()("prec,p", boost::program_options::value<mpfr_prec_t>(&options.precision)->default_value(defaultOptions.precision), "Set precision");
-  desc_named.add_options()("rmode,r",
-                           boost::program_options::value<mpfr_rnd_t>(&options.roundingMode)->default_value(defaultOptions.roundingMode),
-                           "Set rounding mode (N, Z, U, D, A, F, NA)");
-  desc_named.add_options()("digits,d",
-                           boost::program_options::value<int>(&options.digits)->default_value(defaultOptions.digits),
-                           "Set output precision (Number of digits)");
-  desc_named.add_options()("obase,b", boost::program_options::value<int>(&options.output_base), "Set output base");
-  desc_named.add_options()("ibase,B", boost::program_options::value<int>(&options.input_base), "Set input base");
-  desc_named.add_options()("base",
-                           boost::program_options::value<int>()->default_value(defaultOptions.output_base)->notifier([](int value) {
-                             options.input_base = options.output_base = value;
-                           }),
-                           "Set output and input base");
-  desc_named.add_options()(
-      "juxta,j",
-      boost::program_options::value<int>()->default_value(defaultOptions.jpo_precedence)->notifier([](int value) { options.jpo_precedence = sgn(value); }),
-      "Set juxtaposition operator precedence (-1, 0, 1)");
-  desc_named.add_options()("seed,z", boost::program_options::value<unsigned int>(&options.seed), "Set random seed (number)");
-  desc_named.add_options()("seedstr,Z",
-                           boost::program_options::value<std::string>()->notifier([](std::string value) {
-                             std::hash<std::string> hasher;
-                             options.seed = value.empty() ? defaultOptions.seed : static_cast<unsigned int>(hasher(value));
-                           }),
-                           "Set random seed (string)");
-  desc_named.add_options()("interactive,i",
-                           boost::program_options::bool_switch(&options.interactive)->default_value(defaultOptions.interactive),
-                           "Enable interactive mode");
-  desc_named.add_options()("version,V",
-                           boost::program_options::bool_switch(&options.printVersion)->default_value(defaultOptions.printVersion),
-                           "Print version");
-  desc_named.add_options()("help,h", boost::program_options::bool_switch(&options.printUsage)->default_value(defaultOptions.printUsage), "Print usage");
+  std::vector<std::string> envs;
+  resolveEnvironmentVariables(envs);
+
+  boost::program_options::options_description env_desc_named;
+  env_desc_named.add_options()("KALK_PREC", boost::program_options::value<mpfr_prec_t>(&options.precision)->default_value(defaultOptions.precision));
+  env_desc_named.add_options()("KALK_RMODE", boost::program_options::value<mpfr_rnd_t>(&options.roundingMode)->default_value(defaultOptions.roundingMode));
+  env_desc_named.add_options()("KALK_DIGITS", boost::program_options::value<int>(&options.digits)->default_value(defaultOptions.digits));
+  env_desc_named.add_options()("KALK_OBASE", boost::program_options::value<int>(&options.output_base));
+  env_desc_named.add_options()("KALK_IBASE", boost::program_options::value<int>(&options.input_base));
+  env_desc_named.add_options()("KALK_BASE", boost::program_options::value<int>()->default_value(defaultOptions.output_base)->notifier([](int value) {
+    options.output_base = value;
+    options.input_base  = value;
+  }));
+  env_desc_named.add_options()("KALK_JUXTA", boost::program_options::value<int>()->default_value(defaultOptions.jpo_precedence)->notifier([](int value) {
+    options.jpo_precedence = sgn(value);
+  }));
+  env_desc_named.add_options()("KALK_INTERACTIVE", boost::program_options::value<bool>(&options.interactive)->default_value(defaultOptions.interactive));
+
+  boost::program_options::variables_map env_vm;
+  boost::program_options::store(boost::program_options::command_line_parser(envs)
+                                    .options(env_desc_named)
+                                    .extra_parser([](const std::string& value) { return std::make_pair(value, std::string()); })
+                                    .run(),
+                                env_vm);
+  boost::program_options::notify(env_vm);
+
+  boost::program_options::options_description arg_desc_named("Options");
+  arg_desc_named.add_options()("expr,x", boost::program_options::value<std::vector<std::string>>(), "Add an expression");
+  arg_desc_named.add_options()("prec,p", boost::program_options::value<mpfr_prec_t>(&options.precision), "Set precision");
+  arg_desc_named.add_options()("rmode,r", boost::program_options::value<mpfr_rnd_t>(&options.roundingMode), "Set rounding mode (N, Z, U, D, A, F, NA)");
+  arg_desc_named.add_options()("digits,d", boost::program_options::value<int>(&options.digits), "Set output precision (Number of digits)");
+  arg_desc_named.add_options()("obase,b", boost::program_options::value<int>(&options.output_base), "Set output base");
+  arg_desc_named.add_options()("ibase,B", boost::program_options::value<int>(&options.input_base), "Set input base");
+  arg_desc_named.add_options()("base",
+                               boost::program_options::value<int>()->notifier([](int value) { options.input_base = options.output_base = value; }),
+                               "Set output and input base");
+  arg_desc_named.add_options()("juxta,j",
+                               boost::program_options::value<int>()->notifier([](int value) { options.jpo_precedence = sgn(value); }),
+                               "Set juxtaposition operator precedence (-1, 0, 1)");
+  arg_desc_named.add_options()("seed,z", boost::program_options::value<unsigned int>(&options.seed), "Set random seed (number)");
+  arg_desc_named.add_options()("seedstr,Z",
+                               boost::program_options::value<std::string>()->notifier([](std::string value) {
+                                 std::hash<std::string> hasher;
+                                 options.seed = value.empty() ? defaultOptions.seed : static_cast<unsigned int>(hasher(value));
+                               }),
+                               "Set random seed (string)");
+  arg_desc_named.add_options()("interactive,i", boost::program_options::value<bool>(&options.interactive)->implicit_value(true), "Enable interactive mode");
+  arg_desc_named.add_options()("version,V", "Print version");
+  arg_desc_named.add_options()("help,h", "Print usage");
 
   boost::program_options::positional_options_description desc_pos;
   desc_pos.add("expr", -1);
 
-  boost::program_options::variables_map vm;
-  boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(desc_named).positional(desc_pos).run(), vm);
-  boost::program_options::notify(vm);
+  boost::program_options::variables_map arg_vm;
+  boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(arg_desc_named).positional(desc_pos).run(), arg_vm);
+  boost::program_options::notify(arg_vm);
 
-  if(options.printUsage)
+  if(arg_vm.count("help") > 0u)
   {
-    printUsage(desc_named);
+    printUsage(arg_desc_named);
     return 0;
   }
 
-  if(options.printVersion)
+  if(arg_vm.count("version") > 0u)
   {
     printVersion();
     return 0;
   }
 
-  if(vm.count("expr") == 0u && !options.interactive)
+  if(arg_vm.count("expr") == 0u && !options.interactive)
   {
     std::cerr << "*** Error: No expression specified" << std::endl;
     return 1;
@@ -238,9 +306,9 @@ int main(int argc, char* argv[])
   ExpressionParser expressionParser;
   InitDefault(expressionParser);
 
-  if(vm.count("expr") > 0u)
+  if(arg_vm.count("expr") > 0u)
   {
-    for(auto& i : vm["expr"].as<std::vector<std::string>>())
+    for(auto& i : arg_vm["expr"].as<std::vector<std::string>>())
     {
       auto result = expressionParser.Evaluate(i);
       results.push_back(*result->AsPointer<DefaultValueType>());

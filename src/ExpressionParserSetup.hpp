@@ -1,3 +1,6 @@
+#ifndef __EXPRESSIONPARSERSETUP_HPP__
+#define __EXPRESSIONPARSERSETUP_HPP__
+
 #include <vector>
 #include <type_traits>
 #include <mpreal.h>
@@ -38,12 +41,12 @@ struct kalk_options
   int jpo_precedence;
   unsigned int seed;
   bool interactive;
-  bool printVersion;
-  bool printUsage;
 };
 
-constexpr static kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, -1, 0, false, false, false};
+constexpr inline kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, -1, 0, false};
 inline kalk_options options {};
 
 void InitDefault(ExpressionParser& instance);
 void InitChemical(ExpressionParser& instance);
+
+#endif // __EXPRESSIONPARSERSETUP_HPP__
