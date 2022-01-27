@@ -222,7 +222,12 @@ void handleResult(const DefaultValueType* value)
   if(!defaultUninitializedVariableCache.empty())
   {
     std::cout << "*** Warning: Uninitialized variable(s)" << std::endl;
-    defaultUninitializedVariableCache.clear();
+    while(!defaultUninitializedVariableCache.empty())
+    {
+      auto iter = defaultUninitializedVariableCache.begin();
+      defaultVariables.erase(iter->first);
+      defaultUninitializedVariableCache.erase(iter);
+    }
   }
 }
 
@@ -380,8 +385,19 @@ int main(int argc, char* argv[])
 
       if(input.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
       {
-        auto result = expressionParser.Evaluate(input);
-        handleResult(result->AsPointer<DefaultValueType>());
+        try
+        {
+          auto result = expressionParser.Evaluate(input);
+          handleResult(result->AsPointer<DefaultValueType>());
+        }
+        catch(const SyntaxException& e)
+        {
+          std::cerr << "*** Error: " << e.what() << std::endl;
+        }
+        catch(const std::runtime_error& e)
+        {
+          std::cerr << "*** Error: " << e.what() << std::endl;
+        }
 
         add_history(tmpInput);
       }
