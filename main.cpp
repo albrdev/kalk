@@ -306,7 +306,8 @@ int main(int argc, char* argv[])
   InitDefault(expressionParser);
 
   std::unique_ptr<FILE, decltype(&std::fclose)> file_stdin(nullptr, &std::fclose);
-  if(std::cin.rdbuf()->in_avail() != -1 && isatty(fileno(stdin)) == 0)
+  bool hasPipedData = std::cin.rdbuf()->in_avail() != -1 && isatty(fileno(stdin)) == 0;
+  if(hasPipedData)
   {
     std::string line;
     while(std::getline(std::cin, line))
@@ -338,7 +339,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  if(arg_vm.count("expr") == 0u && !options.interactive)
+  if(arg_vm.count("expr") == 0u && !options.interactive && !hasPipedData)
   {
     std::cerr << "*** Error: No expression specified" << std::endl;
     return 1;
