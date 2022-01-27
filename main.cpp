@@ -317,11 +317,14 @@ int main(int argc, char* argv[])
   bool hasPipedData = std::cin.rdbuf()->in_avail() != -1 && isatty(fileno(stdin)) == 0;
   if(hasPipedData)
   {
-    std::string line;
-    while(std::getline(std::cin, line))
+    std::string input;
+    while(std::getline(std::cin, input))
     {
-      auto result = expressionParser.Evaluate(line);
-      handleResult(result->AsPointer<DefaultValueType>());
+      if(input.find_first_not_of(" \t\v\r") != std::string::npos)
+      {
+        auto result = expressionParser.Evaluate(input);
+        handleResult(result->AsPointer<DefaultValueType>());
+      }
     }
 
     if(options.interactive)
@@ -356,8 +359,11 @@ int main(int argc, char* argv[])
 
     for(auto& i : arg_vm["expr"].as<std::vector<std::string>>())
     {
-      auto result = expressionParser.Evaluate(i);
-      handleResult(result->AsPointer<DefaultValueType>());
+      if(i.find_first_not_of(" \t\v\r") != std::string::npos)
+      {
+        auto result = expressionParser.Evaluate(i);
+        handleResult(result->AsPointer<DefaultValueType>());
+      }
     }
   }
 
@@ -365,17 +371,18 @@ int main(int argc, char* argv[])
   {
     results.clear();
 
-    char* line;
-    while((line = readline("> ")) != nullptr)
+    char* tmpInput;
+    while((tmpInput = readline("> ")) != nullptr)
     {
-      auto tmpPtr = std::unique_ptr<char, decltype(std::free)*>(line, std::free);
+      auto tmpPtr       = std::unique_ptr<char, decltype(&std::free)>(tmpInput, &std::free);
+      std::string input = tmpInput;
 
-      auto result = expressionParser.Evaluate(line);
-      handleResult(result->AsPointer<DefaultValueType>());
-
-      if(*line != '\0')
+      if(input.find_first_not_of(" \t\v\r") != std::string::npos)
       {
-        add_history(line);
+        auto result = expressionParser.Evaluate(input);
+        handleResult(result->AsPointer<DefaultValueType>());
+
+        add_history(tmpInput);
       }
     }
   }
