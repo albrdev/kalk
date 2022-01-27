@@ -335,15 +335,16 @@ int main(int argc, char* argv[])
 
     if(options.interactive)
     {
-      const char* ttyFileName = ttyname(fileno(stdout));
-      if(ttyFileName == nullptr)
+      int fd = fileno(stdout);
+      const char* ttyFileName;
+      if(fd == -1 || (ttyFileName = ttyname(fd)) == nullptr)
       {
         std::cerr << "*** Error: " << std::strerror(errno) << std::endl;
         return 1;
       }
 
       FILE* tmpFile;
-      if((tmpFile = freopen(ttyname(fileno(stdout)), "r", stdin)) == nullptr)
+      if((tmpFile = freopen(ttyFileName, "r", stdin)) == nullptr)
       {
         std::cerr << "*** Error: " << std::strerror(errno) << std::endl;
         return 1;
