@@ -1,9 +1,14 @@
+#include <cstring>
+#include <cstdio>
 #include <ctime>
+#include <cerrno>
 #include <string>
 #include <vector>
+#include <memory>
 #include <iostream>
 #include <regex>
 #include <exception>
+#include <unistd.h>
 #include "readline/readline.h"
 #include "readline/history.h"
 #include <boost/format.hpp>
@@ -292,12 +297,6 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  if(arg_vm.count("expr") == 0u && !options.interactive)
-  {
-    std::cerr << "*** Error: No expression specified" << std::endl;
-    return 1;
-  }
-
   mpfr::random(options.seed == 0u ? static_cast<unsigned int>(std::time(nullptr)) : options.seed);
 
   mpfr::mpreal::set_default_prec(options.precision);
@@ -306,8 +305,49 @@ int main(int argc, char* argv[])
   ExpressionParser expressionParser;
   InitDefault(expressionParser);
 
+  std::unique_ptr<FILE, decltype(&std::fclose)> file_stdin(nullptr, &std::fclose);
+  if(std::cin.rdbuf()->in_avail() != -1 && isatty(fileno(stdin)) == 0)
+  {
+    std::string line;
+    while(std::getline(std::cin, line))
+    {
+      auto result = expressionParser.Evaluate(line);
+      results.push_back(*result->AsPointer<DefaultValueType>());
+      printResult(results.back());
+
+      defaultUninitializedVariableCache.clear();
+    }
+
+    if(options.interactive)
+    {
+      const char* ttyFileName = ttyname(fileno(stdout));
+      if(ttyFileName == nullptr)
+      {
+        std::cerr << "*** Error: " << std::strerror(errno) << std::endl;
+        return 1;
+      }
+
+      FILE* tmpFile;
+      if((tmpFile = freopen(ttyname(fileno(stdout)), "r", stdin)) == nullptr)
+      {
+        std::cerr << "*** Error: " << std::strerror(errno) << std::endl;
+        return 1;
+      }
+
+      file_stdin.reset(tmpFile);
+    }
+  }
+
+  if(arg_vm.count("expr") == 0u && !options.interactive)
+  {
+    std::cerr << "*** Error: No expression specified" << std::endl;
+    return 1;
+  }
+
   if(arg_vm.count("expr") > 0u)
   {
+    results.clear();
+
     for(auto& i : arg_vm["expr"].as<std::vector<std::string>>())
     {
       auto result = expressionParser.Evaluate(i);
