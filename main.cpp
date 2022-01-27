@@ -206,15 +206,23 @@ int sgn(T value)
   return (value > static_cast<T>(0)) - (value < static_cast<T>(0));
 }
 
-static void printResult(const DefaultValueType& value)
+void handleResult(const DefaultValueType* value)
 {
-  if(value.GetType() == typeid(DefaultArithmeticType))
+  results.push_back(*value);
+
+  if(value->GetType() == typeid(DefaultArithmeticType))
   {
-    std::cout << value.GetValue<DefaultArithmeticType>().toString(options.digits, options.output_base, mpfr::mpreal::get_default_rnd()) << std::endl;
+    std::cout << value->GetValue<DefaultArithmeticType>().toString(options.digits, options.output_base, mpfr::mpreal::get_default_rnd()) << std::endl;
   }
   else
   {
-    std::cout << value.ToString() << std::endl;
+    std::cout << value->ToString() << std::endl;
+  }
+
+  if(!defaultUninitializedVariableCache.empty())
+  {
+    std::cout << "*** Warning: Uninitialized variable(s)" << std::endl;
+    defaultUninitializedVariableCache.clear();
   }
 }
 
@@ -313,10 +321,7 @@ int main(int argc, char* argv[])
     while(std::getline(std::cin, line))
     {
       auto result = expressionParser.Evaluate(line);
-      results.push_back(*result->AsPointer<DefaultValueType>());
-      printResult(results.back());
-
-      defaultUninitializedVariableCache.clear();
+      handleResult(result->AsPointer<DefaultValueType>());
     }
 
     if(options.interactive)
@@ -352,14 +357,7 @@ int main(int argc, char* argv[])
     for(auto& i : arg_vm["expr"].as<std::vector<std::string>>())
     {
       auto result = expressionParser.Evaluate(i);
-      results.push_back(*result->AsPointer<DefaultValueType>());
-      printResult(results.back());
-
-      if(!defaultUninitializedVariableCache.empty())
-      {
-        std::cout << "*** Warning: Uninitialized variable(s)" << std::endl;
-        defaultUninitializedVariableCache.clear();
-      }
+      handleResult(result->AsPointer<DefaultValueType>());
     }
   }
 
@@ -373,14 +371,7 @@ int main(int argc, char* argv[])
       auto tmpPtr = std::unique_ptr<char, decltype(std::free)*>(line, std::free);
 
       auto result = expressionParser.Evaluate(line);
-      results.push_back(*result->AsPointer<DefaultValueType>());
-      printResult(results.back());
-
-      if(!defaultUninitializedVariableCache.empty())
-      {
-        std::cout << "*** Warning: Uninitialized variable(s)" << std::endl;
-        defaultUninitializedVariableCache.clear();
-      }
+      handleResult(result->AsPointer<DefaultValueType>());
 
       if(*line != '\0')
       {
