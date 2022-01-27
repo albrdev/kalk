@@ -313,6 +313,7 @@ int main(int argc, char* argv[])
   ExpressionParser expressionParser;
   InitDefault(expressionParser);
 
+  constexpr char kWhitespaceCharacters[] = " \t\v\n\r\f";
   std::unique_ptr<FILE, decltype(&std::fclose)> file_stdin(nullptr, &std::fclose);
   bool hasPipedData = std::cin.rdbuf()->in_avail() != -1 && isatty(fileno(stdin)) == 0;
   if(hasPipedData)
@@ -320,7 +321,7 @@ int main(int argc, char* argv[])
     std::string input;
     while(std::getline(std::cin, input))
     {
-      if(input.find_first_not_of(" \t\v\r") != std::string::npos)
+      if(input.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
       {
         auto result = expressionParser.Evaluate(input);
         handleResult(result->AsPointer<DefaultValueType>());
@@ -359,7 +360,7 @@ int main(int argc, char* argv[])
 
     for(auto& i : arg_vm["expr"].as<std::vector<std::string>>())
     {
-      if(i.find_first_not_of(" \t\v\r") != std::string::npos)
+      if(i.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
       {
         auto result = expressionParser.Evaluate(i);
         handleResult(result->AsPointer<DefaultValueType>());
@@ -377,7 +378,7 @@ int main(int argc, char* argv[])
       auto tmpPtr       = std::unique_ptr<char, decltype(&std::free)>(tmpInput, &std::free);
       std::string input = tmpInput;
 
-      if(input.find_first_not_of(" \t\v\r") != std::string::npos)
+      if(input.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
       {
         auto result = expressionParser.Evaluate(input);
         handleResult(result->AsPointer<DefaultValueType>());
