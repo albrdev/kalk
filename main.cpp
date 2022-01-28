@@ -364,12 +364,13 @@ int main(int argc, char* argv[])
   {
     results.clear();
 
-    for(auto& i : arg_vm["expr"].as<std::vector<std::string>>())
+    const auto& exprs = arg_vm["expr"].as<const std::vector<std::string>&>();
+    for(auto& expr : exprs)
     {
-      if(i.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
+      if(expr.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
       {
-        auto result = expressionParser.Evaluate(i);
-        handleResult(result->AsPointer<DefaultValueType>());
+        const auto result = expressionParser.Evaluate(expr);
+        handleResult(result->AsPointer<const DefaultValueType>());
       }
     }
   }
