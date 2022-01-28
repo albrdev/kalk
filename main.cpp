@@ -1,11 +1,12 @@
+#include <cstdlib>
 #include <cstring>
 #include <cstdio>
 #include <ctime>
 #include <cerrno>
 #include <string>
 #include <vector>
-#include <memory>
 #include <iostream>
+#include <memory>
 #include <regex>
 #include <exception>
 #include <unistd.h>
@@ -404,5 +405,5 @@ int main(int argc, char* argv[])
     }
   }
 
-  return 0;
+  std::exit(0);
 }
