@@ -335,9 +335,8 @@ int main(int argc, char* argv[])
 
     if(options.interactive)
     {
-      int fd = fileno(stdout);
-      const char* ttyFileName;
-      if(fd == -1 || (ttyFileName = ttyname(fd)) == nullptr)
+      const char* ttyFileName = ttyname(fileno(stdout));
+      if(ttyFileName == nullptr)
       {
         std::cerr << "*** Error: " << std::strerror(errno) << std::endl;
         return 1;
