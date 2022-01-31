@@ -1,11 +1,13 @@
-#include "ExpressionParserSetup.hpp"
+#include "KalkSetup.hpp"
 #include <string>
 #include <unordered_map>
 #include <sstream>
 #include <memory>
 #include <boost/format.hpp>
+#include <boost/date_time/time_duration.hpp>
 #include <gmpxx.h>
 #include <mpreal.h>
+#include "text/SyntaxException.hpp"
 
 static IValueToken* numberConverter(const std::string& value)
 {
@@ -36,23 +38,23 @@ static std::string operator*(const std::string& lhs, std::size_t rhs)
 
 int compare(const IValueToken* a, const IValueToken* b)
 {
-  auto aValye = a->AsPointer<DefaultValueType>();
+  auto aValue = a->AsPointer<DefaultValueType>();
   auto bValue = b->AsPointer<DefaultValueType>();
   if(a->GetType() == typeid(std::string) && b->GetType() == typeid(std::string))
   {
-    return aValye->GetValue<std::string>().compare(bValue->GetValue<std::string>());
+    return aValue->GetValue<std::string>().compare(bValue->GetValue<std::string>());
   }
   if(a->GetType() == typeid(boost::posix_time::ptime) && b->GetType() == typeid(boost::posix_time::ptime))
   {
-    return aValye->GetValue<boost::posix_time::ptime>() < bValue->GetValue<boost::posix_time::ptime>() ?
+    return aValue->GetValue<boost::posix_time::ptime>() < bValue->GetValue<boost::posix_time::ptime>() ?
              -1 :
-             (aValye->GetValue<boost::posix_time::ptime>() > bValue->GetValue<boost::posix_time::ptime>() ? 1 : 0);
+             (aValue->GetValue<boost::posix_time::ptime>() > bValue->GetValue<boost::posix_time::ptime>() ? 1 : 0);
   }
   if(a->GetType() == typeid(boost::posix_time::time_duration) && bValue->GetType() == typeid(boost::posix_time::time_duration))
   {
-    return aValye->GetValue<boost::posix_time::time_duration>() < bValue->GetValue<boost::posix_time::time_duration>() ?
+    return aValue->GetValue<boost::posix_time::time_duration>() < bValue->GetValue<boost::posix_time::time_duration>() ?
              -1 :
-             (aValye->GetValue<boost::posix_time::time_duration>() > bValue->GetValue<boost::posix_time::time_duration>() ? 1 : 0);
+             (aValue->GetValue<boost::posix_time::time_duration>() > bValue->GetValue<boost::posix_time::time_duration>() ? 1 : 0);
   }
   else if(a->GetType() == typeid(std::nullptr_t) && b->GetType() == typeid(std::nullptr_t))
   {
@@ -65,6 +67,46 @@ int compare(const IValueToken* a, const IValueToken* b)
              (a->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() > b->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() ? 1 :
                                                                                                                                                           0);
   }
+}
+
+void printValue(const DefaultValueType& value)
+{
+  if(value.GetType() == typeid(DefaultArithmeticType))
+  {
+    std::cout << value.GetValue<DefaultArithmeticType>().toString(options.digits, options.output_base, mpfr::mpreal::get_default_rnd()) << std::endl;
+  }
+  else if(value.GetType() == typeid(boost::posix_time::ptime))
+  {
+    std::cout << value.GetValue<boost::posix_time::ptime>() << std::endl;
+  }
+  else if(value.GetType() == typeid(boost::posix_time::time_duration))
+  {
+    std::cout << value.GetValue<boost::posix_time::time_duration>() << std::endl;
+  }
+  else
+  {
+    std::cout << value.ToString() << std::endl;
+  }
+}
+
+const DefaultValueType* ans(int index)
+{
+  if(results.empty())
+  {
+    throw std::runtime_error("No results available");
+  }
+
+  if(index < 0)
+  {
+    index = static_cast<int>(results.size()) + index;
+  }
+
+  if(index < 0 || static_cast<std::size_t>(index) >= results.size())
+  {
+    throw SyntaxException((boost::format("Results index out of range: %1%/%2%") % index % results.size()).str());
+  }
+
+  return &results.at(static_cast<std::size_t>(index));
 }
 
 static std::string makeCompoundString(std::string text)
@@ -860,28 +902,13 @@ static IValueToken* Function_BConv(const std::vector<IValueToken*>& args)
 #ifndef __REGION__FUNCTIONS__SPECIAL
 static IValueToken* Function_Ans(const std::vector<IValueToken*>& args)
 {
-  if(results.empty())
-  {
-    throw std::runtime_error("No results available");
-  }
-
   if(args.empty())
   {
-    return new DefaultValueType(results.back());
+    return new DefaultValueType(*ans());
   }
 
   int index = static_cast<int>(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
-  if(index < 0)
-  {
-    index = static_cast<int>(results.size()) + index;
-  }
-
-  if(index < 0 || static_cast<std::size_t>(index) >= results.size())
-  {
-    throw SyntaxException((boost::format("Results index out of range: %1%/%2%") % index % results.size()).str());
-  }
-
-  return new DefaultValueType(results.at(static_cast<std::size_t>(index)));
+  return new DefaultValueType(*ans(index));
 }
 
 static IValueToken* Function_Del(const std::vector<IValueToken*>& args)
@@ -915,7 +942,7 @@ static IValueToken* Function_MolarMass(const std::vector<IValueToken*>& args)
 
 static std::unique_ptr<BinaryOperatorToken> juxtapositionOperator;
 
-void InitDefault(ExpressionParser& instance)
+void InitDefaultExpressionParser(ExpressionParser& instance)
 {
   if(options.jpo_precedence != 0)
   {
@@ -1036,7 +1063,7 @@ void InitDefault(ExpressionParser& instance)
   addFunction(Function_Date, "date", 0u, 1u);
   addFunction(Function_Dur, "dur", 1u, 1u);
 
-  InitChemical(chemicalExpressionParser);
+  InitChemicalExpressionParser(chemicalExpressionParser);
   addFunction(Function_MolarMass, "chem.M", 1u, 1u);
 
   addVariable(nullptr, "null");

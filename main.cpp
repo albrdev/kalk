@@ -7,63 +7,52 @@
 #include <vector>
 #include <iostream>
 #include <memory>
-#include <regex>
+#include <locale>
 #include <exception>
 #include <unistd.h>
-#include "readline/readline.h"
-#include "readline/history.h"
+#include <readline/readline.h>
+#include <readline/history.h>
+#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/program_options.hpp>
+#include <boost/date_time/date_facet.hpp>
+#include <boost/date_time/time_facet.hpp>
 #include <mpreal.h>
 #include "text/expression/ExpressionParser.hpp"
-#include "ExpressionParserSetup.hpp"
+#include "text/CommandParser.hpp"
+#include "KalkSetup.hpp"
+#include "text/SyntaxException.hpp"
 
-#define STRINGIFY(X) #X
+static std::unordered_map<std::string, mpfr_rnd_t> strToRmodeMap = {
+    {"N", mpfr_rnd_t::MPFR_RNDN},
+    {"Z", mpfr_rnd_t::MPFR_RNDZ},
+    {"U", mpfr_rnd_t::MPFR_RNDU},
+    {"D", mpfr_rnd_t::MPFR_RNDD},
+    {"A", mpfr_rnd_t::MPFR_RNDA},
+    {"F", mpfr_rnd_t::MPFR_RNDF},
+    {"NA", mpfr_rnd_t::MPFR_RNDNA},
+};
 
-static std::string EnumToString(mpfr_rnd_t value)
+static std::unordered_map<mpfr_rnd_t, std::string> rmodeToStrMap = {
+    {mpfr_rnd_t::MPFR_RNDN, "N"},
+    {mpfr_rnd_t::MPFR_RNDZ, "Z"},
+    {mpfr_rnd_t::MPFR_RNDU, "U"},
+    {mpfr_rnd_t::MPFR_RNDD, "D"},
+    {mpfr_rnd_t::MPFR_RNDA, "A"},
+    {mpfr_rnd_t::MPFR_RNDF, "F"},
+    {mpfr_rnd_t::MPFR_RNDNA, "NA"},
+};
+
+mpfr_rnd_t strToRnd(const std::string value)
 {
-  //MPFR_RNDN = 0,  /* round to nearest, with ties to even */
-  //MPFR_RNDZ,      /* round toward zero */
-  //MPFR_RNDU,      /* round toward +Inf */
-  //MPFR_RNDD,      /* round toward -Inf */
-  //MPFR_RNDA,      /* round away from zero */
-  //MPFR_RNDF,      /* faithful rounding */
-  //MPFR_RNDNA = -1 /* round to nearest, with ties away from zero (mpfr_round) */
-
-  switch(value)
+  const auto iter = strToRmodeMap.find(boost::to_upper_copy(value));
+  if(iter != strToRmodeMap.cend())
   {
-    case mpfr_rnd_t::MPFR_RNDN:
-    {
-      return STRINGIFY(MPFR_RNDN);
-    }
-    case mpfr_rnd_t::MPFR_RNDZ:
-    {
-      return STRINGIFY(MPFR_RNDZ);
-    }
-    case mpfr_rnd_t::MPFR_RNDU:
-    {
-      return STRINGIFY(MPFR_RNDU);
-    }
-    case mpfr_rnd_t::MPFR_RNDD:
-    {
-      return STRINGIFY(MPFR_RNDD);
-    }
-    case mpfr_rnd_t::MPFR_RNDA:
-    {
-      return STRINGIFY(MPFR_RNDA);
-    }
-    case mpfr_rnd_t::MPFR_RNDF:
-    {
-      return STRINGIFY(MPFR_RNDF);
-    }
-    case mpfr_rnd_t::MPFR_RNDNA:
-    {
-      return STRINGIFY(MPFR_RNDNA);
-    }
-    default:
-    {
-      throw std::domain_error("Invalid enum value");
-    }
+    return iter->second;
+  }
+  else
+  {
+    throw std::domain_error("Invalid rounding mode");
   }
 }
 
@@ -71,81 +60,8 @@ static std::istream& operator>>(std::istream& stream, mpfr_rnd_t& result)
 {
   std::string value;
   stream >> value;
-
-  boost::to_upper(value);
-
-  std::regex regex(R"(^(MPFR_)?(RND)?(.*)$)", std::regex_constants::icase);
-  std::smatch matches;
-  if(!std::regex_match(value, matches, regex))
-  {
-    throw std::domain_error("Invalid rounding mode");
-  }
-  std::string inputString = matches[matches.size() - 1u];
-
-  std::string enumString = EnumToString(mpfr_rnd_t::MPFR_RNDN);
-  std::regex_match(enumString, matches, regex);
-  enumString = matches[matches.size() - 1u];
-  if(inputString == enumString)
-  {
-    result = mpfr_rnd_t::MPFR_RNDN;
-    return stream;
-  }
-
-  enumString = EnumToString(mpfr_rnd_t::MPFR_RNDZ);
-  std::regex_match(enumString, matches, regex);
-  enumString = matches[matches.size() - 1u];
-  if(inputString == enumString)
-  {
-    result = mpfr_rnd_t::MPFR_RNDZ;
-    return stream;
-  }
-
-  enumString = EnumToString(mpfr_rnd_t::MPFR_RNDU);
-  std::regex_match(enumString, matches, regex);
-  enumString = matches[matches.size() - 1u];
-  if(inputString == enumString)
-  {
-    result = mpfr_rnd_t::MPFR_RNDU;
-    return stream;
-  }
-
-  enumString = EnumToString(mpfr_rnd_t::MPFR_RNDD);
-  std::regex_match(enumString, matches, regex);
-  enumString = matches[matches.size() - 1u];
-  if(inputString == enumString)
-  {
-    result = mpfr_rnd_t::MPFR_RNDD;
-    return stream;
-  }
-
-  enumString = EnumToString(mpfr_rnd_t::MPFR_RNDA);
-  std::regex_match(enumString, matches, regex);
-  enumString = matches[matches.size() - 1u];
-  if(inputString == enumString)
-  {
-    result = mpfr_rnd_t::MPFR_RNDA;
-    return stream;
-  }
-
-  enumString = EnumToString(mpfr_rnd_t::MPFR_RNDF);
-  std::regex_match(enumString, matches, regex);
-  enumString = matches[matches.size() - 1u];
-  if(inputString == enumString)
-  {
-    result = mpfr_rnd_t::MPFR_RNDF;
-    return stream;
-  }
-
-  enumString = EnumToString(mpfr_rnd_t::MPFR_RNDNA);
-  std::regex_match(enumString, matches, regex);
-  enumString = matches[matches.size() - 1u];
-  if(inputString == enumString)
-  {
-    result = mpfr_rnd_t::MPFR_RNDNA;
-    return stream;
-  }
-
-  throw std::domain_error("Invalid rounding mode");
+  result = strToRnd(value);
+  return stream;
 }
 
 void resolveEnvironmentVariables(std::vector<std::string>& result)
@@ -194,6 +110,12 @@ void resolveEnvironmentVariables(std::vector<std::string>& result)
     result.push_back(pTmp);
   }
 
+  if((pTmp = std::getenv("KALK_DATE_OFMT")) != nullptr)
+  {
+    result.push_back("KALK_DATE_OFMT");
+    result.push_back(pTmp);
+  }
+
   if((pTmp = std::getenv("KALK_INTERACTIVE")) != nullptr)
   {
     result.push_back("KALK_INTERACTIVE");
@@ -211,14 +133,7 @@ void handleResult(const DefaultValueType* value)
 {
   results.push_back(*value);
 
-  if(value->GetType() == typeid(DefaultArithmeticType))
-  {
-    std::cout << value->GetValue<DefaultArithmeticType>().toString(options.digits, options.output_base, mpfr::mpreal::get_default_rnd()) << std::endl;
-  }
-  else
-  {
-    std::cout << value->ToString() << std::endl;
-  }
+  printValue(*value);
 
   if(!defaultUninitializedVariableCache.empty())
   {
@@ -232,11 +147,25 @@ void handleResult(const DefaultValueType* value)
   }
 }
 
+static void printOptions()
+{
+  std::cout << "Options" << std::endl;
+  std::cout << (boost::format("  %|1$-26|%|2$|") % "Precision" % options.precision).str() << std::endl;
+  std::cout << (boost::format("  %|1$-26|%|2$|") % "Rounding mode" % rmodeToStrMap[options.roundingMode]).str() << std::endl;
+  std::cout << (boost::format("  %|1$-26|%|2$|") % "Output precision" % options.digits).str() << std::endl;
+  std::cout << (boost::format("  %|1$-26|%|2$|") % "Output base" % options.output_base).str() << std::endl;
+  std::cout << (boost::format("  %|1$-26|%|2$|") % "Input base" % options.input_base).str() << std::endl;
+  std::cout << (boost::format("  %|1$-26|%|2$|") % "Juxtaposition precedence" % options.jpo_precedence).str() << std::endl;
+  std::cout << (boost::format("  %|1$-26|%|2$|") % "Date output format" % options.date_ofmt).str() << std::endl;
+  std::cout << (boost::format("  %|1$-26|%|2$|") % "Seed" % options.seed).str() << std::endl;
+  std::cout << std::endl;
+}
+
 static void printVersion() { std::cout << (boost::format("%1% v%2%") % PROJECT_NAME % PROJECT_VERSION).str() << std::endl; }
 
 static void printUsage(const boost::program_options::options_description& desc)
 {
-  std::cout << (boost::format("%1% -[prdbBjzZiVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
+  std::cout << (boost::format("%1% -[prnbBjdzZiVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
   std::cout << desc << std::endl;
 }
 
@@ -258,6 +187,7 @@ int main(int argc, char* argv[])
   namedEnvDescs.add_options()("KALK_JUXTA", boost::program_options::value<int>()->default_value(defaultOptions.jpo_precedence)->notifier([](int value) {
     options.jpo_precedence = sgn(value);
   }));
+  namedEnvDescs.add_options()("KALK_DATE_OFMT", boost::program_options::value<std::string>(&options.date_ofmt)->default_value(defaultOptions.date_ofmt));
   namedEnvDescs.add_options()("KALK_INTERACTIVE", boost::program_options::value<bool>(&options.interactive)->default_value(defaultOptions.interactive));
 
   boost::program_options::variables_map envVariableMap;
@@ -272,7 +202,7 @@ int main(int argc, char* argv[])
   namedArgDescs.add_options()("expr,x", boost::program_options::value<std::vector<std::string>>(), "Add an expression");
   namedArgDescs.add_options()("prec,p", boost::program_options::value<mpfr_prec_t>(&options.precision), "Set precision");
   namedArgDescs.add_options()("rmode,r", boost::program_options::value<mpfr_rnd_t>(&options.roundingMode), "Set rounding mode (N, Z, U, D, A, F, NA)");
-  namedArgDescs.add_options()("digits,d", boost::program_options::value<int>(&options.digits), "Set output precision (Number of digits)");
+  namedArgDescs.add_options()("digits,n", boost::program_options::value<int>(&options.digits), "Set output precision (Number of digits)");
   namedArgDescs.add_options()("obase,b", boost::program_options::value<int>(&options.output_base), "Set output base");
   namedArgDescs.add_options()("ibase,B", boost::program_options::value<int>(&options.input_base), "Set input base");
   namedArgDescs.add_options()("base",
@@ -281,6 +211,7 @@ int main(int argc, char* argv[])
   namedArgDescs.add_options()("juxta,j",
                               boost::program_options::value<int>()->notifier([](int value) { options.jpo_precedence = sgn(value); }),
                               "Set juxtaposition operator precedence (-1, 0, 1)");
+  namedArgDescs.add_options()("date_ofmt,d", boost::program_options::value<std::string>(&options.date_ofmt), "Set date output format");
   namedArgDescs.add_options()("seed,z", boost::program_options::value<unsigned int>(&options.seed), "Set random seed (number)");
   namedArgDescs.add_options()("seedstr,Z",
                               boost::program_options::value<std::string>()->notifier([](std::string value) {
@@ -289,6 +220,7 @@ int main(int argc, char* argv[])
                               }),
                               "Set random seed (string)");
   namedArgDescs.add_options()("interactive,i", boost::program_options::value<bool>(&options.interactive)->implicit_value(true), "Enable interactive mode");
+  namedArgDescs.add_options()("verbose,v", "Enable verbose mode");
   namedArgDescs.add_options()("version,V", "Print version");
   namedArgDescs.add_options()("help,h", "Print usage");
 
@@ -317,8 +249,19 @@ int main(int argc, char* argv[])
   mpfr::mpreal::set_default_prec(options.precision);
   mpfr::mpreal::set_default_rnd(options.roundingMode);
 
+  auto dateFacet = new boost::posix_time::time_facet(options.date_ofmt.c_str());
+  std::cout.imbue(std::locale(std::cout.getloc(), dateFacet));
+
+  if(argVariableMap.count("verbose") > 0u)
+  {
+    printOptions();
+  }
+
   ExpressionParser expressionParser;
-  InitDefault(expressionParser);
+  InitDefaultExpressionParser(expressionParser);
+
+  CommandParser commandParser;
+  InitCommandParser(commandParser);
 
   constexpr char kWhitespaceCharacters[] = " \t\v\n\r\f";
   std::unique_ptr<FILE, decltype(&std::fclose)> file_stdin(nullptr, &std::fclose);
@@ -381,28 +324,47 @@ int main(int argc, char* argv[])
     results.clear();
 
     char* tmpInput;
-    while((tmpInput = readline("> ")) != nullptr)
+    while(!quit && (tmpInput = readline("> ")) != nullptr)
     {
       auto tmpPtr       = std::unique_ptr<char, decltype(&std::free)>(tmpInput, &std::free);
       std::string input = tmpInput;
 
       if(input.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
       {
-        try
+        boost::trim(input);
+        if(input.front() == '/')
         {
-          auto result = expressionParser.Evaluate(input);
-          handleResult(result->AsPointer<DefaultValueType>());
+          try
+          {
+            commandParser.Execute(input.erase(0, 1));
+          }
+          catch(const SyntaxException& e)
+          {
+            std::cerr << "*** Command error: " << e.what() << std::endl;
+          }
+          catch(const std::runtime_error& e)
+          {
+            std::cerr << "*** Command error: " << e.what() << std::endl;
+          }
         }
-        catch(const SyntaxException& e)
+        else
         {
-          std::cerr << "*** Error: " << e.what() << std::endl;
-        }
-        catch(const std::runtime_error& e)
-        {
-          std::cerr << "*** Error: " << e.what() << std::endl;
-        }
+          try
+          {
+            auto result = expressionParser.Evaluate(input);
+            handleResult(result->AsPointer<DefaultValueType>());
+          }
+          catch(const SyntaxException& e)
+          {
+            std::cerr << "*** Expression error: " << e.what() << std::endl;
+          }
+          catch(const std::runtime_error& e)
+          {
+            std::cerr << "*** Expression error: " << e.what() << std::endl;
+          }
 
-        add_history(tmpInput);
+          add_history(tmpInput);
+        }
       }
     }
   }

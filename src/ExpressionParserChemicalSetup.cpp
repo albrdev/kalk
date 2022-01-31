@@ -1,4 +1,4 @@
-#include "ExpressionParserSetup.hpp"
+#include "KalkSetup.hpp"
 #include <string>
 #include <unordered_map>
 #include <memory>
@@ -47,7 +47,7 @@ static IValueToken* BinaryOperator_Multiplication(IValueToken* lhs, IValueToken*
 
 static BinaryOperatorToken juxtapositionOperator(BinaryOperator_Multiplication, "*", 2, Associativity::Right);
 
-void InitChemical(ExpressionParser& instance)
+void InitChemicalExpressionParser(ExpressionParser& instance)
 {
   instance.SetOnParseNumberCallback(numberConverter);
   instance.SetJuxtapositionOperator(&juxtapositionOperator);

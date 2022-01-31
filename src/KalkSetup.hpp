@@ -1,12 +1,14 @@
 #ifndef __EXPRESSIONPARSERSETUP_HPP__
 #define __EXPRESSIONPARSERSETUP_HPP__
 
+#include <string>
 #include <vector>
 #include <type_traits>
 #include <mpreal.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "text/expression/ExpressionParser.hpp"
+#include "text/CommandParser.hpp"
 
 using DefaultArithmeticType = mpfr::mpreal;
 using DefaultValueType      = ValueToken<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>;
@@ -31,6 +33,8 @@ inline std::unordered_map<std::string, IVariableToken*> defaultVariables;
 
 inline std::vector<DefaultValueType> results;
 
+inline bool quit = false;
+
 struct kalk_options
 {
   mpfr_prec_t precision;
@@ -39,14 +43,20 @@ struct kalk_options
   int output_base;
   int input_base;
   int jpo_precedence;
+  std::string date_ofmt;
   unsigned int seed;
   bool interactive;
 };
 
-constexpr inline kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, -1, 0, false};
+const inline kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, -1, "%Y-%m-%d %H:%M:%S", 0, false};
 inline kalk_options options {};
 
-void InitDefault(ExpressionParser& instance);
-void InitChemical(ExpressionParser& instance);
+mpfr_rnd_t strToRnd(const std::string value);
+void printValue(const DefaultValueType& value);
+const DefaultValueType* ans(int index = -1);
+
+void InitDefaultExpressionParser(ExpressionParser& instance);
+void InitChemicalExpressionParser(ExpressionParser& instance);
+void InitCommandParser(CommandParser& instance);
 
 #endif // __EXPRESSIONPARSERSETUP_HPP__
