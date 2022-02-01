@@ -1,8 +1,10 @@
 #include "KalkSetup.hpp"
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <sstream>
 #include <memory>
+#include <limits>
 #include <boost/format.hpp>
 #include <boost/date_time/time_duration.hpp>
 #include <gmpxx.h>
@@ -1136,50 +1138,71 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addVariable(1, "true");
   addVariable(0, "false");
 
-  addVariable(mpfr::mpreal("1000000000000000000000000"), "Y");
-  addVariable(mpfr::mpreal("1000000000000000000000"), "Z");
-  addVariable(mpfr::mpreal("1000000000000000000"), "E");
-  addVariable(mpfr::mpreal("1000000000000000"), "P");
-  addVariable(mpfr::mpreal("1000000000000"), "T");
-  addVariable(mpfr::mpreal("1000000000"), "G");
-  addVariable(mpfr::mpreal("1000000"), "M");
-  addVariable(mpfr::mpreal("1000"), "k");
-  addVariable(mpfr::mpreal("100"), "h");
-  addVariable(mpfr::mpreal("10"), "da");
-  addVariable(mpfr::mpreal("0.1"), "d");
-  addVariable(mpfr::mpreal("0.01"), "c");
-  addVariable(mpfr::mpreal("0.001"), "m");
-  addVariable(mpfr::mpreal("0.000001"), "u");
-  addVariable(mpfr::mpreal("0.000000001"), "n");
-  addVariable(mpfr::mpreal("0.000000000001"), "p");
-  addVariable(mpfr::mpreal("0.000000000000001"), "f");
-  addVariable(mpfr::mpreal("0.000000000000000001"), "a");
-  addVariable(mpfr::mpreal("0.000000000000000000001"), "z");
-  addVariable(mpfr::mpreal("0.000000000000000000000001"), "y");
+  addVariable(mpfr::exp10(mpfr::mpreal(24)), "Y");
+  addVariable(mpfr::exp10(mpfr::mpreal(21)), "Z");
+  addVariable(mpfr::exp10(mpfr::mpreal(18)), "E");
+  addVariable(mpfr::exp10(mpfr::mpreal(15)), "P");
+  addVariable(mpfr::exp10(mpfr::mpreal(12)), "T");
+  addVariable(mpfr::exp10(mpfr::mpreal(9)), "G");
+  addVariable(mpfr::exp10(mpfr::mpreal(6)), "M");
+  addVariable(mpfr::exp10(mpfr::mpreal(3)), "k");
+  addVariable(mpfr::exp10(mpfr::mpreal(2)), "h");
+  addVariable(mpfr::exp10(mpfr::mpreal(1)), "da");
+  addVariable(mpfr::exp10(mpfr::mpreal(-1)), "d");
+  addVariable(mpfr::exp10(mpfr::mpreal(-2)), "c");
+  addVariable(mpfr::exp10(mpfr::mpreal(-3)), "m");
+  addVariable(mpfr::exp10(mpfr::mpreal(-6)), "u");
+  addVariable(mpfr::exp10(mpfr::mpreal(-9)), "n");
+  addVariable(mpfr::exp10(mpfr::mpreal(-12)), "p");
+  addVariable(mpfr::exp10(mpfr::mpreal(-15)), "f");
+  addVariable(mpfr::exp10(mpfr::mpreal(-18)), "a");
+  addVariable(mpfr::exp10(mpfr::mpreal(-21)), "z");
+  addVariable(mpfr::exp10(mpfr::mpreal(-24)), "y");
 
-  addVariable(mpfr::mpreal("0.01"), "pc");
-  addVariable(mpfr::mpreal("0.001"), "pm");
-  addVariable(mpfr::mpreal("0.0001"), "ptt");
-  addVariable(mpfr::mpreal("0.000001"), "ppm");
-  addVariable(mpfr::mpreal("0.000000001"), "ppb");
-  addVariable(mpfr::mpreal("0.000000000001"), "ppt");
-  addVariable(mpfr::mpreal("0.000000000000001"), "ppq");
+  addVariable(mpfr::exp10(mpfr::mpreal(-2)), "pc");
+  addVariable(mpfr::exp10(mpfr::mpreal(-3)), "pm");
+  addVariable(mpfr::exp10(mpfr::mpreal(-4)), "ptt");
+  addVariable(mpfr::exp10(mpfr::mpreal(-6)), "ppm");
+  addVariable(mpfr::exp10(mpfr::mpreal(-9)), "ppb");
+  addVariable(mpfr::exp10(mpfr::mpreal(-12)), "ppt");
+  addVariable(mpfr::exp10(mpfr::mpreal(-15)), "ppq");
+
+  addVariable(mpfr::mpreal(0), "zero");
+  addVariable(mpfr::mpreal(1), "one");
+  addVariable(mpfr::mpreal(10), "ten");
+  addVariable(mpfr::mpreal(100), "hundred");
+  addVariable(mpfr::mpreal(1000), "thousand");
+  addVariable(mpfr::mpreal(1000000), "million");
+
+  addVariable(mpfr::exp10(mpfr::mpreal(9)), "ss.billion");
+  addVariable(mpfr::exp10(mpfr::mpreal(12)), "ss.trillion");
+  addVariable(mpfr::exp10(mpfr::mpreal(15)), "ss.quadrillion");
+  addVariable(mpfr::exp10(mpfr::mpreal(18)), "ss.quintillion");
+  addVariable(mpfr::exp10(mpfr::mpreal(21)), "ss.sextillion");
+  addVariable(mpfr::exp10(mpfr::mpreal(24)), "ss.septillion");
+
+  addVariable(mpfr::exp10(mpfr::mpreal(9)), "ls.milliard");
+  addVariable(mpfr::exp10(mpfr::mpreal(12)), "ls.billion");
+  addVariable(mpfr::exp10(mpfr::mpreal(15)), "ls.billiard");
+  addVariable(mpfr::exp10(mpfr::mpreal(18)), "ls.trillion");
+  addVariable(mpfr::exp10(mpfr::mpreal(21)), "ls.trilliard");
+  addVariable(mpfr::exp10(mpfr::mpreal(24)), "ls.quadrillion");
 
   addVariable(mpfr::const_pi(), "math.pi");
   addVariable(mpfr::const_euler(), "math.E");
   addVariable(mpfr::const_catalan(), "math.catalan");
   addVariable(mpfr::mpreal("2.71828182846"), "math.e");
 
-  addVariable(mpfr::mpreal("602214085700000000000000"), "phys.NA");
+  addVariable(mpfr::mpreal("6.02214076") * mpfr::exp10(mpfr::mpreal(23)), "phys.NA");
   addVariable(mpfr::mpreal("299792458"), "phys.c");
   addVariable(mpfr::mpreal("149597870700"), "phys.au");
   addVariable(mpfr::mpreal("86400"), "phys.D");
-  addVariable(mpfr::mpreal("1988920000000000000000000000000"), "phys.M");
+  addVariable(mpfr::mpreal("1.98892") * mpfr::exp10(mpfr::mpreal(30)), "phys.M");
   addVariable(mpfr::mpreal("9460730472580800"), "phys.ly");
   addVariable(mpfr::mpreal("30856775814913700"), "phys.pc");
-  addVariable(mpfr::mpreal("0.00000000006674"), "phys.G");
+  addVariable(mpfr::mpreal("6.674") * mpfr::exp10(mpfr::mpreal(-11)), "phys.G");
   addVariable(mpfr::mpreal("9.80665"), "phys.g");
-  addVariable(mpfr::mpreal("8.3144626181532"), "phys.R");
+  addVariable(mpfr::mpreal("8.31446261815324"), "phys.R");
 
   addVariable(boost::posix_time::hours(1l), "time.h");
   addVariable(boost::posix_time::minutes(1l), "time.m");
@@ -1197,5 +1220,30 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addVariable(year * 10l, "time.decade");
   addVariable(year * 100l, "time.century");
 
-  addVariable(mpfr::mpreal("10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"), "googol");
+  addVariable(mpfr::exp2(mpfr::mpreal(10)), "KiB");
+  addVariable(mpfr::exp2(mpfr::mpreal(20)), "MiB");
+  addVariable(mpfr::exp2(mpfr::mpreal(30)), "GiB");
+  addVariable(mpfr::exp2(mpfr::mpreal(40)), "TiB");
+  addVariable(mpfr::exp2(mpfr::mpreal(50)), "PiB");
+  addVariable(mpfr::exp2(mpfr::mpreal(60)), "EiB");
+
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::min()), "sbyte.min");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::max()), "sbyte.max");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::min()), "short.min");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::max()), "short.max");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::min()), "int.min");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::max()), "int.max");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::min()), "long.min");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::max()), "long.max");
+
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::min()), "byte.min");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::max()), "byte.max");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::min()), "ushort.min");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::max()), "ushort.max");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::min()), "uint.min");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::max()), "uint.max");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::min()), "ulong.min");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::max()), "ulong.max");
+
+  addVariable(mpfr::exp10(mpfr::mpreal(100)), "googol");
 }
