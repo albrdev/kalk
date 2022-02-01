@@ -205,12 +205,28 @@ DefaultValueType* addNewVariable(const std::string& identifier)
 #ifndef __REGION__UNOPS__COMMON
 static IValueToken* UnaryOperator_Plus(IValueToken* rhs)
 {
-  return new DefaultValueType(mpfr::abs(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+  if(rhs->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    const auto& tmpValue = rhs->AsPointer<DefaultValueType>()->GetValue<boost::posix_time::time_duration>();
+    const boost::posix_time::time_duration zero;
+    return new DefaultValueType(tmpValue < zero ? -tmpValue : tmpValue);
+  }
+  else
+  {
+    return new DefaultValueType(mpfr::abs(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+  }
 }
 
 static IValueToken* UnaryOperator_Minus(IValueToken* rhs)
 {
-  return new DefaultValueType(-rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
+  if(rhs->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    return new DefaultValueType(-rhs->AsPointer<DefaultValueType>()->GetValue<boost::posix_time::time_duration>());
+  }
+  else
+  {
+    return new DefaultValueType(-rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
+  }
 }
 #endif // __REGION__UNOPS__COMMON
 
@@ -494,17 +510,42 @@ static IValueToken* Function_Sgn(const std::vector<IValueToken*>& args)
 
 static IValueToken* Function_Abs(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::abs(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+  if(args[0]->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    const auto& tmpValue = args[0]->AsPointer<DefaultValueType>()->GetValue<boost::posix_time::time_duration>();
+    const boost::posix_time::time_duration zero;
+    return new DefaultValueType(tmpValue < zero ? -tmpValue : tmpValue);
+  }
+  else
+  {
+    return new DefaultValueType(mpfr::abs(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+  }
 }
 
 static IValueToken* Function_Neg(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(-args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
+  if(args[0]->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    return new DefaultValueType(-args[0]->AsPointer<DefaultValueType>()->GetValue<boost::posix_time::time_duration>());
+  }
+  else
+  {
+    return new DefaultValueType(-args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
+  }
 }
 
-static IValueToken* Function_Neg2(const std::vector<IValueToken*>& args)
+static IValueToken* Function_NegAbs(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(-mpfr::abs(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+  if(args[0]->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    const auto& tmpValue = args[0]->AsPointer<DefaultValueType>()->GetValue<boost::posix_time::time_duration>();
+    const boost::posix_time::time_duration zero;
+    return new DefaultValueType(tmpValue > zero ? -tmpValue : tmpValue);
+  }
+  else
+  {
+    return new DefaultValueType(-mpfr::abs(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+  }
 }
 
 static IValueToken* Function_Mod(const std::vector<IValueToken*>& args)
@@ -999,7 +1040,7 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addFunction(Function_Sgn, "sgn", 1u, 1u);
   addFunction(Function_Abs, "abs", 1u, 1u);
   addFunction(Function_Neg, "neg", 1u, 1u);
-  addFunction(Function_Neg2, "neg2", 1u, 1u);
+  addFunction(Function_NegAbs, "negabs", 1u, 1u);
 
   addFunction(Function_Mod, "math.mod", 2u, 2u);
   addFunction(Function_Rem, "math.rem", 2u, 2u);
