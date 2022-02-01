@@ -282,14 +282,11 @@ static IValueToken* BinaryOperator_Addition(IValueToken* lhs, IValueToken* rhs)
   }
   else if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
-    if(lhs->GetType() == typeid(boost::posix_time::ptime))
-    {
-      return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() + rhsValue->GetValue<boost::posix_time::time_duration>());
-    }
-    else
-    {
-      return new DefaultValueType(lhsValue->GetValue<boost::posix_time::time_duration>() + rhsValue->GetValue<boost::posix_time::time_duration>());
-    }
+    return new DefaultValueType(lhsValue->GetValue<boost::posix_time::time_duration>() + rhsValue->GetValue<boost::posix_time::time_duration>());
+  }
+  else if(lhs->GetType() == typeid(boost::posix_time::ptime) || rhs->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() + rhsValue->GetValue<boost::posix_time::time_duration>());
   }
   else
   {
@@ -303,14 +300,15 @@ static IValueToken* BinaryOperator_Subtraction(IValueToken* lhs, IValueToken* rh
   auto rhsValue = rhs->AsPointer<DefaultValueType>();
   if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
-    if(lhs->GetType() == typeid(boost::posix_time::ptime))
-    {
-      return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() - rhsValue->GetValue<boost::posix_time::time_duration>());
-    }
-    else
-    {
-      return new DefaultValueType(lhsValue->GetValue<boost::posix_time::time_duration>() - rhsValue->GetValue<boost::posix_time::time_duration>());
-    }
+    return new DefaultValueType(lhsValue->GetValue<boost::posix_time::time_duration>() - rhsValue->GetValue<boost::posix_time::time_duration>());
+  }
+  else if(lhs->GetType() == typeid(boost::posix_time::ptime) || rhs->GetType() == typeid(boost::posix_time::ptime))
+  {
+    return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() - rhsValue->GetValue<boost::posix_time::ptime>());
+  }
+  else if(lhs->GetType() == typeid(boost::posix_time::ptime) || rhs->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() - rhsValue->GetValue<boost::posix_time::time_duration>());
   }
   else
   {
@@ -328,17 +326,18 @@ static IValueToken* BinaryOperator_Multiplication(IValueToken* lhs, IValueToken*
   }
   else if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
-    using nanoseconds = boost::date_time::subsecond_duration<boost::posix_time::time_duration, 1000000000l>;
     if(lhs->GetType() == typeid(DefaultArithmeticType))
     {
-      auto ticks = nanoseconds(static_cast<long>(static_cast<double>(rhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
-                                                 lhsValue->GetValue<DefaultArithmeticType>().toDouble()));
+      auto ticks =
+          boost::posix_time::nanoseconds(static_cast<long>(static_cast<double>(rhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
+                                                           lhsValue->GetValue<DefaultArithmeticType>().toDouble()));
       return new DefaultValueType(boost::posix_time::time_duration(ticks));
     }
     else
     {
-      auto ticks = nanoseconds(static_cast<long>(static_cast<double>(lhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
-                                                 rhsValue->GetValue<DefaultArithmeticType>().toDouble()));
+      auto ticks =
+          boost::posix_time::nanoseconds(static_cast<long>(static_cast<double>(lhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) *
+                                                           rhsValue->GetValue<DefaultArithmeticType>().toDouble()));
       return new DefaultValueType(boost::posix_time::time_duration(ticks));
     }
   }
@@ -354,9 +353,9 @@ static IValueToken* BinaryOperator_Division(IValueToken* lhs, IValueToken* rhs)
   auto rhsValue = rhs->AsPointer<DefaultValueType>();
   if(lhs->GetType() == typeid(boost::posix_time::time_duration) && rhs->GetType() == typeid(DefaultArithmeticType))
   {
-    using nanoseconds = boost::date_time::subsecond_duration<boost::posix_time::time_duration, 1000000000l>;
-    auto ticks        = nanoseconds(static_cast<long>(static_cast<double>(lhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) /
-                                               rhsValue->GetValue<DefaultArithmeticType>().toDouble()));
+    auto ticks =
+        boost::posix_time::nanoseconds(static_cast<long>(static_cast<double>(lhsValue->GetValue<boost::posix_time::time_duration>().total_nanoseconds()) /
+                                                         rhsValue->GetValue<DefaultArithmeticType>().toDouble()));
     return new DefaultValueType(boost::posix_time::time_duration(ticks));
   }
   else
