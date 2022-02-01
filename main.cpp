@@ -149,24 +149,24 @@ void handleResult(const DefaultValueType* value)
 
 static void printOptions()
 {
-  std::cout << "Options" << std::endl;
-  std::cout << (boost::format("  %|1$-26|%|2$|") % "Precision" % options.precision).str() << std::endl;
-  std::cout << (boost::format("  %|1$-26|%|2$|") % "Rounding mode" % rmodeToStrMap[options.roundingMode]).str() << std::endl;
-  std::cout << (boost::format("  %|1$-26|%|2$|") % "Output precision" % options.digits).str() << std::endl;
-  std::cout << (boost::format("  %|1$-26|%|2$|") % "Output base" % options.output_base).str() << std::endl;
-  std::cout << (boost::format("  %|1$-26|%|2$|") % "Input base" % options.input_base).str() << std::endl;
-  std::cout << (boost::format("  %|1$-26|%|2$|") % "Juxtaposition precedence" % options.jpo_precedence).str() << std::endl;
-  std::cout << (boost::format("  %|1$-26|%|2$|") % "Date output format" % options.date_ofmt).str() << std::endl;
-  std::cout << (boost::format("  %|1$-26|%|2$|") % "Seed" % options.seed).str() << std::endl;
-  std::cout << std::endl;
+  std::cerr << "Options" << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Precision" % options.precision).str() << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Rounding mode" % rmodeToStrMap[options.roundingMode]).str() << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Output precision" % options.digits).str() << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Output base" % options.output_base).str() << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Input base" % options.input_base).str() << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Juxtaposition precedence" % options.jpo_precedence).str() << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Date output format" % options.date_ofmt).str() << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Seed" % options.seed).str() << std::endl;
+  std::cerr << std::endl;
 }
 
 static void printVersion() { std::cout << (boost::format("%1% v%2%") % PROJECT_NAME % PROJECT_VERSION).str() << std::endl; }
 
 static void printUsage(const boost::program_options::options_description& desc)
 {
-  std::cout << (boost::format("%1% -[prnbBjdzZivVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
-  std::cout << desc << std::endl;
+  std::cerr << (boost::format("%1% -[prnbBjdzZivVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
+  std::cerr << desc << std::endl;
 }
 
 int main(int argc, char* argv[])
