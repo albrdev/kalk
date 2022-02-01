@@ -1107,11 +1107,11 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addFunction(Function_MolarMass, "chem.M", 1u, 1u);
 
   addVariable(nullptr, "null");
-  addVariable(mpfr::const_infinity(), "inf");
   mpfr::mpreal tmpValue;
   addVariable(tmpValue.setNan(), "nan");
-  addVariable(0, "false");
+  addVariable(mpfr::const_infinity(), "inf");
   addVariable(1, "true");
+  addVariable(0, "false");
 
   addVariable(mpfr::mpreal("1000000000000000000000000"), "Y");
   addVariable(mpfr::mpreal("1000000000000000000000"), "Z");
@@ -1145,10 +1145,9 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addVariable(mpfr::const_pi(), "math.pi");
   addVariable(mpfr::const_euler(), "math.E");
   addVariable(mpfr::const_catalan(), "math.catalan");
-
   addVariable(mpfr::mpreal("2.71828182846"), "math.e");
 
-  addVariable(mpfr::mpreal("602214085700000000000000"), "phys.N");
+  addVariable(mpfr::mpreal("602214085700000000000000"), "phys.NA");
   addVariable(mpfr::mpreal("299792458"), "phys.c");
   addVariable(mpfr::mpreal("149597870700"), "phys.au");
   addVariable(mpfr::mpreal("86400"), "phys.D");
