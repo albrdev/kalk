@@ -392,6 +392,12 @@ static IValueToken* BinaryOperator_Modulo(IValueToken* lhs, IValueToken* rhs)
       mpfr::fmod(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(), rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
+static IValueToken* BinaryOperator_Remainder(IValueToken* lhs, IValueToken* rhs)
+{
+  return new DefaultValueType(mpfr::remainder(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
+                                              rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+}
+
 static IValueToken* BinaryOperator_Exponentiation(IValueToken* lhs, IValueToken* rhs)
 {
   return new DefaultValueType(
@@ -1020,6 +1026,7 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addBinaryOperator(BinaryOperator_Division, "/", 6, Associativity::Left);
   addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 6, Associativity::Left);
   addBinaryOperator(BinaryOperator_Modulo, "%", 6, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Remainder, "%%", 6, Associativity::Left);
   addBinaryOperator(BinaryOperator_Exponentiation, "**", 8, Associativity::Right);
 
   addBinaryOperator(BinaryOperator_BitwiseOr, "|", 2, Associativity::Left);
