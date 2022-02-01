@@ -44,13 +44,13 @@ int compare(const IValueToken* a, const IValueToken* b)
   {
     return aValue->GetValue<std::string>().compare(bValue->GetValue<std::string>());
   }
-  if(a->GetType() == typeid(boost::posix_time::ptime) && b->GetType() == typeid(boost::posix_time::ptime))
+  else if(a->GetType() == typeid(boost::posix_time::ptime) && b->GetType() == typeid(boost::posix_time::ptime))
   {
     return aValue->GetValue<boost::posix_time::ptime>() < bValue->GetValue<boost::posix_time::ptime>() ?
              -1 :
              (aValue->GetValue<boost::posix_time::ptime>() > bValue->GetValue<boost::posix_time::ptime>() ? 1 : 0);
   }
-  if(a->GetType() == typeid(boost::posix_time::time_duration) && bValue->GetType() == typeid(boost::posix_time::time_duration))
+  else if(a->GetType() == typeid(boost::posix_time::time_duration) && bValue->GetType() == typeid(boost::posix_time::time_duration))
   {
     return aValue->GetValue<boost::posix_time::time_duration>() < bValue->GetValue<boost::posix_time::time_duration>() ?
              -1 :
@@ -62,10 +62,9 @@ int compare(const IValueToken* a, const IValueToken* b)
   }
   else
   {
-    return a->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() < b->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() ?
+    return aValue->GetValue<DefaultArithmeticType>() < bValue->GetValue<DefaultArithmeticType>() ?
              -1 :
-             (a->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() > b->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>() ? 1 :
-                                                                                                                                                          0);
+             (aValue->GetValue<DefaultArithmeticType>() > bValue->GetValue<DefaultArithmeticType>() ? 1 : 0);
   }
 }
 
@@ -276,6 +275,7 @@ static IValueToken* BinaryOperator_LogicalAnd(IValueToken* lhs, IValueToken* rhs
                               rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>());
 }
 #endif // __REGION__BINOPS__COMPARISON
+
 #ifndef __REGION__BINOPS__COMMON
 static IValueToken* BinaryOperator_Addition(IValueToken* lhs, IValueToken* rhs)
 {
@@ -296,11 +296,11 @@ static IValueToken* BinaryOperator_Addition(IValueToken* lhs, IValueToken* rhs)
 
     return new DefaultValueType(tmpString);
   }
-  else if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
+  else if(lhs->GetType() == typeid(boost::posix_time::time_duration) && rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
     return new DefaultValueType(lhsValue->GetValue<boost::posix_time::time_duration>() + rhsValue->GetValue<boost::posix_time::time_duration>());
   }
-  else if(lhs->GetType() == typeid(boost::posix_time::ptime) || rhs->GetType() == typeid(boost::posix_time::time_duration))
+  else if(lhs->GetType() == typeid(boost::posix_time::ptime) && rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
     return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() + rhsValue->GetValue<boost::posix_time::time_duration>());
   }
@@ -314,15 +314,15 @@ static IValueToken* BinaryOperator_Subtraction(IValueToken* lhs, IValueToken* rh
 {
   auto lhsValue = lhs->AsPointer<DefaultValueType>();
   auto rhsValue = rhs->AsPointer<DefaultValueType>();
-  if(lhs->GetType() == typeid(boost::posix_time::time_duration) || rhs->GetType() == typeid(boost::posix_time::time_duration))
-  {
-    return new DefaultValueType(lhsValue->GetValue<boost::posix_time::time_duration>() - rhsValue->GetValue<boost::posix_time::time_duration>());
-  }
-  else if(lhs->GetType() == typeid(boost::posix_time::ptime) || rhs->GetType() == typeid(boost::posix_time::ptime))
+  if(lhs->GetType() == typeid(boost::posix_time::ptime) && rhs->GetType() == typeid(boost::posix_time::ptime))
   {
     return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() - rhsValue->GetValue<boost::posix_time::ptime>());
   }
-  else if(lhs->GetType() == typeid(boost::posix_time::ptime) || rhs->GetType() == typeid(boost::posix_time::time_duration))
+  else if(lhs->GetType() == typeid(boost::posix_time::time_duration) && rhs->GetType() == typeid(boost::posix_time::time_duration))
+  {
+    return new DefaultValueType(lhsValue->GetValue<boost::posix_time::time_duration>() - rhsValue->GetValue<boost::posix_time::time_duration>());
+  }
+  else if(lhs->GetType() == typeid(boost::posix_time::ptime) && rhs->GetType() == typeid(boost::posix_time::time_duration))
   {
     return new DefaultValueType(lhsValue->GetValue<boost::posix_time::ptime>() - rhsValue->GetValue<boost::posix_time::time_duration>());
   }
