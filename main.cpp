@@ -5,6 +5,7 @@
 #include <cerrno>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <iostream>
 #include <memory>
 #include <locale>
@@ -43,7 +44,7 @@ static std::unordered_map<mpfr_rnd_t, std::string> rmodeToStrMap = {
     {mpfr_rnd_t::MPFR_RNDNA, "NA"},
 };
 
-mpfr_rnd_t strToRnd(const std::string value)
+mpfr_rnd_t strToRmode(const std::string value)
 {
   const auto iter = strToRmodeMap.find(boost::to_upper_copy(value));
   if(iter != strToRmodeMap.cend())
@@ -60,7 +61,7 @@ static std::istream& operator>>(std::istream& stream, mpfr_rnd_t& result)
 {
   std::string value;
   stream >> value;
-  result = strToRnd(value);
+  result = strToRmode(value);
   return stream;
 }
 

@@ -386,7 +386,7 @@ static IValueToken* BinaryOperator_TruncatedDivision(IValueToken* lhs, IValueTok
                                           rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
-static IValueToken* BinaryOperator_Modulo(IValueToken* lhs, IValueToken* rhs)
+static IValueToken* BinaryOperator_Fmod(IValueToken* lhs, IValueToken* rhs)
 {
   return new DefaultValueType(
       mpfr::fmod(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(), rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
@@ -554,7 +554,14 @@ static IValueToken* Function_NegAbs(const std::vector<IValueToken*>& args)
   }
 }
 
-static IValueToken* Function_Mod(const std::vector<IValueToken*>& args)
+static IValueToken* Function_Round(const std::vector<IValueToken*>& args)
+{
+  const mpfr_rnd_t tmpRndMode =
+      (args.size() > 0u) ? strToRmode(args[1]->AsPointer<DefaultValueType>()->GetValue<std::string>()) : mpfr::mpreal::get_default_rnd();
+  return new DefaultValueType(mpfr::rint(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(), tmpRndMode));
+}
+
+static IValueToken* Function_Fmod(const std::vector<IValueToken*>& args)
 {
   return new DefaultValueType(mpfr::fmod(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
                                          args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
@@ -564,6 +571,13 @@ static IValueToken* Function_Rem(const std::vector<IValueToken*>& args)
 {
   return new DefaultValueType(mpfr::remainder(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
                                               args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+}
+
+static IValueToken* Function_Mod(const std::vector<IValueToken*>& args)
+{
+  const auto& a = args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>();
+  const auto& b = args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>();
+  return new DefaultValueType(a - (mpfr::floor(a / b) * b));
 }
 
 static IValueToken* Function_Pow(const std::vector<IValueToken*>& args)
@@ -1025,7 +1039,7 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addBinaryOperator(BinaryOperator_Multiplication, "*", 6, Associativity::Left);
   addBinaryOperator(BinaryOperator_Division, "/", 6, Associativity::Left);
   addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 6, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Modulo, "%", 6, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Fmod, "%", 6, Associativity::Left);
   addBinaryOperator(BinaryOperator_Remainder, "%%", 6, Associativity::Left);
   addBinaryOperator(BinaryOperator_Exponentiation, "**", 8, Associativity::Right);
 
@@ -1048,9 +1062,11 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addFunction(Function_Abs, "abs", 1u, 1u);
   addFunction(Function_Neg, "neg", 1u, 1u);
   addFunction(Function_NegAbs, "negabs", 1u, 1u);
+  addFunction(Function_Round, "round", 1u, 2u);
 
-  addFunction(Function_Mod, "math.mod", 2u, 2u);
+  addFunction(Function_Fmod, "math.fmod", 2u, 2u);
   addFunction(Function_Rem, "math.rem", 2u, 2u);
+  addFunction(Function_Mod, "math.mod", 2u, 2u);
   addFunction(Function_Pow, "math.pow", 2u, 2u);
   addFunction(Function_Sqr, "math.sqr", 1u, 1u);
   addFunction(Function_Cb, "math.cb", 1u, 1u);

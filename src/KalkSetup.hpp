@@ -51,7 +51,7 @@ struct kalk_options
 const inline kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, -1, "%Y-%m-%d %H:%M:%S", 0, false};
 inline kalk_options options {};
 
-mpfr_rnd_t strToRnd(const std::string value);
+mpfr_rnd_t strToRmode(const std::string value);
 void printValue(const DefaultValueType& value);
 const DefaultValueType* ans(int index = -1);
 

@@ -28,7 +28,7 @@ int Command_RMode(const std::vector<std::string>& args)
   }
   else
   {
-    options.roundingMode = strToRnd(args[0]);
+    options.roundingMode = strToRmode(args[0]);
   }
 
   return 0;
