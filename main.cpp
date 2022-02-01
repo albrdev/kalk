@@ -244,7 +244,12 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  mpfr::random(options.seed == 0u ? static_cast<unsigned int>(std::time(nullptr)) : options.seed);
+  if(options.seed == 0u)
+  {
+    options.seed = static_cast<unsigned int>(std::time(nullptr));
+  }
+
+  mpfr::random(options.seed);
 
   mpfr::mpreal::set_default_prec(options.precision);
   mpfr::mpreal::set_default_rnd(options.roundingMode);
