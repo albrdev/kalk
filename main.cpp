@@ -165,7 +165,7 @@ static void printVersion() { std::cout << (boost::format("%1% v%2%") % PROJECT_N
 
 static void printUsage(const boost::program_options::options_description& desc)
 {
-  std::cout << (boost::format("%1% -[prnbBjdzZiVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
+  std::cout << (boost::format("%1% -[prnbBjdzZivVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
   std::cout << desc << std::endl;
 }
 
