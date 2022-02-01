@@ -1119,5 +1119,21 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addVariable(mpfr::mpreal("9.80665"), "phys.g");
   addVariable(mpfr::mpreal("8.3144626181532"), "phys.R");
 
+  addVariable(boost::posix_time::hours(1l), "time.h");
+  addVariable(boost::posix_time::minutes(1l), "time.m");
+  addVariable(boost::posix_time::seconds(1l), "time.s");
+  addVariable(boost::posix_time::milliseconds(1l), "time.ms");
+  addVariable(boost::posix_time::microseconds(1l), "time.us");
+  addVariable(boost::posix_time::nanoseconds(1l), "time.ns");
+
+  const boost::posix_time::hours day(24l);
+  const auto year = day * 365;
+  addVariable(day * 1l, "time.day");
+  addVariable(day * 7l, "time.week");
+  addVariable(day * 30l, "time.month");
+
+  addVariable(year * 10l, "time.decade");
+  addVariable(year * 100l, "time.century");
+
   addVariable(mpfr::mpreal("10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"), "googol");
 }
