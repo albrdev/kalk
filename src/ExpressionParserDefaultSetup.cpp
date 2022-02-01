@@ -232,7 +232,7 @@ static IValueToken* UnaryOperator_Minus(IValueToken* rhs)
 #ifndef __REGION__UNOPS__BITWISE
 static IValueToken* UnaryOperator_Not(IValueToken* rhs) { return new DefaultValueType(!rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()); }
 
-static IValueToken* UnaryOperator_OnesComplement(IValueToken* rhs)
+static IValueToken* UnaryOperator_BitwiseOnesComplement(IValueToken* rhs)
 {
   mpz_class tmpRhs;
   tmpRhs.set_str(mpfr::trunc(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
@@ -400,7 +400,7 @@ static IValueToken* BinaryOperator_Exponentiation(IValueToken* lhs, IValueToken*
 #endif // __REGION__BINOPS__COMMON
 
 #ifndef __REGION__BINOPS__BITWISE
-static IValueToken* BinaryOperator_Or(IValueToken* lhs, IValueToken* rhs)
+static IValueToken* BinaryOperator_BitwiseOr(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
   tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
@@ -411,7 +411,7 @@ static IValueToken* BinaryOperator_Or(IValueToken* lhs, IValueToken* rhs)
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
-static IValueToken* BinaryOperator_And(IValueToken* lhs, IValueToken* rhs)
+static IValueToken* BinaryOperator_BitwiseAnd(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
   tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
@@ -422,7 +422,7 @@ static IValueToken* BinaryOperator_And(IValueToken* lhs, IValueToken* rhs)
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
-static IValueToken* BinaryOperator_Xor(IValueToken* lhs, IValueToken* rhs)
+static IValueToken* BinaryOperator_BitwiseXor(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
   tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
@@ -433,7 +433,7 @@ static IValueToken* BinaryOperator_Xor(IValueToken* lhs, IValueToken* rhs)
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
-static IValueToken* BinaryOperator_LeftShift(IValueToken* lhs, IValueToken* rhs)
+static IValueToken* BinaryOperator_BitwiseLeftShift(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
   tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
@@ -442,7 +442,7 @@ static IValueToken* BinaryOperator_LeftShift(IValueToken* lhs, IValueToken* rhs)
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
-static IValueToken* BinaryOperator_RightShift(IValueToken* lhs, IValueToken* rhs)
+static IValueToken* BinaryOperator_BitwiseRightShift(IValueToken* lhs, IValueToken* rhs)
 {
   mpz_class tmpLhs;
   tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
@@ -1002,7 +1002,7 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addUnaryOperator(UnaryOperator_Not, '!', 9, Associativity::Right);
   addUnaryOperator(UnaryOperator_Plus, '+', 9, Associativity::Right);
   addUnaryOperator(UnaryOperator_Minus, '-', 9, Associativity::Right);
-  addUnaryOperator(UnaryOperator_OnesComplement, '~', 9, Associativity::Right);
+  addUnaryOperator(UnaryOperator_BitwiseOnesComplement, '~', 9, Associativity::Right);
 
   addBinaryOperator(BinaryOperator_Equals, "==", 3, Associativity::Left);
   addBinaryOperator(BinaryOperator_NotEquals, "!=", 3, Associativity::Left);
@@ -1022,11 +1022,11 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addBinaryOperator(BinaryOperator_Modulo, "%", 6, Associativity::Left);
   addBinaryOperator(BinaryOperator_Exponentiation, "**", 8, Associativity::Right);
 
-  addBinaryOperator(BinaryOperator_Or, "|", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_And, "&", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Xor, "^", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_LeftShift, "<<", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_RightShift, ">>", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_BitwiseOr, "|", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_BitwiseAnd, "&", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_BitwiseXor, "^", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_BitwiseLeftShift, "<<", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_BitwiseRightShift, ">>", 2, Associativity::Left);
 
   addBinaryOperator(BinaryOperator_VariableAssignment, "=", 9, Associativity::Right);
 
