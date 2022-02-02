@@ -1,8 +1,5 @@
 #include "KalkSetup.hpp"
-#include <string>
-#include <unordered_map>
 #include <memory>
-#include <mpreal.h>
 
 static IValueToken* numberConverter(const std::string& value)
 {

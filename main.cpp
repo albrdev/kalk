@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <memory>
+#include <regex>
 #include <locale>
 #include <exception>
 #include <unistd.h>
@@ -24,17 +25,7 @@
 #include "KalkSetup.hpp"
 #include "text/SyntaxException.hpp"
 
-static std::unordered_map<std::string, mpfr_rnd_t> strToRmodeMap = {
-    {"N", mpfr_rnd_t::MPFR_RNDN},
-    {"Z", mpfr_rnd_t::MPFR_RNDZ},
-    {"U", mpfr_rnd_t::MPFR_RNDU},
-    {"D", mpfr_rnd_t::MPFR_RNDD},
-    {"A", mpfr_rnd_t::MPFR_RNDA},
-    {"F", mpfr_rnd_t::MPFR_RNDF},
-    {"NA", mpfr_rnd_t::MPFR_RNDNA},
-};
-
-static std::unordered_map<mpfr_rnd_t, std::string> rmodeToStrMap = {
+static const std::unordered_map<mpfr_rnd_t, std::string> rmodeNameMap = {
     {mpfr_rnd_t::MPFR_RNDN, "N"},
     {mpfr_rnd_t::MPFR_RNDZ, "Z"},
     {mpfr_rnd_t::MPFR_RNDU, "U"},
@@ -44,10 +35,26 @@ static std::unordered_map<mpfr_rnd_t, std::string> rmodeToStrMap = {
     {mpfr_rnd_t::MPFR_RNDNA, "NA"},
 };
 
+static const std::unordered_map<std::string, mpfr_rnd_t> rmodeNameMap2 = {
+    {"N", mpfr_rnd_t::MPFR_RNDN},
+    {"Z", mpfr_rnd_t::MPFR_RNDZ},
+    {"U", mpfr_rnd_t::MPFR_RNDU},
+    {"D", mpfr_rnd_t::MPFR_RNDD},
+    {"A", mpfr_rnd_t::MPFR_RNDA},
+    {"F", mpfr_rnd_t::MPFR_RNDF},
+    {"NA", mpfr_rnd_t::MPFR_RNDNA},
+};
+
+static const std::unordered_map<Associativity, std::string> associativityNameMap = {
+    {Associativity::Left, "Left"},
+    {Associativity::Right, "Right"},
+    {Associativity::Any, "Any"},
+};
+
 mpfr_rnd_t strToRmode(const std::string value)
 {
-  const auto iter = strToRmodeMap.find(boost::to_upper_copy(value));
-  if(iter != strToRmodeMap.cend())
+  const auto iter = rmodeNameMap2.find(boost::to_upper_copy(value));
+  if(iter != rmodeNameMap2.cend())
   {
     return iter->second;
   }
@@ -148,11 +155,133 @@ void handleResult(const DefaultValueType* value)
   }
 }
 
+void list(const std::string& searchPattern)
+{
+  const std::regex regex(searchPattern);
+  bool isPrevEmptyLine = true;
+
+  std::cerr << "Unary operators" << std::endl;
+  for(const auto& i : unaryOperatorInfoMap)
+  {
+    const auto& entry = std::get<0u>(i);
+    if(entry == nullptr)
+    {
+      if(!isPrevEmptyLine)
+      {
+        std::cerr << std::endl;
+        isPrevEmptyLine = true;
+      }
+
+      continue;
+    }
+
+    const auto identifier    = std::string(1u, entry->GetIdentifier());
+    const auto precedence    = entry->GetPrecedence();
+    const auto associativity = associativityNameMap.at(entry->GetAssociativity());
+    const auto& title        = std::get<1u>(i);
+    const auto& description  = std::get<2u>(i);
+    if(std::regex_match(identifier.begin(), identifier.end(), regex) || std::regex_match(title.begin(), title.end(), regex) ||
+       std::regex_match(description.begin(), description.end(), regex))
+    {
+      std::cout << (boost::format("  %|1$-5|%|2$-5|%|3$-9|%|4$-20|%|5$|") % identifier % precedence % associativity % title % description).str() << std::endl;
+      isPrevEmptyLine = false;
+    }
+  }
+  std::cerr << std::endl;
+
+  isPrevEmptyLine = true;
+  std::cerr << "Binary operators" << std::endl;
+  for(const auto& i : binaryOperatorInfoMap)
+  {
+    const auto& entry = std::get<0u>(i);
+    if(entry == nullptr)
+    {
+      if(!isPrevEmptyLine)
+      {
+        std::cerr << std::endl;
+        isPrevEmptyLine = true;
+      }
+
+      continue;
+    }
+
+    const auto& identifier   = entry->GetIdentifier();
+    const auto precedence    = entry->GetPrecedence();
+    const auto associativity = associativityNameMap.at(entry->GetAssociativity());
+    const auto& title        = std::get<1u>(i);
+    const auto& description  = std::get<2u>(i);
+    if(std::regex_match(identifier.begin(), identifier.end(), regex) || std::regex_match(title.begin(), title.end(), regex) ||
+       std::regex_match(description.begin(), description.end(), regex))
+    {
+      std::cout << (boost::format("  %|1$-6|%|2$-5|%|3$-9|%|4$-25|%|5$|") % identifier % precedence % associativity % title % description).str() << std::endl;
+      isPrevEmptyLine = false;
+    }
+  }
+  std::cerr << std::endl;
+
+  isPrevEmptyLine = true;
+  std::cerr << "Functions" << std::endl;
+  for(const auto& i : functionInfoMap)
+  {
+    const auto& entry = std::get<0u>(i);
+    if(entry == nullptr)
+    {
+      if(!isPrevEmptyLine)
+      {
+        std::cerr << std::endl;
+        isPrevEmptyLine = true;
+      }
+
+      continue;
+    }
+
+    const auto& identifier = entry->GetIdentifier();
+    const auto argMinCount = ((entry->GetMinArgumentCount() != FunctionToken::GetArgumentCountMaxLimit()) ? std::to_string(entry->GetMinArgumentCount()) : "-");
+    const auto argMaxCount = ((entry->GetMaxArgumentCount() != FunctionToken::GetArgumentCountMaxLimit()) ? std::to_string(entry->GetMaxArgumentCount()) : "-");
+    const auto& title      = std::get<1u>(i);
+    const auto& description = std::get<2u>(i);
+    if(std::regex_match(identifier.begin(), identifier.end(), regex) || std::regex_match(title.begin(), title.end(), regex) ||
+       std::regex_match(description.begin(), description.end(), regex))
+    {
+      std::cout << (boost::format("  %|1$-15|%|2$-5|%|3$-5|%|4$-27|%|5$|") % identifier % argMinCount % argMaxCount % title % description).str() << std::endl;
+      isPrevEmptyLine = false;
+    }
+  }
+  std::cerr << std::endl;
+
+  isPrevEmptyLine = true;
+  std::cerr << "Variables" << std::endl;
+  for(const auto& i : variableInfoMap)
+  {
+    const auto& entry = std::get<0u>(i);
+    if(entry == nullptr)
+    {
+      if(!isPrevEmptyLine)
+      {
+        std::cerr << std::endl;
+        isPrevEmptyLine = true;
+      }
+
+      continue;
+    }
+
+    const auto& identifier  = entry->GetIdentifier();
+    const auto& title       = std::get<1u>(i);
+    const auto& description = std::get<2u>(i);
+    if(std::regex_match(identifier.begin(), identifier.end(), regex) || std::regex_match(title.begin(), title.end(), regex) ||
+       std::regex_match(description.begin(), description.end(), regex))
+    {
+      std::cout << (boost::format("  %|1$-18|%|2$-31|%|3$|") % identifier % title % description).str() << std::endl;
+      isPrevEmptyLine = false;
+    }
+  }
+}
+
 static void printOptions()
 {
   std::cerr << "Options" << std::endl;
   std::cerr << (boost::format("  %|1$-26|%|2$|") % "Precision" % options.precision).str() << std::endl;
-  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Rounding mode" % rmodeToStrMap[options.roundingMode]).str() << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Rounding mode" % rmodeNameMap.at(options.roundingMode)).str() << std::endl;
   std::cerr << (boost::format("  %|1$-26|%|2$|") % "Output precision" % options.digits).str() << std::endl;
   std::cerr << (boost::format("  %|1$-26|%|2$|") % "Output base" % options.output_base).str() << std::endl;
   std::cerr << (boost::format("  %|1$-26|%|2$|") % "Input base" % options.input_base).str() << std::endl;
@@ -166,7 +295,7 @@ static void printVersion() { std::cout << (boost::format("%1% v%2%") % PROJECT_N
 
 static void printUsage(const boost::program_options::options_description& desc)
 {
-  std::cerr << (boost::format("%1% -[prnbBjdzZivVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
+  std::cerr << (boost::format("%1% -[prnbBjdzZilvVh] expr...") % PROJECT_EXECUTABLE).str() << std::endl;
   std::cerr << desc << std::endl;
 }
 
@@ -221,6 +350,7 @@ int main(int argc, char* argv[])
                               }),
                               "Set random seed (string)");
   namedArgDescs.add_options()("interactive,i", boost::program_options::value<bool>(&options.interactive)->implicit_value(true), "Enable interactive mode");
+  namedArgDescs.add_options()("list,l", boost::program_options::value<std::string>()->implicit_value(".*"), "List available operators/functions/variables");
   namedArgDescs.add_options()("verbose,v", "Enable verbose mode");
   namedArgDescs.add_options()("version,V", "Print version");
   namedArgDescs.add_options()("help,h", "Print usage");
@@ -268,6 +398,12 @@ int main(int argc, char* argv[])
 
   CommandParser commandParser;
   InitCommandParser(commandParser);
+
+  if(argVariableMap.count("list") > 0u)
+  {
+    list(argVariableMap["list"].as<const std::string&>());
+    return 0;
+  }
 
   constexpr char kWhitespaceCharacters[] = " \t\v\n\r\f";
   std::unique_ptr<FILE, decltype(&std::fclose)> file_stdin(nullptr, &std::fclose);
@@ -352,6 +488,10 @@ int main(int argc, char* argv[])
           {
             std::cerr << "*** Command error: " << e.what() << std::endl;
           }
+          catch(const std::domain_error& e)
+          {
+            std::cerr << "*** Command error: " << e.what() << std::endl;
+          }
         }
         else
         {
@@ -365,6 +505,10 @@ int main(int argc, char* argv[])
             std::cerr << "*** Expression error: " << e.what() << std::endl;
           }
           catch(const std::runtime_error& e)
+          {
+            std::cerr << "*** Expression error: " << e.what() << std::endl;
+          }
+          catch(const std::domain_error& e)
           {
             std::cerr << "*** Expression error: " << e.what() << std::endl;
           }

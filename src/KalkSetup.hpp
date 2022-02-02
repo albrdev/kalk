@@ -3,6 +3,9 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <tuple>
+#include <mpfr.h>
 #include <mpreal.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -32,6 +35,11 @@ inline std::unordered_map<std::string, IVariableToken*> defaultVariables;
 
 inline std::vector<DefaultValueType> results;
 
+inline std::vector<std::tuple<const IUnaryOperatorToken*, std::string, std::string>> unaryOperatorInfoMap;
+inline std::vector<std::tuple<const IBinaryOperatorToken*, std::string, std::string>> binaryOperatorInfoMap;
+inline std::vector<std::tuple<const IFunctionToken*, std::string, std::string>> functionInfoMap;
+inline std::vector<std::tuple<const IVariableToken*, std::string, std::string>> variableInfoMap;
+
 inline bool quit = false;
 
 struct kalk_options
@@ -53,6 +61,7 @@ inline kalk_options options {};
 mpfr_rnd_t strToRmode(const std::string value);
 void printValue(const DefaultValueType& value);
 const DefaultValueType* ans(int index = -1);
+void list(const std::string& searchPattern = ".*");
 
 void InitDefaultExpressionParser(ExpressionParser& instance);
 void InitChemicalExpressionParser(ExpressionParser& instance);

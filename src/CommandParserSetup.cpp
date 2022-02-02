@@ -1,9 +1,7 @@
 #include "KalkSetup.hpp"
 #include <cstdlib>
-#include <string>
-#include <unordered_map>
+#include <functional>
 #include <readline/history.h>
-#include <mpfr.h>
 #include "text/CommandParser.hpp"
 
 int Command_Prec(const std::vector<std::string>& args)
@@ -189,6 +187,14 @@ int Command_Ans(const std::vector<std::string>& args)
   return 0;
 }
 
+int Command_List(const std::vector<std::string>& args)
+{
+  std::string arg = (args.size() == 0u) ? ".*" : args[0];
+  list(arg);
+
+  return 0;
+}
+
 int Command_Clear(const std::vector<std::string>& args)
 {
   constexpr char kValidArgs[] = "chrv";
@@ -250,6 +256,7 @@ void InitCommandParser(CommandParser& instance)
   callbacks["seed"]      = Command_Seed;
   callbacks["seedstr"]   = Command_SeedStr;
   callbacks["ans"]       = Command_Ans;
+  callbacks["list"]      = Command_List;
   callbacks["clear"]     = Command_Clear;
   callbacks["exit"]      = Command_Exit;
 }

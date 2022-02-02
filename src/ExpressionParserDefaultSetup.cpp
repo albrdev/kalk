@@ -1,14 +1,11 @@
 #include "KalkSetup.hpp"
 #include <cstdint>
-#include <string>
-#include <unordered_map>
 #include <sstream>
 #include <memory>
 #include <limits>
 #include <boost/format.hpp>
 #include <boost/date_time/time_duration.hpp>
 #include <gmpxx.h>
-#include <mpreal.h>
 #include "text/SyntaxException.hpp"
 
 static IValueToken* numberConverter(const std::string& value)
@@ -148,40 +145,60 @@ static std::string makeCompoundString(std::string text)
   return result;
 }
 
-static void addUnaryOperator(const UnaryOperatorToken::CallbackType& callback, char identifier, int precedence, Associativity associativity)
+static void addUnaryOperator(const UnaryOperatorToken::CallbackType& callback,
+                             char identifier,
+                             int precedence,
+                             Associativity associativity,
+                             const std::string& title       = "",
+                             const std::string& description = "")
 {
   auto tmpNew                           = std::make_unique<UnaryOperatorToken>(callback, identifier, precedence, associativity);
   auto tmp                              = tmpNew.get();
   defaultUnaryOperatorCache[identifier] = std::move(tmpNew);
   defaultUnaryOperators[identifier]     = tmp;
+
+  unaryOperatorInfoMap.push_back(std::make_tuple(tmp, title, description));
 }
 
-static void addBinaryOperator(const BinaryOperatorToken::CallbackType& callback, const std::string& identifier, int precedence, Associativity associativity)
+static void addBinaryOperator(const BinaryOperatorToken::CallbackType& callback,
+                              const std::string& identifier,
+                              int precedence,
+                              Associativity associativity,
+                              const std::string& title       = "",
+                              const std::string& description = "")
 {
   auto tmpNew                            = std::make_unique<BinaryOperatorToken>(callback, identifier, precedence, associativity);
   auto tmp                               = tmpNew.get();
   defaultBinaryOperatorCache[identifier] = std::move(tmpNew);
   defaultBinaryOperators[identifier]     = tmp;
+
+  binaryOperatorInfoMap.push_back(std::make_tuple(tmp, title, description));
 }
 
 static void addFunction(const FunctionToken::CallbackType& callback,
                         const std::string& identifier,
-                        std::size_t minArgs = 0u,
-                        std::size_t maxArgs = FunctionToken::GetArgumentCountMaxLimit())
+                        std::size_t minArgs            = 0u,
+                        std::size_t maxArgs            = FunctionToken::GetArgumentCountMaxLimit(),
+                        const std::string& title       = "",
+                        const std::string& description = "")
 {
   auto tmpNew                      = std::make_unique<FunctionToken>(callback, identifier, minArgs, maxArgs);
   auto tmp                         = tmpNew.get();
   defaultFunctionCache[identifier] = std::move(tmpNew);
   defaultFunctions[identifier]     = tmp;
+
+  functionInfoMap.push_back(std::make_tuple(tmp, title, description));
 }
 
 template<class T>
-static void addVariable(const T& value, const std::string& identifier)
+static void addVariable(const T& value, const std::string& identifier, const std::string& title = "", const std::string& description = "")
 {
   auto tmpNew                                 = std::make_unique<DefaultVariableType>(identifier, value);
   auto tmp                                    = tmpNew.get();
   defaultInitializedVariableCache[identifier] = std::move(tmpNew);
   defaultVariables[identifier]                = tmp;
+
+  variableInfoMap.push_back(std::make_tuple(tmp, title, description));
 }
 
 static void removeVariable(const std::string& identifier)
@@ -626,7 +643,13 @@ static IValueToken* Function_Exp2(const std::vector<IValueToken*>& args)
 
 static IValueToken* Function_Exp10(const std::vector<IValueToken*>& args)
 {
-  return new DefaultValueType(mpfr::pow(10, args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+  return new DefaultValueType(mpfr::exp10(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+}
+
+static IValueToken* Function_LogN(const std::vector<IValueToken*>& args)
+{
+  return new DefaultValueType(mpfr::log(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()) /
+                              mpfr::log(args[1]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
 static IValueToken* Function_Log(const std::vector<IValueToken*>& args)
@@ -1021,229 +1044,277 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   instance.SetFunctions(&defaultFunctions);
   instance.SetVariables(&defaultVariables);
 
-  addUnaryOperator(UnaryOperator_Not, '!', 9, Associativity::Right);
-  addUnaryOperator(UnaryOperator_Plus, '+', 9, Associativity::Right);
-  addUnaryOperator(UnaryOperator_Minus, '-', 9, Associativity::Right);
-  addUnaryOperator(UnaryOperator_BitwiseOnesComplement, '~', 9, Associativity::Right);
+  addUnaryOperator(UnaryOperator_Not, '!', 9, Associativity::Right, "Not", "!x");
+  unaryOperatorInfoMap.push_back(std::make_tuple(nullptr, "", ""));
+  addUnaryOperator(UnaryOperator_Plus, '+', 9, Associativity::Right, "Unary plus", "+x");
+  addUnaryOperator(UnaryOperator_Minus, '-', 9, Associativity::Right, "Unary minus", "-x");
+  addUnaryOperator(UnaryOperator_BitwiseOnesComplement, '~', 9, Associativity::Right, "One\'s complement", "Invert bits");
 
-  addBinaryOperator(BinaryOperator_Equals, "==", 3, Associativity::Left);
-  addBinaryOperator(BinaryOperator_NotEquals, "!=", 3, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Lesser, "<", 3, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Greater, ">", 3, Associativity::Left);
-  addBinaryOperator(BinaryOperator_LesserOrEquals, "<=", 3, Associativity::Left);
-  addBinaryOperator(BinaryOperator_GreaterOrEquals, ">=", 3, Associativity::Left);
+  addBinaryOperator(BinaryOperator_Equals, "==", 3, Associativity::Left, "Equals", "x == y");
+  addBinaryOperator(BinaryOperator_NotEquals, "!=", 3, Associativity::Left, "Not equals", "x != y");
+  addBinaryOperator(BinaryOperator_Lesser, "<", 3, Associativity::Left, "Lesser", "x < y");
+  addBinaryOperator(BinaryOperator_Greater, ">", 3, Associativity::Left, "Greater", "x > y");
+  addBinaryOperator(BinaryOperator_LesserOrEquals, "<=", 3, Associativity::Left, "Lesser or equal", "x <= y");
+  addBinaryOperator(BinaryOperator_GreaterOrEquals, ">=", 3, Associativity::Left, "Greater or equal", "x >= y");
+  binaryOperatorInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addBinaryOperator(BinaryOperator_LogicalOr, "||", 1, Associativity::Left);
-  addBinaryOperator(BinaryOperator_LogicalAnd, "&&", 1, Associativity::Left);
+  addBinaryOperator(BinaryOperator_LogicalOr, "||", 1, Associativity::Left, "Logical OR", "x || y");
+  addBinaryOperator(BinaryOperator_LogicalAnd, "&&", 1, Associativity::Left, "Logical AND", "x && y");
+  binaryOperatorInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addBinaryOperator(BinaryOperator_Addition, "+", 4, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Subtraction, "-", 4, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Multiplication, "*", 6, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Division, "/", 6, Associativity::Left);
-  addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 6, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Fmod, "%", 6, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Remainder, "%%", 6, Associativity::Left);
-  addBinaryOperator(BinaryOperator_Exponentiation, "**", 8, Associativity::Right);
+  addBinaryOperator(BinaryOperator_Addition, "+", 4, Associativity::Left, "Addition", "");
+  addBinaryOperator(BinaryOperator_Subtraction, "-", 4, Associativity::Left, "Subtraction", "");
+  addBinaryOperator(BinaryOperator_Multiplication, "*", 6, Associativity::Left, "Multiplication", "");
+  addBinaryOperator(BinaryOperator_Division, "/", 6, Associativity::Left, "Division", "");
+  addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 6, Associativity::Left, "Truncated division", "");
+  addBinaryOperator(BinaryOperator_Fmod, "%", 6, Associativity::Left, "Floating point modulo", "Returns the remainder of x / y (Using truncation)");
+  addBinaryOperator(BinaryOperator_Remainder, "%%", 6, Associativity::Left, "Remainder", "Returns the remainder of x / y (Using round to nearest)");
+  addBinaryOperator(BinaryOperator_Exponentiation, "**", 8, Associativity::Right, "Power", "Returns x to the power of y");
+  binaryOperatorInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addBinaryOperator(BinaryOperator_BitwiseOr, "|", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_BitwiseAnd, "&", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_BitwiseXor, "^", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_BitwiseLeftShift, "<<", 2, Associativity::Left);
-  addBinaryOperator(BinaryOperator_BitwiseRightShift, ">>", 2, Associativity::Left);
+  addBinaryOperator(BinaryOperator_BitwiseOr, "|", 2, Associativity::Left, "Bitwise OR", "x OR y");
+  addBinaryOperator(BinaryOperator_BitwiseAnd, "&", 2, Associativity::Left, "Bitwise AND", "x AND y");
+  addBinaryOperator(BinaryOperator_BitwiseXor, "^", 2, Associativity::Left, "Bitwise XOR", "x XOR y");
+  addBinaryOperator(BinaryOperator_BitwiseLeftShift, "<<", 2, Associativity::Left, "Bitwise left shift", "Shift bits n steps to the left");
+  addBinaryOperator(BinaryOperator_BitwiseRightShift, ">>", 2, Associativity::Left, "Bitwise right shift", "Shift bits n steps to the right");
+  binaryOperatorInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addBinaryOperator(BinaryOperator_VariableAssignment, "=", 9, Associativity::Right);
+  addBinaryOperator(BinaryOperator_VariableAssignment, "=", 9, Associativity::Right, "Assignment", "Assign variable");
 
-  addFunction(Function_Ans, "ans", 0u, 1u);
-  addFunction(Function_Del, "del", 1u, 1u);
-  addFunction(Function_BConv, "bconv", 2u, 2u);
+  addFunction(Function_Ans, "ans", 0u, 1u, "Answer", "Returns the result at the index specified by argument");
+  addFunction(Function_Del, "del", 1u, 1u, "Delete", "Delete and return the variable that matches the argument");
+  addFunction(Function_BConv, "bconv", 2u, 2u, "Base conversion", "Convert value specified by argument x(str) from the base specified by y(num)");
+  functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_Random, "random", 0, 2);
+  addFunction(Function_Trunc, "trunc", 1u, 1u, "Truncation", "Truncates the fractional part");
+  addFunction(Function_Sgn, "sgn", 1u, 1u, "Sign", "Returns the sign (-1, 0, 1)");
+  addFunction(Function_Abs, "abs", 1u, 1u, "Absolute value", "Returns the absolute value");
+  addFunction(Function_Neg, "neg", 1u, 1u, "Negate", "Returns the negated value");
+  addFunction(Function_NegAbs, "negabs", 1u, 1u, "Negate absolute value", "Returns the negated absolute value");
+  addFunction(Function_Round, "round", 1u, 2u, "Round", "Round a value according to second argument or the default rounding mode");
+  functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_Trunc, "trunc", 1u, 1u);
-  addFunction(Function_Sgn, "sgn", 1u, 1u);
-  addFunction(Function_Abs, "abs", 1u, 1u);
-  addFunction(Function_Neg, "neg", 1u, 1u);
-  addFunction(Function_NegAbs, "negabs", 1u, 1u);
-  addFunction(Function_Round, "round", 1u, 2u);
+  addFunction(Function_Fmod, "math.fmod", 2u, 2u, "Floating point modulo", "Returns the remainder of x / y (Using truncation)");
+  addFunction(Function_Rem, "math.rem", 2u, 2u, "Remainder", "Returns the remainder of x / y (Using round to nearest)");
+  addFunction(Function_Mod, "math.mod", 2u, 2u, "Modulo", "Returns modulo of x / y");
+  addFunction(Function_Pow, "math.pow", 2u, 2u, "Power", "Returns x to the power of y");
+  addFunction(Function_Sqr, "math.sqr", 1u, 1u, "Square", "Returns x to the power of 2");
+  addFunction(Function_Cb, "math.cb", 1u, 1u, "Cube", "Returns x to the power of 3");
+  addFunction(Function_Root, "math.root", 2u, 2u, "Root", "Returns nth root of x");
+  addFunction(Function_Sqrt, "math.sqrt", 1u, 1u, "Square root", "Returns square root of x");
+  addFunction(Function_Cbrt, "math.cbrt", 1u, 1u, "Cubic root", "Returns cubic root of x");
+  functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_Fmod, "math.fmod", 2u, 2u);
-  addFunction(Function_Rem, "math.rem", 2u, 2u);
-  addFunction(Function_Mod, "math.mod", 2u, 2u);
-  addFunction(Function_Pow, "math.pow", 2u, 2u);
-  addFunction(Function_Sqr, "math.sqr", 1u, 1u);
-  addFunction(Function_Cb, "math.cb", 1u, 1u);
-  addFunction(Function_Root, "math.root", 2u, 2u);
-  addFunction(Function_Sqrt, "math.sqrt", 1u, 1u);
-  addFunction(Function_Cbrt, "math.cbrt", 1u, 1u);
+  addFunction(Function_Exp, "math.exp", 1u, 1u, "Natural exponent", "Returns e to the power of x");
+  addFunction(Function_Exp2, "math.exp2", 1u, 1u, "Binary exponent", "Returns 2 to the power of x");
+  addFunction(Function_Exp10, "math.exp10", 1u, 1u, "Decimal exponent", "Returns 10 to the power of x");
+  addFunction(Function_LogN, "math.logn", 1u, 1u, "Logarithm", "Returns nth logarithm of x");
+  addFunction(Function_Log, "math.log", 1u, 1u, "Natural logarithm", "Returns nth logarithm of e");
+  addFunction(Function_Log2, "math.log2", 1u, 1u, "Binary logarithm", "Returns nth logarithm of 2");
+  addFunction(Function_Log10, "math.log10", 1u, 1u, "Decimal logarithm", "Returns nth logarithm of 10");
+  functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_Exp, "math.exp", 1u, 1u);
-  addFunction(Function_Exp2, "math.exp2", 1u, 1u);
-  addFunction(Function_Exp10, "math.exp10", 1u, 1u);
-  addFunction(Function_Log, "math.log", 1u, 1u);
-  addFunction(Function_Log2, "math.log2", 1u, 1u);
-  addFunction(Function_Log10, "math.log10", 1u, 1u);
+  addFunction(Function_Sin, "math.sin", 1u, 1u, "Sine", "Trigonometric function");
+  addFunction(Function_Cos, "math.cos", 1u, 1u, "Cosine", "Trigonometric function");
+  addFunction(Function_Tan, "math.tan", 1u, 1u, "tangent", "Trigonometric function");
+  addFunction(Function_Cot, "math.cot", 1u, 1u, "cotangent", "Trigonometric function");
+  addFunction(Function_Sec, "math.sec", 1u, 1u, "secant", "Trigonometric function");
+  addFunction(Function_Csc, "math.csc", 1u, 1u, "cosecant", "Trigonometric function");
 
-  addFunction(Function_Sin, "math.sin", 1u, 1u);
-  addFunction(Function_Cos, "math.cos", 1u, 1u);
-  addFunction(Function_Tan, "math.tan", 1u, 1u);
-  addFunction(Function_Cot, "math.cot", 1u, 1u);
-  addFunction(Function_Sec, "math.sec", 1u, 1u);
-  addFunction(Function_Csc, "math.csc", 1u, 1u);
+  addFunction(Function_ASin, "math.asin", 1u, 1u, "Arcsine", "Trigonometric function");
+  addFunction(Function_ACos, "math.acos", 1u, 1u, "Arccosine", "Trigonometric function");
+  addFunction(Function_ATan, "math.atan", 1u, 1u, "Arctangent", "Trigonometric function");
+  addFunction(Function_ATan2, "math.atan2", 2u, 2u, "Arctangent 2", "Trigonometric function (2 argument version)");
+  addFunction(Function_ACot, "math.acot", 1u, 1u, "Arccotangent", "Trigonometric function");
+  addFunction(Function_ASec, "math.asec", 1u, 1u, "Arcsecant", "Trigonometric function");
+  addFunction(Function_ACsc, "math.acsc", 1u, 1u, "Arccosecant", "Trigonometric function");
 
-  addFunction(Function_ASin, "math.asin", 1u, 1u);
-  addFunction(Function_ACos, "math.acos", 1u, 1u);
-  addFunction(Function_ATan, "math.atan", 1u, 1u);
-  addFunction(Function_ATan2, "math.atan2", 2u, 2u);
-  addFunction(Function_ACot, "math.acot", 1u, 1u);
-  addFunction(Function_ASec, "math.asec", 1u, 1u);
-  addFunction(Function_ACsc, "math.acsc", 1u, 1u);
+  addFunction(Function_SinH, "math.sinh", 1u, 1u, "Hyperbolic sine", "Trigonometric function");
+  addFunction(Function_CosH, "math.cosh", 1u, 1u, "Hyperbolic cosine", "Trigonometric function");
+  addFunction(Function_TanH, "math.tanh", 1u, 1u, "Hyperbolic tangent", "Trigonometric function");
+  addFunction(Function_CotH, "math.coth", 1u, 1u, "Hyperbolic cotangent", "Trigonometric function");
+  addFunction(Function_SecH, "math.sech", 1u, 1u, "Hyperbolic secant", "Trigonometric function");
+  addFunction(Function_CscH, "math.csch", 1u, 1u, "Hyperbolic cosecant", "Trigonometric function");
 
-  addFunction(Function_SinH, "math.sinh", 1u, 1u);
-  addFunction(Function_CosH, "math.cosh", 1u, 1u);
-  addFunction(Function_TanH, "math.tanh", 1u, 1u);
-  addFunction(Function_CotH, "math.coth", 1u, 1u);
-  addFunction(Function_SecH, "math.sech", 1u, 1u);
-  addFunction(Function_CscH, "math.csch", 1u, 1u);
+  addFunction(Function_ASinH, "math.asinh", 1u, 1u, "Hyperbolic arcsine", "Trigonometric function");
+  addFunction(Function_ACosH, "math.acosh", 1u, 1u, "Hyperbolic arccosine", "Trigonometric function");
+  addFunction(Function_ATanH, "math.atanh", 1u, 1u, "Hyperbolic arctangent", "Trigonometric function");
+  addFunction(Function_ACotH, "math.acoth", 1u, 1u, "Hyperbolic arccotangent", "Trigonometric function");
+  addFunction(Function_ASecH, "math.asech", 1u, 1u, "Hyperbolic arcsecant", "Trigonometric function");
+  addFunction(Function_ACscH, "math.acsch", 1u, 1u, "Hyperbolic arccosecant", "Trigonometric function");
+  functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_ASinH, "math.asinh", 1u, 1u);
-  addFunction(Function_ACosH, "math.acosh", 1u, 1u);
-  addFunction(Function_ATanH, "math.atanh", 1u, 1u);
-  addFunction(Function_ACotH, "math.acoth", 1u, 1u);
-  addFunction(Function_ASecH, "math.asech", 1u, 1u);
-  addFunction(Function_ACscH, "math.acsch", 1u, 1u);
+  addFunction(Function_Min, "min", 1u, FunctionToken::GetArgumentCountMaxLimit(), "Min", "Returns the minimum of specified arguments");
+  addFunction(Function_Max, "max", 1u, FunctionToken::GetArgumentCountMaxLimit(), "Max", "Returns the maximum of specified arguments");
 
-  addFunction(Function_Min, "min", 1u, FunctionToken::GetArgumentCountMaxLimit());
-  addFunction(Function_Max, "max", 1u, FunctionToken::GetArgumentCountMaxLimit());
+  addFunction(Function_Mean, "math.mean", 1u, FunctionToken::GetArgumentCountMaxLimit(), "Mean", "Returns the mean of specified arguments");
+  addFunction(Function_Median, "math.median", 1u, FunctionToken::GetArgumentCountMaxLimit(), "Median", "Returns the median of specified arguments");
+  addFunction(Function_Mode, "math.mode", 1u, FunctionToken::GetArgumentCountMaxLimit(), "Mode", "Returns the mode of specified arguments");
+  addFunction(Function_Quartile_Lower,
+              "math.q1",
+              1u,
+              FunctionToken::GetArgumentCountMaxLimit(),
+              "First quartile",
+              "Returns the first quartile of specified arguments");
+  addFunction(Function_Median,
+              "math.q2",
+              1u,
+              FunctionToken::GetArgumentCountMaxLimit(),
+              "Second quartile",
+              "Returns the second quartile of specified arguments");
+  addFunction(Function_Quartile_Upper,
+              "math.q3",
+              1u,
+              FunctionToken::GetArgumentCountMaxLimit(),
+              "Third quartile",
+              "Returns the third quartile of specified arguments");
+  functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_Mean, "math.mean", 1u, FunctionToken::GetArgumentCountMaxLimit());
-  addFunction(Function_Median, "math.median", 1u, FunctionToken::GetArgumentCountMaxLimit());
-  addFunction(Function_Mode, "math.mode", 1u, FunctionToken::GetArgumentCountMaxLimit());
-  addFunction(Function_Quartile_Lower, "math.q1", 1u, FunctionToken::GetArgumentCountMaxLimit());
-  addFunction(Function_Median, "math.q2", 1u, FunctionToken::GetArgumentCountMaxLimit());
-  addFunction(Function_Quartile_Upper, "math.q3", 1u, FunctionToken::GetArgumentCountMaxLimit());
+  addFunction(Function_Str, "str", 1u, 1u, "Stringify", "Returns string representation of argument");
+  addFunction(Function_StrLen, "strlen", 1u, 1u, "String length", "Returns length of string argument");
+  functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_Str, "str", 1u, 1u);
-  addFunction(Function_StrLen, "strlen", 1u, 1u);
+  addFunction(Function_Date, "date", 0u, 1u, "", "Returns a date/time value that respresents the argument or the current date/time if empty");
+  addFunction(Function_Dur, "dur", 1u, 1u, "Duration", "Returns a value representing a time duration specified by argument");
+  functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_Date, "date", 0u, 1u);
-  addFunction(Function_Dur, "dur", 1u, 1u);
+  addFunction(Function_Random, "random", 0, 2, "Random", "Returns a random number between (0 and 1), (0 and x) or (x and y) depending of arguments specified");
+  functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
   InitChemicalExpressionParser(chemicalExpressionParser);
-  addFunction(Function_MolarMass, "chem.M", 1u, 1u);
+  addFunction(Function_MolarMass, "chem.M", 1u, 1u, "Molar mass", "Returns molar mass calculated from chemical compound string");
 
-  addVariable(nullptr, "null");
+  addVariable(nullptr, "null", "Null", "Represents an undefined value type");
+  addVariable(nullptr, "nil", "Nil", "Represents an undefined value type");
+  addVariable(nullptr, "none", "None", "Represents an undefined value type");
   mpfr::mpreal tmpValue;
-  addVariable(tmpValue.setNan(), "nan");
-  addVariable(mpfr::const_infinity(), "inf");
-  addVariable(1, "true");
-  addVariable(0, "false");
+  addVariable(tmpValue.setNan(), "nan", "Not a number", "Represents an undefined numeric value");
+  addVariable(mpfr::const_infinity(), "inf", "Infinity", "Represents infinity");
+  addVariable(1, "true", "True", "Boolean value");
+  addVariable(0, "false", "False", "Boolean value");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::exp10(mpfr::mpreal(24)), "Y");
-  addVariable(mpfr::exp10(mpfr::mpreal(21)), "Z");
-  addVariable(mpfr::exp10(mpfr::mpreal(18)), "E");
-  addVariable(mpfr::exp10(mpfr::mpreal(15)), "P");
-  addVariable(mpfr::exp10(mpfr::mpreal(12)), "T");
-  addVariable(mpfr::exp10(mpfr::mpreal(9)), "G");
-  addVariable(mpfr::exp10(mpfr::mpreal(6)), "M");
-  addVariable(mpfr::exp10(mpfr::mpreal(3)), "k");
-  addVariable(mpfr::exp10(mpfr::mpreal(2)), "h");
-  addVariable(mpfr::exp10(mpfr::mpreal(1)), "da");
-  addVariable(mpfr::exp10(mpfr::mpreal(-1)), "d");
-  addVariable(mpfr::exp10(mpfr::mpreal(-2)), "c");
-  addVariable(mpfr::exp10(mpfr::mpreal(-3)), "m");
-  addVariable(mpfr::exp10(mpfr::mpreal(-6)), "u");
-  addVariable(mpfr::exp10(mpfr::mpreal(-9)), "n");
-  addVariable(mpfr::exp10(mpfr::mpreal(-12)), "p");
-  addVariable(mpfr::exp10(mpfr::mpreal(-15)), "f");
-  addVariable(mpfr::exp10(mpfr::mpreal(-18)), "a");
-  addVariable(mpfr::exp10(mpfr::mpreal(-21)), "z");
-  addVariable(mpfr::exp10(mpfr::mpreal(-24)), "y");
+  addVariable(mpfr::const_pi(), "math.pi", "Pi", "Mathematical constant");
+  addVariable(mpfr::const_euler(), "math.E", "Euler-Mascheroni constant", "Mathematical constant");
+  addVariable(mpfr::const_catalan(), "math.catalan", "Catalan's constant", "Mathematical constant");
+  addVariable(mpfr::const_log2(), "math.ln2", "Logarithm of 2", "Mathematical constant");
+  addVariable(mpfr::mpreal("2.71828182846"), "math.e", "Euler's number", "Mathematical constant");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::exp10(mpfr::mpreal(-2)), "pc");
-  addVariable(mpfr::exp10(mpfr::mpreal(-3)), "pm");
-  addVariable(mpfr::exp10(mpfr::mpreal(-4)), "ptt");
-  addVariable(mpfr::exp10(mpfr::mpreal(-6)), "ppm");
-  addVariable(mpfr::exp10(mpfr::mpreal(-9)), "ppb");
-  addVariable(mpfr::exp10(mpfr::mpreal(-12)), "ppt");
-  addVariable(mpfr::exp10(mpfr::mpreal(-15)), "ppq");
+  addVariable(mpfr::exp10(mpfr::mpreal(24)), "Y", "Yotta", "Metric prefix (10^24)");
+  addVariable(mpfr::exp10(mpfr::mpreal(21)), "Z", "Zetta", "Metric prefix (10^21)");
+  addVariable(mpfr::exp10(mpfr::mpreal(18)), "E", "Exa", "Metric prefix (10^18)");
+  addVariable(mpfr::exp10(mpfr::mpreal(15)), "P", "Peta", "Metric prefix (10^15)");
+  addVariable(mpfr::exp10(mpfr::mpreal(12)), "T", "Tera", "Metric prefix (10^12)");
+  addVariable(mpfr::exp10(mpfr::mpreal(9)), "G", "Giga", "Metric prefix (10^9)");
+  addVariable(mpfr::exp10(mpfr::mpreal(6)), "M", "Mega", "Metric prefix (10^6)");
+  addVariable(mpfr::exp10(mpfr::mpreal(3)), "k", "Kilo", "Metric prefix (10^3)");
+  addVariable(mpfr::exp10(mpfr::mpreal(2)), "h", "Hecto", "Metric prefix (10^2)");
+  addVariable(mpfr::exp10(mpfr::mpreal(1)), "da", "Deca", "Metric prefix (10^1)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-1)), "d", "Deci", "Metric prefix (10^-1)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-2)), "c", "Centi", "Metric prefix (10^-2)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-3)), "m", "Milli", "Metric prefix (10^-3)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-6)), "u", "Micro", "Metric prefix (10^-6)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-9)), "n", "Nano", "Metric prefix (10^-9)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-12)), "p", "Pico", "Metric prefix (10^-12)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-15)), "f", "Femto", "Metric prefix (10^-15)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-18)), "a", "Atto", "Metric prefix (10^-18)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-21)), "z", "Zepto", "Metric prefix (10^-21)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-24)), "y", "Yocto", "Metric prefix (10^-24)");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::mpreal(0), "zero");
-  addVariable(mpfr::mpreal(1), "one");
-  addVariable(mpfr::mpreal(10), "ten");
-  addVariable(mpfr::mpreal(100), "hundred");
-  addVariable(mpfr::mpreal(1000), "thousand");
-  addVariable(mpfr::mpreal(1000000), "million");
+  addVariable(mpfr::exp2(mpfr::mpreal(10)), "Ki", "Kibi", "2^10");
+  addVariable(mpfr::exp2(mpfr::mpreal(20)), "Mi", "Mebi", "2^20");
+  addVariable(mpfr::exp2(mpfr::mpreal(30)), "Gi", "Gibi", "2^30");
+  addVariable(mpfr::exp2(mpfr::mpreal(40)), "Ti", "Tebi", "2^40");
+  addVariable(mpfr::exp2(mpfr::mpreal(50)), "Pi", "Pebi", "2^50");
+  addVariable(mpfr::exp2(mpfr::mpreal(60)), "Ei", "Exbi", "2^60");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::exp10(mpfr::mpreal(9)), "ss.billion");
-  addVariable(mpfr::exp10(mpfr::mpreal(12)), "ss.trillion");
-  addVariable(mpfr::exp10(mpfr::mpreal(15)), "ss.quadrillion");
-  addVariable(mpfr::exp10(mpfr::mpreal(18)), "ss.quintillion");
-  addVariable(mpfr::exp10(mpfr::mpreal(21)), "ss.sextillion");
-  addVariable(mpfr::exp10(mpfr::mpreal(24)), "ss.septillion");
+  addVariable(mpfr::exp10(mpfr::mpreal(-2)), "pc", "Percent", "Parts-per notation (10^-2");
+  addVariable(mpfr::exp10(mpfr::mpreal(-3)), "pm", "Permille", "Parts-per notation (10^-3)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-4)), "ptt", "Parts per ten thousand", "Parts-per notation (10^-4)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-6)), "ppm", "Parts per million", "Parts-per notation (10^-6)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-9)), "ppb", "Parts per billion", "Parts-per notation (10^-9)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-12)), "ppt", "Parts per trillion", "Parts-per notation (10^-12)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-15)), "ppq", "Parts per quadrillion", "Parts-per notation (10^-15)");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::exp10(mpfr::mpreal(9)), "ls.milliard");
-  addVariable(mpfr::exp10(mpfr::mpreal(12)), "ls.billion");
-  addVariable(mpfr::exp10(mpfr::mpreal(15)), "ls.billiard");
-  addVariable(mpfr::exp10(mpfr::mpreal(18)), "ls.trillion");
-  addVariable(mpfr::exp10(mpfr::mpreal(21)), "ls.trilliard");
-  addVariable(mpfr::exp10(mpfr::mpreal(24)), "ls.quadrillion");
+  addVariable(mpfr::mpreal(0), "zero", "Zero", "");
+  addVariable(mpfr::mpreal(1), "one", "One", "Power of ten (10^0)");
+  addVariable(mpfr::mpreal(10), "ten", "Ten", "Power of ten (10^1)");
+  addVariable(mpfr::mpreal(100), "hundred", "Hundred", "Power of ten (10^2)");
+  addVariable(mpfr::mpreal(1000), "thousand", "Thousand", "Power of ten (10^3)");
+  addVariable(mpfr::mpreal(1000000), "million", "Million", "Power of ten (10^6)");
 
-  addVariable(mpfr::const_pi(), "math.pi");
-  addVariable(mpfr::const_euler(), "math.E");
-  addVariable(mpfr::const_catalan(), "math.catalan");
-  addVariable(mpfr::mpreal("2.71828182846"), "math.e");
+  addVariable(mpfr::exp10(mpfr::mpreal(9)), "ss.billion", "Billion", "Power of ten, short scale (10^9)");
+  addVariable(mpfr::exp10(mpfr::mpreal(12)), "ss.trillion", "Trillion", "Power of ten, short scale (10^12)");
+  addVariable(mpfr::exp10(mpfr::mpreal(15)), "ss.quadrillion", "Quadrillion", "Power of ten, short scale (10^15)");
+  addVariable(mpfr::exp10(mpfr::mpreal(18)), "ss.quintillion", "Quintillion", "Power of ten, short scale (10^18)");
+  addVariable(mpfr::exp10(mpfr::mpreal(21)), "ss.sextillion", "Sextillion", "Power of ten, short scale (10^21)");
+  addVariable(mpfr::exp10(mpfr::mpreal(24)), "ss.septillion", "Septillion", "Power of ten, short scale (10^24)");
 
-  addVariable(mpfr::mpreal("6.02214076") * mpfr::exp10(mpfr::mpreal(23)), "phys.NA");
-  addVariable(mpfr::mpreal("299792458"), "phys.c");
-  addVariable(mpfr::mpreal("149597870700"), "phys.au");
-  addVariable(mpfr::mpreal("86400"), "phys.D");
-  addVariable(mpfr::mpreal("1.98892") * mpfr::exp10(mpfr::mpreal(30)), "phys.M");
-  addVariable(mpfr::mpreal("9460730472580800"), "phys.ly");
-  addVariable(mpfr::mpreal("30856775814913700"), "phys.pc");
-  addVariable(mpfr::mpreal("6.674") * mpfr::exp10(mpfr::mpreal(-11)), "phys.G");
-  addVariable(mpfr::mpreal("9.80665"), "phys.g");
-  addVariable(mpfr::mpreal("8.31446261815324"), "phys.R");
+  addVariable(mpfr::exp10(mpfr::mpreal(9)), "ls.milliard", "Milliard", "Power of ten, long scale (10^9)");
+  addVariable(mpfr::exp10(mpfr::mpreal(12)), "ls.billion", "Billion", "Power of ten, long scale (10^12)");
+  addVariable(mpfr::exp10(mpfr::mpreal(15)), "ls.billiard", "Billiard", "Power of ten, long scale (10^15)");
+  addVariable(mpfr::exp10(mpfr::mpreal(18)), "ls.trillion", "Trillion", "Power of ten, long scale (10^18)");
+  addVariable(mpfr::exp10(mpfr::mpreal(21)), "ls.trilliard", "Trilliard", "Power of ten, long scale (10^21)");
+  addVariable(mpfr::exp10(mpfr::mpreal(24)), "ls.quadrillion", "Quadrillion", "Power of ten, long scale (10^24)");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(boost::posix_time::hours(1l), "time.h");
-  addVariable(boost::posix_time::minutes(1l), "time.m");
-  addVariable(boost::posix_time::seconds(1l), "time.s");
-  addVariable(boost::posix_time::milliseconds(1l), "time.ms");
-  addVariable(boost::posix_time::microseconds(1l), "time.us");
-  addVariable(boost::posix_time::nanoseconds(1l), "time.ns");
+  addVariable(mpfr::mpreal("6.02214076") * mpfr::exp10(mpfr::mpreal(23)), "phys.NA", "Avogadro\'s constant", "6.02214076 * 10^23");
+  addVariable(mpfr::mpreal("149597870700"), "phys.au", "Astronomical unit of length", "Defined in metres");
+  addVariable(mpfr::mpreal("86400"), "phys.D", "Astronomical unit of time", "Defined in seconds");
+  addVariable(mpfr::mpreal("1.98892") * mpfr::exp10(mpfr::mpreal(30)), "phys.M", "Astronomical unit of mass", "Defined in kilograms");
+  addVariable(mpfr::mpreal("299792458"), "phys.c", "Speed of light", "In vacuum. Defined in m/s");
+  addVariable(mpfr::mpreal("9460730472580800"), "phys.ly", "Light-year", "Defined in metres");
+  addVariable(mpfr::mpreal("30856775814913700"), "phys.pc", "Parsec", "Defined in metres");
+  addVariable(mpfr::mpreal("6.674") * mpfr::exp10(mpfr::mpreal(-11)), "phys.G", "Gravitational constant", "Defined in m^3*kg^-1*s^-2");
+  addVariable(mpfr::mpreal("9.80665"), "phys.g", "Gravitational acceleration", "Defined in m/s^2");
+  addVariable(mpfr::mpreal("8.31446261815324"), "phys.R", "Molar gas constant", "Defined in J*K^-1*mol^-1");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
+
+  addVariable(boost::posix_time::hours(1l), "time.h", "Hour", "60 * 60 seconds");
+  addVariable(boost::posix_time::minutes(1l), "time.m", "Minute", "60 seconds");
+  addVariable(boost::posix_time::seconds(1l), "time.s", "Second", "1 second");
+  addVariable(boost::posix_time::milliseconds(1l), "time.ms", "Millisecond", "10^-3 of a second");
+  addVariable(boost::posix_time::microseconds(1l), "time.us", "Microsecond", "10^-6 of a second");
+  addVariable(boost::posix_time::nanoseconds(1l), "time.ns", "Nanosecond", "10^-9 of a second");
 
   const boost::posix_time::hours day(24l);
   const auto year = day * 365;
-  addVariable(day * 1l, "time.day");
-  addVariable(day * 7l, "time.week");
-  addVariable(day * 30l, "time.month");
+  addVariable(day * 1l, "time.day", "Day", "24 hours");
+  addVariable(day * 7l, "time.week", "Week", "7 days");
+  addVariable(day * 30l, "time.month", "Month", "30 days");
 
-  addVariable(year * 10l, "time.decade");
-  addVariable(year * 100l, "time.century");
+  addVariable(year * 10l, "time.decade", "Decade", "10 years");
+  addVariable(year * 100l, "time.century", "Century", "100 years");
+  //addVariable(year * 100l, "time.millennium", "Millennium", "1000 years");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::exp2(mpfr::mpreal(10)), "KiB");
-  addVariable(mpfr::exp2(mpfr::mpreal(20)), "MiB");
-  addVariable(mpfr::exp2(mpfr::mpreal(30)), "GiB");
-  addVariable(mpfr::exp2(mpfr::mpreal(40)), "TiB");
-  addVariable(mpfr::exp2(mpfr::mpreal(50)), "PiB");
-  addVariable(mpfr::exp2(mpfr::mpreal(60)), "EiB");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::min()), "i8.min", "Signed byte min", "8 bit signed integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::max()), "i8.max", "Signed byte max", "8 bit signed integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::min()), "i16.min", "Signed short min", "16 bit signed integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::max()), "i16.max", "Signed short max", "16 bit signed integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::min()), "i32.min", "Signed int min", "32 bit signed integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::max()), "i32.max", "Signed int max", "32 bit signed integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::min()), "i64.min", "Signed long min", "64 bit signed integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::max()), "i64.max", "Signed long max", "64 bit signed integer max. limit");
+  addVariable(mpfr::exp2(-mpfr::mpreal(128 - 1)), "i128.min", "Signed long long min", "128 bit signed integer min. limit");
+  addVariable(mpfr::exp2(mpfr::mpreal(128 - 1) - 1), "i128.max", "Signed long long max", "128 bit signed integer max. limit");
 
-  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::min()), "sbyte.min");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::max()), "sbyte.max");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::min()), "short.min");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::max()), "short.max");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::min()), "int.min");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::max()), "int.max");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::min()), "long.min");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::max()), "long.max");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::min()), "u8.min", "Unsigned byte min", "8 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::max()), "u8.max", "Unsigned byte max", "8 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::min()), "u16.min", "Unsigned short min", "16 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::max()), "u16.max", "Unsigned short max", "16 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::min()), "u32.min", "Unsigned int min", "32 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::max()), "u32.max", "Unsigned int max", "32 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::min()), "u64.min", "Unsigned long min", "64 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::max()), "u64.max", "Unsigned long max", "64 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal(0u), "u128.min", "Unsigned long long min", "128 bit unsigned integer min. limit");
+  addVariable(mpfr::exp2(mpfr::mpreal(128) - 1u), "u128.max", "Unsigned long long max", "128 bit unsigned integer max. limit");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::min()), "byte.min");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::max()), "byte.max");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::min()), "ushort.min");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::max()), "ushort.max");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::min()), "uint.min");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::max()), "uint.max");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::min()), "ulong.min");
-  addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::max()), "ulong.max");
-
-  addVariable(mpfr::exp10(mpfr::mpreal(100)), "googol");
+  addVariable(mpfr::exp10(mpfr::mpreal(100)), "googol", "Googol", "10^100");
+  //addVariable(mpfr::exp10(mpfr::exp10(mpfr::mpreal(100))), "googolplex", "Googolplex", "10^(10^100)");
 }
