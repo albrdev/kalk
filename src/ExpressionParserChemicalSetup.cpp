@@ -188,4 +188,8 @@ void InitChemicalExpressionParser(ExpressionParser& instance)
   addVariable(mpfr::mpreal("292"), "Uuh"); //Lv
   addVariable(mpfr::mpreal("294"), "Uus");
   addVariable(mpfr::mpreal("294"), "Uuo");
+
+  addVariable(mpfr::mpreal("1.67262192369") * mpfr::exp10(-24), "p");
+  addVariable(mpfr::mpreal("1.67492749804") * mpfr::exp10(-24), "n");
+  addVariable(mpfr::mpreal("9.1093837015") * mpfr::exp10(-28), "e");
 }
