@@ -1062,11 +1062,16 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addBinaryOperator(BinaryOperator_LogicalAnd, "&&", 1, Associativity::Left, "Logical AND", "x && y");
   binaryOperatorInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addBinaryOperator(BinaryOperator_Addition, "+", 4, Associativity::Left, "Addition", "");
-  addBinaryOperator(BinaryOperator_Subtraction, "-", 4, Associativity::Left, "Subtraction", "");
-  addBinaryOperator(BinaryOperator_Multiplication, "*", 6, Associativity::Left, "Multiplication", "");
-  addBinaryOperator(BinaryOperator_Division, "/", 6, Associativity::Left, "Division", "");
-  addBinaryOperator(BinaryOperator_TruncatedDivision, "//", 6, Associativity::Left, "Truncated division", "");
+  addBinaryOperator(BinaryOperator_Addition, "+", 4, Associativity::Left, "Addition", "x + y");
+  addBinaryOperator(BinaryOperator_Subtraction, "-", 4, Associativity::Left, "Subtraction", "x - y");
+  addBinaryOperator(BinaryOperator_Multiplication, "*", 6, Associativity::Left, "Multiplication", "x * y");
+  addBinaryOperator(BinaryOperator_Division, "/", 6, Associativity::Left, "Division", "x / y");
+  addBinaryOperator(BinaryOperator_TruncatedDivision,
+                    "//",
+                    6,
+                    Associativity::Left,
+                    "Truncated division",
+                    "Division with the quotient\'s fractional part truncated");
   addBinaryOperator(BinaryOperator_Fmod, "%", 6, Associativity::Left, "Floating point modulo", "Returns the remainder of x / y (Using truncation)");
   addBinaryOperator(BinaryOperator_Remainder, "%%", 6, Associativity::Left, "Remainder", "Returns the remainder of x / y (Using round to nearest)");
   addBinaryOperator(BinaryOperator_Exponentiation, "**", 8, Associativity::Right, "Power", "Returns x to the power of y");
@@ -1174,7 +1179,7 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addFunction(Function_StrLen, "strlen", 1u, 1u, "String length", "Returns length of string argument");
   functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_Date, "date", 0u, 1u, "", "Returns a date/time value that respresents the argument or the current date/time if empty");
+  addFunction(Function_Date, "date", 0u, 1u, "Date", "Returns a date/time value that respresents the argument or the current date/time if empty");
   addFunction(Function_Dur, "dur", 1u, 1u, "Duration", "Returns a value representing a time duration specified by argument");
   functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
