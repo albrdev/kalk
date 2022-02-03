@@ -580,6 +580,26 @@ static IValueToken* Function_Round(const std::vector<IValueToken*>& args)
   return new DefaultValueType(mpfr::rint(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(), tmpRndMode));
 }
 
+static IValueToken* Function_RoundE(const std::vector<IValueToken*>& args)
+{
+  return new DefaultValueType(mpfr::rint(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(), mpfr_rnd_t::MPFR_RNDN));
+}
+
+static IValueToken* Function_RoundA(const std::vector<IValueToken*>& args)
+{
+  return new DefaultValueType(mpfr::round(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+}
+
+static IValueToken* Function_Ceil(const std::vector<IValueToken*>& args)
+{
+  return new DefaultValueType(mpfr::ceil(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+}
+
+static IValueToken* Function_Floor(const std::vector<IValueToken*>& args)
+{
+  return new DefaultValueType(mpfr::floor(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+}
+
 static IValueToken* Function_Fmod(const std::vector<IValueToken*>& args)
 {
   return new DefaultValueType(mpfr::fmod(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
@@ -1091,12 +1111,16 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addFunction(Function_BConv, "bconv", 2u, 2u, "Base conversion", "Convert value specified by argument x(str) from the base specified by y(num)");
   functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addFunction(Function_Trunc, "trunc", 1u, 1u, "Truncation", "Truncates the fractional part");
   addFunction(Function_Sgn, "sgn", 1u, 1u, "Sign", "Returns the sign (-1, 0, 1)");
   addFunction(Function_Abs, "abs", 1u, 1u, "Absolute value", "Returns the absolute value");
   addFunction(Function_Neg, "neg", 1u, 1u, "Negate", "Returns the negated value");
   addFunction(Function_NegAbs, "negabs", 1u, 1u, "Negate absolute value", "Returns the negated absolute value");
   addFunction(Function_Round, "round", 1u, 2u, "Round", "Round a value according to second argument or the default rounding mode");
+  addFunction(Function_RoundE, "rounde", 1u, 2u, "Round even", "Round a value with halfway cases to nearest even number");
+  addFunction(Function_RoundA, "rounda", 1u, 2u, "Round away", "Round a value with halfway cases away from zero");
+  addFunction(Function_Ceil, "ceil", 1u, 2u, "Ceil", "Round a value towards higher or equal number");
+  addFunction(Function_Floor, "floor", 1u, 2u, "Floor", "Round a value towards lower or equal number");
+  addFunction(Function_Trunc, "trunc", 1u, 1u, "Truncation", "Truncates the fractional part (Round towards zero)");
   functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
   addFunction(Function_Fmod, "math.fmod", 2u, 2u, "Floating point modulo", "Returns the remainder of x / y (Using truncation)");
@@ -1228,15 +1252,17 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addVariable(mpfr::exp10(mpfr::mpreal(-24)), "y", "Yocto", "Metric prefix (10^-24)");
   variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::exp2(mpfr::mpreal(10)), "Ki", "Kibi", "2^10");
-  addVariable(mpfr::exp2(mpfr::mpreal(20)), "Mi", "Mebi", "2^20");
-  addVariable(mpfr::exp2(mpfr::mpreal(30)), "Gi", "Gibi", "2^30");
-  addVariable(mpfr::exp2(mpfr::mpreal(40)), "Ti", "Tebi", "2^40");
-  addVariable(mpfr::exp2(mpfr::mpreal(50)), "Pi", "Pebi", "2^50");
-  addVariable(mpfr::exp2(mpfr::mpreal(60)), "Ei", "Exbi", "2^60");
+  addVariable(mpfr::exp2(mpfr::mpreal(10)), "Ki", "Kibi", "Binary prefix (2^10)");
+  addVariable(mpfr::exp2(mpfr::mpreal(20)), "Mi", "Mebi", "Binary prefix (2^20)");
+  addVariable(mpfr::exp2(mpfr::mpreal(30)), "Gi", "Gibi", "Binary prefix (2^30)");
+  addVariable(mpfr::exp2(mpfr::mpreal(40)), "Ti", "Tebi", "Binary prefix (2^40)");
+  addVariable(mpfr::exp2(mpfr::mpreal(50)), "Pi", "Pebi", "Binary prefix (2^50)");
+  addVariable(mpfr::exp2(mpfr::mpreal(60)), "Ei", "Exbi", "Binary prefix (2^60)");
+  addVariable(mpfr::exp2(mpfr::mpreal(60)), "Zi", "Zebi", "Binary prefix (2^70)");
+  addVariable(mpfr::exp2(mpfr::mpreal(60)), "Yi", "Yobi", "Binary prefix (2^80)");
   variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::exp10(mpfr::mpreal(-2)), "pc", "Percent", "Parts-per notation (10^-2");
+  addVariable(mpfr::exp10(mpfr::mpreal(-2)), "pc", "Percent", "Parts-per notation (10^-2)");
   addVariable(mpfr::exp10(mpfr::mpreal(-3)), "pm", "Permille", "Parts-per notation (10^-3)");
   addVariable(mpfr::exp10(mpfr::mpreal(-4)), "ptt", "Parts per ten thousand", "Parts-per notation (10^-4)");
   addVariable(mpfr::exp10(mpfr::mpreal(-6)), "ppm", "Parts per million", "Parts-per notation (10^-6)");
@@ -1297,27 +1323,69 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   //addVariable(year * 100l, "time.millennium", "Millennium", "1000 years");
   variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::min()), "bpB", "Bits per byte", "Common value for number of bits per byte");
+
+  addVariable(mpfr::mpreal("-1000", mpfr::mpreal::get_default_prec(), 2), "i4.min", "Signed nibble min", "4 bit signed integer min. limit");
+  addVariable(mpfr::mpreal("0111", mpfr::mpreal::get_default_prec(), 2), "i4.max", "Signed nibble max", "4 bit signed integer max. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::min()), "i8.min", "Signed byte min", "8 bit signed integer min. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::max()), "i8.max", "Signed byte max", "8 bit signed integer max. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::min()), "i16.min", "Signed short min", "16 bit signed integer min. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::max()), "i16.max", "Signed short max", "16 bit signed integer max. limit");
+  addVariable(mpfr::mpreal("-100000000000000000000000", mpfr::mpreal::get_default_prec(), 2),
+              "i24.min",
+              "Signed 24-bit min",
+              "24 bit signed integer min. limit");
+  addVariable(mpfr::mpreal("011111111111111111111111", mpfr::mpreal::get_default_prec(), 2),
+              "i24.max",
+              "Signed 24-bit max",
+              "24 bit signed integer max. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::min()), "i32.min", "Signed int min", "32 bit signed integer min. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::max()), "i32.max", "Signed int max", "32 bit signed integer max. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::min()), "i64.min", "Signed long min", "64 bit signed integer min. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::max()), "i64.max", "Signed long max", "64 bit signed integer max. limit");
-  addVariable(mpfr::exp2(-mpfr::mpreal(128 - 1)), "i128.min", "Signed long long min", "128 bit signed integer min. limit");
-  addVariable(mpfr::exp2(mpfr::mpreal(128 - 1) - 1), "i128.max", "Signed long long max", "128 bit signed integer max. limit");
+  addVariable(mpfr::mpreal("-10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                           mpfr::mpreal::get_default_prec(),
+                           2),
+              "i128.min",
+              "Signed long long min",
+              "128 bit signed integer min. limit");
+  addVariable(mpfr::mpreal("01111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+                           mpfr::mpreal::get_default_prec(),
+                           2),
+              "i128.max",
+              "Signed long long max",
+              "128 bit signed integer max. limit");
 
+  addVariable(mpfr::mpreal("0000", mpfr::mpreal::get_default_prec(), 2), "u4.min", "Unsigned nibble min", "4 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal("1111", mpfr::mpreal::get_default_prec(), 2), "u4.max", "Unsigned nibble max", "4 bit unsigned integer max. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::min()), "u8.min", "Unsigned byte min", "8 bit unsigned integer min. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::max()), "u8.max", "Unsigned byte max", "8 bit unsigned integer max. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::min()), "u16.min", "Unsigned short min", "16 bit unsigned integer min. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::max()), "u16.max", "Unsigned short max", "16 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal("000000000000000000000000", mpfr::mpreal::get_default_prec(), 2),
+              "u24.min",
+              "Unsigned 24-bit min",
+              "24 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal("111111111111111111111111", mpfr::mpreal::get_default_prec(), 2),
+              "u24.max",
+              "Unsigned 24-bit max",
+              "24 bit unsigned integer max. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::min()), "u32.min", "Unsigned int min", "32 bit unsigned integer min. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::max()), "u32.max", "Unsigned int max", "32 bit unsigned integer max. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::min()), "u64.min", "Unsigned long min", "64 bit unsigned integer min. limit");
   addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::max()), "u64.max", "Unsigned long max", "64 bit unsigned integer max. limit");
-  addVariable(mpfr::mpreal(0u), "u128.min", "Unsigned long long min", "128 bit unsigned integer min. limit");
-  addVariable(mpfr::exp2(mpfr::mpreal(128) - 1u), "u128.max", "Unsigned long long max", "128 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                           mpfr::mpreal::get_default_prec(),
+                           2),
+              "u128.min",
+              "Unsigned long long min",
+              "128 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal("11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+                           mpfr::mpreal::get_default_prec(),
+                           2),
+              "u128.max",
+              "Unsigned long long max",
+              "128 bit unsigned integer max. limit");
   variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
   addVariable(mpfr::exp10(mpfr::mpreal(100)), "googol", "Googol", "10^100");
