@@ -1323,7 +1323,7 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   //addVariable(year * 100l, "time.millennium", "Millennium", "1000 years");
   variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::min()), "bpB", "Bits per byte", "Common value for number of bits per byte");
+  addVariable(mpfr::mpreal(CHAR_BIT), "bpB", "Bits per byte", "Common value for number of bits per byte");
 
   addVariable(mpfr::mpreal("-1000", mpfr::mpreal::get_default_prec(), 2), "i4.min", "Signed nibble min", "4 bit signed integer min. limit");
   addVariable(mpfr::mpreal("0111", mpfr::mpreal::get_default_prec(), 2), "i4.max", "Signed nibble max", "4 bit signed integer max. limit");
@@ -1386,6 +1386,13 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
               "u128.max",
               "Unsigned long long max",
               "128 bit unsigned integer max. limit");
+
+  addVariable(mpfr::mpreal(std::numeric_limits<float>::min()), "f32.min", "Float min", "32 bit floating point min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<float>::max()), "f32.max", "Float max", "32 bit floating point max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<float>::epsilon()), "f32.epsilon", "Float epsilon", "32 bit floating point epsilon");
+  addVariable(mpfr::mpreal(std::numeric_limits<double>::min()), "f64.min", "Double min", "64 bit floating point min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<double>::max()), "f64.max", "Double max", "64 bit floating point max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<double>::epsilon()), "f64.epsilon", "Double epsilon", "64 bit floating point epsilon");
   variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
   addVariable(mpfr::exp10(mpfr::mpreal(100)), "googol", "Googol", "10^100");
