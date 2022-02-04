@@ -1314,10 +1314,11 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
 
   const boost::posix_time::hours day(24l);
   const auto year = day * 365;
-  addVariable(day * 1l, "time.day", "Day", "24 hours");
+  addVariable(day, "time.day", "Day", "24 hours");
   addVariable(day * 7l, "time.week", "Week", "7 days");
   addVariable(day * 30l, "time.month", "Month", "30 days");
 
+  addVariable(year, "time.year", "Year", "365 days");
   addVariable(year * 10l, "time.decade", "Decade", "10 years");
   addVariable(year * 100l, "time.century", "Century", "100 years");
   //addVariable(year * 100l, "time.millennium", "Millennium", "1000 years");
