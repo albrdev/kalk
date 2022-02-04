@@ -1321,7 +1321,7 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addVariable(year, "time.year", "Year", "365 days");
   addVariable(year * 10l, "time.decade", "Decade", "10 years");
   addVariable(year * 100l, "time.century", "Century", "100 years");
-  //addVariable(year * 100l, "time.millennium", "Millennium", "1000 years");
+  //addVariable(year * 1000l, "time.millennium", "Millennium", "1000 years");
   variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
   addVariable(mpfr::mpreal(CHAR_BIT), "bpB", "Bits per byte", "Common value for number of bits per byte");
