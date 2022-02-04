@@ -600,6 +600,11 @@ static IValueToken* Function_Floor(const std::vector<IValueToken*>& args)
   return new DefaultValueType(mpfr::floor(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
 }
 
+static IValueToken* Function_Trunc(const std::vector<IValueToken*>& args)
+{
+  return new DefaultValueType(mpfr::trunc(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
+}
+
 static IValueToken* Function_Fmod(const std::vector<IValueToken*>& args)
 {
   return new DefaultValueType(mpfr::fmod(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>(),
@@ -991,11 +996,6 @@ static IValueToken* Function_Random(const std::vector<IValueToken*>& args)
   }
 }
 
-static IValueToken* Function_Trunc(const std::vector<IValueToken*>& args)
-{
-  return new DefaultValueType(mpfr::trunc(args[0]->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()));
-}
-
 static IValueToken* Function_BConv(const std::vector<IValueToken*>& args)
 {
   return new DefaultValueType(mpfr::mpreal(args[0]->AsPointer<DefaultValueType>()->GetValue<std::string>(),
@@ -1116,10 +1116,10 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addFunction(Function_Neg, "neg", 1u, 1u, "Negate", "Returns the negated value");
   addFunction(Function_NegAbs, "negabs", 1u, 1u, "Negate absolute value", "Returns the negated absolute value");
   addFunction(Function_Round, "round", 1u, 2u, "Round", "Round a value according to second argument or the default rounding mode");
-  addFunction(Function_RoundE, "rounde", 1u, 2u, "Round even", "Round a value with halfway cases to nearest even number");
-  addFunction(Function_RoundA, "rounda", 1u, 2u, "Round away", "Round a value with halfway cases away from zero");
-  addFunction(Function_Ceil, "ceil", 1u, 2u, "Ceil", "Round a value towards higher or equal number");
-  addFunction(Function_Floor, "floor", 1u, 2u, "Floor", "Round a value towards lower or equal number");
+  addFunction(Function_RoundE, "rounde", 1u, 1u, "Round even", "Round a value with halfway cases to nearest even number");
+  addFunction(Function_RoundA, "rounda", 1u, 1u, "Round away", "Round a value with halfway cases away from zero");
+  addFunction(Function_Ceil, "ceil", 1u, 1u, "Ceil", "Round a value towards higher or equal number");
+  addFunction(Function_Floor, "floor", 1u, 1u, "Floor", "Round a value towards lower or equal number");
   addFunction(Function_Trunc, "trunc", 1u, 1u, "Truncation", "Truncates the fractional part (Round towards zero)");
   functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
