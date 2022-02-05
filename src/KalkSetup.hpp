@@ -13,8 +13,8 @@
 #include "text/CommandParser.hpp"
 
 using DefaultArithmeticType = mpfr::mpreal;
-using DefaultValueType      = ValueToken<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>;
-using DefaultVariableType   = VariableToken<DefaultArithmeticType, boost::posix_time::ptime, boost::posix_time::time_duration>;
+using DefaultValueType      = ValueToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
+using DefaultVariableType   = VariableToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
 
 using ChemArithmeticType = mpfr::mpreal;
 using ChemValueType      = ValueToken<ChemArithmeticType>;
