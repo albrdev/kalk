@@ -366,13 +366,13 @@ int main(int argc, char* argv[])
   if(argVariableMap.count("help") > 0u)
   {
     printUsage(namedArgDescs);
-    return 0;
+    std::exit(EXIT_SUCCESS);
   }
 
   if(argVariableMap.count("version") > 0u)
   {
     printVersion();
-    return 0;
+    std::exit(EXIT_SUCCESS);
   }
 
   if(options.seed == 0u)
@@ -402,7 +402,7 @@ int main(int argc, char* argv[])
   if(argVariableMap.count("list") > 0u)
   {
     list(argVariableMap["list"].as<const std::string&>());
-    return 0;
+    std::exit(EXIT_SUCCESS);
   }
 
   constexpr char kWhitespaceCharacters[] = " \t\v\n\r\f";
@@ -426,14 +426,14 @@ int main(int argc, char* argv[])
       if(ttyFileName == nullptr)
       {
         std::cerr << "*** Error: " << std::strerror(errno) << std::endl;
-        return 1;
+        std::exit(EXIT_FAILURE);
       }
 
       FILE* tmpFile;
       if((tmpFile = freopen(ttyFileName, "r", stdin)) == nullptr)
       {
         std::cerr << "*** Error: " << std::strerror(errno) << std::endl;
-        return 1;
+        std::exit(EXIT_FAILURE);
       }
 
       file_stdin.reset(tmpFile);
@@ -443,7 +443,7 @@ int main(int argc, char* argv[])
   if(argVariableMap.count("expr") == 0u && !options.interactive && !hasPipedData)
   {
     std::cerr << "*** Error: No expression specified" << std::endl;
-    return 1;
+    std::exit(EXIT_FAILURE);
   }
 
   if(argVariableMap.count("expr") > 0u)
@@ -519,5 +519,5 @@ int main(int argc, char* argv[])
     }
   }
 
-  std::exit(0);
+  std::exit(EXIT_SUCCESS);
 }
