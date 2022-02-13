@@ -1,6 +1,6 @@
 DIR_BUILD	:= build
 DIR_INSTALL := /usr/local/bin
-BIN_KALK := kalk
+BIN_NAME := kalk
 
 CMD_BUILD := cmake
 CMD_MKDIR	:= mkdir
@@ -23,14 +23,14 @@ prebuild:
 
 .PHONY: memcheck
 memcheck:
-	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --error-exitcode=1 ./$(DIR_BUILD)/$(BIN_KALK).out | sed --quiet "/SUMMARY/,$$$$p"
+	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --error-exitcode=1 ./$(DIR_BUILD)/$(BIN_NAME).out | sed --quiet "/SUMMARY/,$$$$p"
 
 .PHONY: install
 install:
-	$(CMD_CP) --force ./$(DIR_BUILD)/$(BIN_KALK).out $(DIR_INSTALL)/$(BIN_KALK)
-	$(CMD_CHMOD) --reference=$(DIR_INSTALL) $(DIR_INSTALL)/kalk
-	$(CMD_CHOWN) --reference=$(DIR_INSTALL) $(DIR_INSTALL)/kalk
+	$(CMD_CP) --force ./$(DIR_BUILD)/$(BIN_NAME).out $(DIR_INSTALL)/$(BIN_NAME)
+	$(CMD_CHMOD) --reference=$(DIR_INSTALL) $(DIR_INSTALL)/$(BIN_NAME)
+	$(CMD_CHOWN) --reference=$(DIR_INSTALL) $(DIR_INSTALL)/$(BIN_NAME)
 
 .PHONY: uninstall
 uninstall:
-	$(CMD_RM) --force $(DIR_INSTALL)/$(BIN_KALK)
+	$(CMD_RM) --force $(DIR_INSTALL)/$(BIN_NAME)
