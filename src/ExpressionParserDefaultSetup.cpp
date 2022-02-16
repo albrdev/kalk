@@ -463,7 +463,7 @@ static IValueToken* BinaryOperator_BitwiseLeftShift(IValueToken* lhs, IValueToke
   mpz_class tmpLhs;
   tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
 
-  mpz_class tmpResult = tmpLhs << rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>().toULLong();
+  mpz_class tmpResult = tmpLhs << static_cast<mp_bitcnt_t>(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>().toULong());
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 
@@ -472,7 +472,7 @@ static IValueToken* BinaryOperator_BitwiseRightShift(IValueToken* lhs, IValueTok
   mpz_class tmpLhs;
   tmpLhs.set_str(mpfr::trunc(lhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>()).toString(), 10);
 
-  mpz_class tmpResult = tmpLhs >> rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>().toULLong();
+  mpz_class tmpResult = tmpLhs >> static_cast<mp_bitcnt_t>(rhs->AsPointer<DefaultValueType>()->GetValue<DefaultArithmeticType>().toULong());
   return new DefaultValueType(DefaultArithmeticType(tmpResult.get_str()));
 }
 #endif // __REGION__BINOPS__BITWISE
