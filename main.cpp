@@ -155,6 +155,21 @@ void handleResult(const DefaultValueType* value)
   }
 }
 
+void evaluate(std::string expression, ExpressionParser& expressionParser)
+{
+  constexpr char kWhitespaceCharacters[] = " \t\v\n\r\f";
+  bool end                               = false;
+  while(!end && expression.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
+  {
+    const auto result = expressionParser.Evaluate(expression);
+    handleResult(result->AsPointer<const DefaultValueType>());
+    if(!(end = expressionParser.GetCurrent() != ';'))
+    {
+      expression = (expressionParser.GetRemaining() + 1u);
+    }
+  }
+}
+
 void list(const std::string& searchPattern)
 {
   const std::regex regex(searchPattern);
@@ -405,7 +420,6 @@ int main(int argc, char* argv[])
     std::exit(EXIT_SUCCESS);
   }
 
-  constexpr char kWhitespaceCharacters[] = " \t\v\n\r\f";
   std::unique_ptr<FILE, decltype(&std::fclose)> file_stdin(nullptr, &std::fclose);
   bool hasPipedData = std::cin.rdbuf()->in_avail() != -1 && isatty(fileno(stdin)) == 0;
   if(hasPipedData)
@@ -413,11 +427,7 @@ int main(int argc, char* argv[])
     std::string input;
     while(std::getline(std::cin, input))
     {
-      if(input.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
-      {
-        auto result = expressionParser.Evaluate(input);
-        handleResult(result->AsPointer<DefaultValueType>());
-      }
+      evaluate(input, expressionParser);
     }
 
     if(options.interactive)
@@ -453,11 +463,7 @@ int main(int argc, char* argv[])
     const auto& exprs = argVariableMap["expr"].as<const std::vector<std::string>&>();
     for(auto& expr : exprs)
     {
-      if(expr.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
-      {
-        const auto result = expressionParser.Evaluate(expr);
-        handleResult(result->AsPointer<const DefaultValueType>());
-      }
+      evaluate(expr, expressionParser);
     }
   }
 
@@ -471,9 +477,9 @@ int main(int argc, char* argv[])
       auto tmpPtr       = std::unique_ptr<char, decltype(&std::free)>(tmpInput, &std::free);
       std::string input = tmpInput;
 
-      if(input.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
+      boost::trim_left(input);
+      if(!input.empty())
       {
-        boost::trim(input);
         if(input.front() == '/')
         {
           try
@@ -497,8 +503,7 @@ int main(int argc, char* argv[])
         {
           try
           {
-            auto result = expressionParser.Evaluate(input);
-            handleResult(result->AsPointer<DefaultValueType>());
+            evaluate(input, expressionParser);
           }
           catch(const SyntaxException& e)
           {
