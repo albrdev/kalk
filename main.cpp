@@ -517,9 +517,9 @@ int main(int argc, char* argv[])
           {
             std::cerr << "*** Expression error: " << e.what() << std::endl;
           }
-
-          add_history(tmpInput);
         }
+
+        add_history(tmpInput);
       }
     }
   }

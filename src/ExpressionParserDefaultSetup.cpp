@@ -210,7 +210,7 @@ static void removeVariable(const std::string& identifier)
   }
 }
 
-DefaultValueType* addNewVariable(const std::string& identifier)
+static DefaultValueType* addNewVariable(const std::string& identifier)
 {
   auto tmpNew                                   = std::make_unique<DefaultVariableType>(identifier);
   auto result                                   = tmpNew.get();
