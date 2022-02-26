@@ -21,6 +21,10 @@ prebuild:
 	$(CMD_MKDIR) -p ./$(DIR_BUILD)
 	$(CMD_BUILD) -B ./$(DIR_BUILD)
 
+.PHONY: clean
+clean:
+	$(CMD_RM) --force --recursive ./$(DIR_BUILD)/*
+
 .PHONY: memcheck
 memcheck:
 	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --error-exitcode=1 ./$(DIR_BUILD)/$(BIN_NAME).out | sed --quiet "/SUMMARY/,$$$$p"
