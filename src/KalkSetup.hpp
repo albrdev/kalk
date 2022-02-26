@@ -1,5 +1,5 @@
-#ifndef __EXPRESSIONPARSERSETUP_HPP__
-#define __EXPRESSIONPARSERSETUP_HPP__
+#ifndef __KALKSETUP_HPP__
+#define __KALKSETUP_HPP__
 
 #include <string>
 #include <vector>
@@ -55,7 +55,7 @@ struct kalk_options
   bool interactive;
 };
 
-const inline kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, -1, "%Y-%m-%d %H:%M:%S", 0, false};
+const inline kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, -1, "%Y-%m-%d %H:%M:%S", 0u, false};
 inline kalk_options options {};
 
 mpfr_rnd_t strToRmode(const std::string value);
@@ -67,4 +67,4 @@ void InitDefaultExpressionParser(ExpressionParser& instance);
 void InitChemicalExpressionParser(ExpressionParser& instance);
 void InitCommandParser(CommandParser& instance);
 
-#endif // __EXPRESSIONPARSERSETUP_HPP__
+#endif // __KALKSETUP_HPP__

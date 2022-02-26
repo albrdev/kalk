@@ -22,8 +22,8 @@
 #include <mpreal.h>
 #include "text/expression/ExpressionParser.hpp"
 #include "text/CommandParser.hpp"
-#include "KalkSetup.hpp"
 #include "text/SyntaxException.hpp"
+#include "KalkSetup.hpp"
 
 static const std::unordered_map<mpfr_rnd_t, std::string> rmodeNameMap = {
     {mpfr_rnd_t::MPFR_RNDN, "N"},
@@ -137,10 +137,9 @@ int sgn(T value)
   return (value > static_cast<T>(0)) - (value < static_cast<T>(0));
 }
 
-void handleResult(const DefaultValueType* value)
+static void handleResult(const DefaultValueType* value)
 {
   results.push_back(*value);
-
   printValue(*value);
 
   if(!defaultUninitializedVariableCache.empty())
@@ -155,7 +154,7 @@ void handleResult(const DefaultValueType* value)
   }
 }
 
-void evaluate(std::string expression, ExpressionParser& expressionParser)
+static void evaluate(std::string expression, ExpressionParser& expressionParser)
 {
   constexpr char kWhitespaceCharacters[] = " \t\v\n\r\f";
   bool end                               = false;

@@ -1,5 +1,6 @@
 #include "KalkSetup.hpp"
 #include <cstdint>
+#include <iostream>
 #include <sstream>
 #include <memory>
 #include <limits>
@@ -1097,14 +1098,14 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addBinaryOperator(BinaryOperator_Exponentiation, "**", 8, Associativity::Right, "Power", "Returns x to the power of y");
   binaryOperatorInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addBinaryOperator(BinaryOperator_BitwiseOr, "|", 2, Associativity::Left, "Bitwise OR", "x OR y");
-  addBinaryOperator(BinaryOperator_BitwiseAnd, "&", 2, Associativity::Left, "Bitwise AND", "x AND y");
-  addBinaryOperator(BinaryOperator_BitwiseXor, "^", 2, Associativity::Left, "Bitwise XOR", "x XOR y");
+  addBinaryOperator(BinaryOperator_BitwiseOr, "|", 2, Associativity::Left, "Bitwise OR", "x | y");
+  addBinaryOperator(BinaryOperator_BitwiseAnd, "&", 2, Associativity::Left, "Bitwise AND", "x & y");
+  addBinaryOperator(BinaryOperator_BitwiseXor, "^", 2, Associativity::Left, "Bitwise XOR", "x ^ y");
   addBinaryOperator(BinaryOperator_BitwiseLeftShift, "<<", 2, Associativity::Left, "Bitwise left shift", "Shift bits n steps to the left");
   addBinaryOperator(BinaryOperator_BitwiseRightShift, ">>", 2, Associativity::Left, "Bitwise right shift", "Shift bits n steps to the right");
   binaryOperatorInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
-  addBinaryOperator(BinaryOperator_VariableAssignment, "=", 9, Associativity::Right, "Assignment", "Assign variable");
+  addBinaryOperator(BinaryOperator_VariableAssignment, "=", 10, Associativity::Right, "Assignment", "Assigns variable");
 
   addFunction(Function_Ans, "ans", 0u, 1u, "Answer", "Returns the result at the index specified by argument");
   addFunction(Function_Del, "del", 1u, 1u, "Delete", "Delete and return the variable that matches the argument");
