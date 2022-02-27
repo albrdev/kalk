@@ -23,6 +23,7 @@
 #include "text/expression/ExpressionParser.hpp"
 #include "text/CommandParser.hpp"
 #include "text/SyntaxException.hpp"
+#include "math/Common.hpp"
 #include "Setup.hpp"
 
 static const std::unordered_map<mpfr_rnd_t, std::string> rmodeNameMap = {
@@ -129,12 +130,6 @@ void resolveEnvironmentVariables(std::vector<std::string>& result)
     result.push_back("KALK_INTERACTIVE");
     result.push_back(pTmp);
   }
-}
-
-template<class T>
-int sgn(T value)
-{
-  return (value > static_cast<T>(0)) - (value < static_cast<T>(0));
 }
 
 static void handleResult(const DefaultValueType* value)
@@ -329,7 +324,7 @@ int main(int argc, char* argv[])
     options.input_base  = value;
   }));
   namedEnvDescs.add_options()("KALK_JUXTA", boost::program_options::value<int>()->default_value(defaultOptions.jpo_precedence)->notifier([](int value) {
-    options.jpo_precedence = sgn(value);
+    options.jpo_precedence = Math::Sign(value);
   }));
   namedEnvDescs.add_options()("KALK_DATE_OFMT", boost::program_options::value<std::string>(&options.date_ofmt)->default_value(defaultOptions.date_ofmt));
   namedEnvDescs.add_options()("KALK_INTERACTIVE", boost::program_options::value<bool>(&options.interactive)->default_value(defaultOptions.interactive));
@@ -353,7 +348,7 @@ int main(int argc, char* argv[])
                               boost::program_options::value<int>()->notifier([](int value) { options.input_base = options.output_base = value; }),
                               "Set output and input base");
   namedArgDescs.add_options()("juxta,j",
-                              boost::program_options::value<int>()->notifier([](int value) { options.jpo_precedence = sgn(value); }),
+                              boost::program_options::value<int>()->notifier([](int value) { options.jpo_precedence = Math::Sign(value); }),
                               "Set juxtaposition operator precedence (-1, 0, 1)");
   namedArgDescs.add_options()("date_ofmt,d", boost::program_options::value<std::string>(&options.date_ofmt), "Set date output format");
   namedArgDescs.add_options()("seed,z", boost::program_options::value<unsigned int>(&options.seed), "Set random seed (number)");

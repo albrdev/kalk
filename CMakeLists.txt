@@ -32,15 +32,17 @@ if(Boost_FOUND)
 endif()
 
 set(LIBRARY_COMMON common)
+set(LIBRARY_MATH math)
 set(LIBRARY_TEXT text)
 
 # Traverse directories
 add_subdirectory(src)
 add_subdirectory(ext/lib-common-cpp)
+add_subdirectory(ext/lib-math-cpp)
 add_subdirectory(ext/lib-text-cpp)
 
 get_target_property(SOURCES ${TARGET_KALK} SOURCES)
 add_executable(${EXECUTABLE_KALK} main.cpp ${SOURCES})
 target_compile_definitions(${TARGET_KALK} PUBLIC BOOST_DATE_TIME_POSIX_TIME_STD_CONFIG PROJECT_NAME="${PROJECT_NAME}" PROJECT_VERSION="${PROJECT_VERSION}" PROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR} PROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR} PROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH} PROJECT_EXECUTABLE="${EXECUTABLE_NAME}")
-target_include_directories(${TARGET_KALK} PUBLIC src ext/lib-common-cpp/src ext/lib-text-cpp/src)
-target_link_libraries(${EXECUTABLE_KALK} ${TARGET_KALK} ${LIBRARY_COMMON} ${LIBRARY_TEXT} gmpxx gmp mpfr readline)
+target_include_directories(${TARGET_KALK} PUBLIC src ext/lib-common-cpp/src ext/lib-math-cpp/src ext/lib-text-cpp/src)
+target_link_libraries(${EXECUTABLE_KALK} ${TARGET_KALK} ${LIBRARY_COMMON} ${LIBRARY_MATH} ${LIBRARY_TEXT} gmpxx gmp mpfr readline)
