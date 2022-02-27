@@ -23,7 +23,7 @@
 #include "text/expression/ExpressionParser.hpp"
 #include "text/CommandParser.hpp"
 #include "text/SyntaxException.hpp"
-#include "KalkSetup.hpp"
+#include "Setup.hpp"
 
 static const std::unordered_map<mpfr_rnd_t, std::string> rmodeNameMap = {
     {mpfr_rnd_t::MPFR_RNDN, "N"},
