@@ -6,3 +6,7 @@
 	path = ext/lib-text-cpp
 	url = git@github.com:albrdev/lib-text-cpp.git
 	branch = main
+[submodule "ext/lib-math-cpp"]
+	path = ext/lib-math-cpp
+	url = git@github.com:albrdev/lib-math-cpp.git
+	branch = main
