@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <functional>
 #include <readline/history.h>
-#include "text/CommandParser.hpp"
 
 int Command_Prec(const std::vector<std::string>& args)
 {

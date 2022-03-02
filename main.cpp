@@ -20,9 +20,6 @@
 #include <boost/date_time/date_facet.hpp>
 #include <boost/date_time/time_facet.hpp>
 #include <mpreal.h>
-#include "text/expression/ExpressionParser.hpp"
-#include "text/CommandParser.hpp"
-#include "text/SyntaxException.hpp"
 #include "math/Common.hpp"
 #include "Setup.hpp"
 

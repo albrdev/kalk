@@ -10,15 +10,33 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "text/expression/ExpressionParser.hpp"
-#include "text/CommandParser.hpp"
+#include "text/parse/CommandParser.hpp"
+#include "text/exception/SyntaxException.hpp"
 
 using DefaultArithmeticType = mpfr::mpreal;
-using DefaultValueType      = ValueToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
-using DefaultVariableType   = VariableToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
+using DefaultValueType =
+    text::expression::ValueToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
+using DefaultVariableType =
+    text::expression::VariableToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
 
 using ChemArithmeticType = mpfr::mpreal;
-using ChemValueType      = ValueToken<ChemArithmeticType>;
-using ChemVariableType   = VariableToken<ChemArithmeticType>;
+using ChemValueType      = text::expression::ValueToken<ChemArithmeticType>;
+using ChemVariableType   = text::expression::VariableToken<ChemArithmeticType>;
+
+using text::expression::IValueToken;
+using text::expression::IVariableToken;
+using text::expression::IUnaryOperatorToken;
+using text::expression::IBinaryOperatorToken;
+using text::expression::IFunctionToken;
+using text::expression::UnaryOperatorToken;
+using text::expression::BinaryOperatorToken;
+using text::expression::FunctionToken;
+
+using text::expression::Associativity;
+
+using text::expression::ExpressionParser;
+using text::parse::CommandParser;
+using text::exception::SyntaxException;
 
 inline std::unordered_map<char, std::unique_ptr<UnaryOperatorToken>> defaultUnaryOperatorCache;
 inline std::unordered_map<char, IUnaryOperatorToken*> defaultUnaryOperators;
