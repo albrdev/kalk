@@ -10,33 +10,33 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "text/expression/ExpressionParser.hpp"
-#include "text/parse/CommandParser.hpp"
+#include "text/parsing/CommandParser.hpp"
 #include "text/exception/SyntaxException.hpp"
 
 using DefaultArithmeticType = mpfr::mpreal;
 using DefaultValueType =
-    text::expression::ValueToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
+    Text::Expression::ValueToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
 using DefaultVariableType =
-    text::expression::VariableToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
+    Text::Expression::VariableToken<std::nullptr_t, DefaultArithmeticType, std::string, boost::posix_time::ptime, boost::posix_time::time_duration>;
 
 using ChemArithmeticType = mpfr::mpreal;
-using ChemValueType      = text::expression::ValueToken<ChemArithmeticType>;
-using ChemVariableType   = text::expression::VariableToken<ChemArithmeticType>;
+using ChemValueType      = Text::Expression::ValueToken<ChemArithmeticType>;
+using ChemVariableType   = Text::Expression::VariableToken<ChemArithmeticType>;
 
-using text::expression::IValueToken;
-using text::expression::IVariableToken;
-using text::expression::IUnaryOperatorToken;
-using text::expression::IBinaryOperatorToken;
-using text::expression::IFunctionToken;
-using text::expression::UnaryOperatorToken;
-using text::expression::BinaryOperatorToken;
-using text::expression::FunctionToken;
+using Text::Expression::IValueToken;
+using Text::Expression::IVariableToken;
+using Text::Expression::IUnaryOperatorToken;
+using Text::Expression::IBinaryOperatorToken;
+using Text::Expression::IFunctionToken;
+using Text::Expression::UnaryOperatorToken;
+using Text::Expression::BinaryOperatorToken;
+using Text::Expression::FunctionToken;
 
-using text::expression::Associativity;
+using Text::Expression::Associativity;
 
-using text::expression::ExpressionParser;
-using text::parse::CommandParser;
-using text::exception::SyntaxException;
+using Text::Expression::ExpressionParser;
+using Text::Parsing::CommandParser;
+using Text::Exception::SyntaxException;
 
 inline std::unordered_map<char, std::unique_ptr<UnaryOperatorToken>> defaultUnaryOperatorCache;
 inline std::unordered_map<char, IUnaryOperatorToken*> defaultUnaryOperators;
