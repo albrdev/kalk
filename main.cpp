@@ -127,12 +127,21 @@ void resolveEnvironmentVariables(std::vector<std::string>& result)
     result.push_back("KALK_INTERACTIVE");
     result.push_back(pTmp);
   }
+
+  if((pTmp = std::getenv("KALK_VERBOSE")) != nullptr)
+  {
+    result.push_back("KALK_VERBOSE");
+    result.push_back(pTmp);
+  }
 }
 
-static void handleResult(const DefaultValueType* value)
+static void handleResult(const DefaultValueType* value, bool verbose)
 {
   results.push_back(*value);
-  printValue(*value);
+  if(verbose)
+  {
+    printValue(*value);
+  }
 
   if(!defaultUninitializedVariableCache.empty())
   {
@@ -146,14 +155,14 @@ static void handleResult(const DefaultValueType* value)
   }
 }
 
-static void evaluate(std::string expression, ExpressionParser& expressionParser)
+static void evaluate(std::string expression, ExpressionParser& expressionParser, bool verbose = true)
 {
   constexpr char kWhitespaceCharacters[] = " \t\v\n\r\f";
   bool end                               = false;
   while(!end && expression.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
   {
     const auto result = expressionParser.Evaluate(expression);
-    handleResult(result->AsPointer<const DefaultValueType>());
+    handleResult(result->AsPointer<const DefaultValueType>(), verbose);
     if(!(end = expressionParser.GetCurrent() != ';'))
     {
       expression = (expressionParser.GetRemaining() + 1u);
@@ -325,6 +334,7 @@ int main(int argc, char* argv[])
   }));
   namedEnvDescs.add_options()("KALK_DATE_OFMT", boost::program_options::value<std::string>(&options.date_ofmt)->default_value(defaultOptions.date_ofmt));
   namedEnvDescs.add_options()("KALK_INTERACTIVE", boost::program_options::value<bool>(&options.interactive)->default_value(defaultOptions.interactive));
+  namedEnvDescs.add_options()("KALK_VERBOSE", boost::program_options::value<std::string>()->default_value(""));
 
   boost::program_options::variables_map envVariableMap;
   boost::program_options::store(boost::program_options::command_line_parser(envs)
@@ -357,7 +367,7 @@ int main(int argc, char* argv[])
                               "Set random seed (string)");
   namedArgDescs.add_options()("interactive,i", boost::program_options::value<bool>(&options.interactive)->implicit_value(true), "Enable interactive mode");
   namedArgDescs.add_options()("list,l", boost::program_options::value<std::string>()->implicit_value(".*"), "List available operators/functions/variables");
-  namedArgDescs.add_options()("verbose,v", "Enable verbose mode");
+  namedArgDescs.add_options()("verbose,v", boost::program_options::value<std::string>()->default_value("")->implicit_value("op"), "Enable verbose mode");
   namedArgDescs.add_options()("version,V", "Print version");
   namedArgDescs.add_options()("help,h", "Print usage");
 
@@ -394,7 +404,12 @@ int main(int argc, char* argv[])
   auto dateFacet = new boost::posix_time::time_facet(options.date_ofmt.c_str());
   std::cout.imbue(std::locale(std::cout.getloc(), dateFacet));
 
-  if(argVariableMap.count("verbose") > 0u)
+  const bool verboseOptions = envVariableMap["KALK_VERBOSE"].as<const std::string&>().find_first_of("oO") != std::string::npos ||
+                              argVariableMap["verbose"].as<const std::string&>().find_first_of("oO") != std::string::npos;
+  const bool verbosePipe = envVariableMap["KALK_VERBOSE"].as<const std::string&>().find_first_of("pP") != std::string::npos ||
+                           argVariableMap["verbose"].as<const std::string&>().find_first_of("pP") != std::string::npos;
+
+  if(verboseOptions)
   {
     printOptions();
   }
@@ -418,7 +433,7 @@ int main(int argc, char* argv[])
     std::string input;
     while(std::getline(std::cin, input))
     {
-      evaluate(input, expressionParser);
+      evaluate(input, expressionParser, verbosePipe);
     }
 
     if(options.interactive)
