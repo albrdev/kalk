@@ -1278,4 +1278,76 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addVariable(boost::posix_time::microseconds(1l), "time.us", "Microsecond", "10^-6 of a second");
   addVariable(boost::posix_time::nanoseconds(1l), "time.ns", "Nanosecond", "10^-9 of a second");
   addVariable(boost::posix_time::hours(24l), "time.d", "Day", "24 hours");
+  variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
+
+  addVariable(mpfr::mpreal(CHAR_BIT), "bpB", "Bits per byte", "Common value for number of bits per byte");
+
+  addVariable(mpfr::mpreal("-1000", mpfr::mpreal::get_default_prec(), 2), "i4.min", "Signed nibble min", "4 bit signed integer min. limit");
+  addVariable(mpfr::mpreal("0111", mpfr::mpreal::get_default_prec(), 2), "i4.max", "Signed nibble max", "4 bit signed integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::min()), "i8.min", "Signed byte min", "8 bit signed integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int8_t>::max()), "i8.max", "Signed byte max", "8 bit signed integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::min()), "i16.min", "Signed short min", "16 bit signed integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int16_t>::max()), "i16.max", "Signed short max", "16 bit signed integer max. limit");
+  addVariable(mpfr::mpreal("-100000000000000000000000", mpfr::mpreal::get_default_prec(), 2),
+              "i24.min",
+              "Signed 24-bit min",
+              "24 bit signed integer min. limit");
+  addVariable(mpfr::mpreal("011111111111111111111111", mpfr::mpreal::get_default_prec(), 2),
+              "i24.max",
+              "Signed 24-bit max",
+              "24 bit signed integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::min()), "i32.min", "Signed int min", "32 bit signed integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int32_t>::max()), "i32.max", "Signed int max", "32 bit signed integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::min()), "i64.min", "Signed long min", "64 bit signed integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::int64_t>::max()), "i64.max", "Signed long max", "64 bit signed integer max. limit");
+  addVariable(mpfr::mpreal("-10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                           mpfr::mpreal::get_default_prec(),
+                           2),
+              "i128.min",
+              "Signed long long min",
+              "128 bit signed integer min. limit");
+  addVariable(mpfr::mpreal("01111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+                           mpfr::mpreal::get_default_prec(),
+                           2),
+              "i128.max",
+              "Signed long long max",
+              "128 bit signed integer max. limit");
+
+  addVariable(mpfr::mpreal("0000", mpfr::mpreal::get_default_prec(), 2), "u4.min", "Unsigned nibble min", "4 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal("1111", mpfr::mpreal::get_default_prec(), 2), "u4.max", "Unsigned nibble max", "4 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::min()), "u8.min", "Unsigned byte min", "8 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint8_t>::max()), "u8.max", "Unsigned byte max", "8 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::min()), "u16.min", "Unsigned short min", "16 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint16_t>::max()), "u16.max", "Unsigned short max", "16 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal("000000000000000000000000", mpfr::mpreal::get_default_prec(), 2),
+              "u24.min",
+              "Unsigned 24-bit min",
+              "24 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal("111111111111111111111111", mpfr::mpreal::get_default_prec(), 2),
+              "u24.max",
+              "Unsigned 24-bit max",
+              "24 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::min()), "u32.min", "Unsigned int min", "32 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint32_t>::max()), "u32.max", "Unsigned int max", "32 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::min()), "u64.min", "Unsigned long min", "64 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<std::uint64_t>::max()), "u64.max", "Unsigned long max", "64 bit unsigned integer max. limit");
+  addVariable(mpfr::mpreal("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+                           mpfr::mpreal::get_default_prec(),
+                           2),
+              "u128.min",
+              "Unsigned long long min",
+              "128 bit unsigned integer min. limit");
+  addVariable(mpfr::mpreal("11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+                           mpfr::mpreal::get_default_prec(),
+                           2),
+              "u128.max",
+              "Unsigned long long max",
+              "128 bit unsigned integer max. limit");
+
+  addVariable(mpfr::mpreal(std::numeric_limits<float>::min()), "f32.min", "Float min", "32 bit floating point min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<float>::max()), "f32.max", "Float max", "32 bit floating point max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<float>::epsilon()), "f32.epsilon", "Float epsilon", "32 bit floating point epsilon");
+  addVariable(mpfr::mpreal(std::numeric_limits<double>::min()), "f64.min", "Double min", "64 bit floating point min. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<double>::max()), "f64.max", "Double max", "64 bit floating point max. limit");
+  addVariable(mpfr::mpreal(std::numeric_limits<double>::epsilon()), "f64.epsilon", "Double epsilon", "64 bit floating point epsilon");
 }
