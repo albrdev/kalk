@@ -1,13 +1,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
-#include <ctime>
 #include <cerrno>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <regex>
 #include <locale>
 #include <exception>
@@ -391,12 +391,7 @@ int main(int argc, char* argv[])
     std::exit(EXIT_SUCCESS);
   }
 
-  if(options.seed == 0u)
-  {
-    options.seed = static_cast<unsigned int>(std::time(nullptr));
-  }
-
-  mpfr::random(options.seed);
+  mpfr::random((options.seed != 0u) ? options.seed : std::random_device()());
 
   if((options.precision < MPFR_PREC_MIN) || (options.precision > MPFR_PREC_MAX))
   {
