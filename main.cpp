@@ -398,6 +398,12 @@ int main(int argc, char* argv[])
 
   mpfr::random(options.seed);
 
+  if((options.precision < MPFR_PREC_MIN) || (options.precision > MPFR_PREC_MAX))
+  {
+    std::cerr << (boost::format("*** Error: Precision out of range: %1% (%2% - %3%)") % options.precision % MPFR_PREC_MIN % MPFR_PREC_MAX) << std::endl;
+    std::exit(EXIT_FAILURE);
+  }
+
   mpfr::mpreal::set_default_prec(options.precision);
   mpfr::mpreal::set_default_rnd(options.roundingMode);
 
