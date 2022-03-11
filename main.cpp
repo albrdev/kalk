@@ -162,7 +162,7 @@ static void evaluate(std::string expression, ExpressionParser& expressionParser,
   while(!end && expression.find_first_not_of(kWhitespaceCharacters) != std::string::npos)
   {
     const auto result = expressionParser.Evaluate(expression);
-    handleResult(result->AsPointer<const DefaultValueType>(), verbose);
+    handleResult(result->As<const DefaultValueType*>(), verbose);
     if(!(end = expressionParser.GetCurrent() != ';'))
     {
       expression = (expressionParser.GetRemaining() + 1u);

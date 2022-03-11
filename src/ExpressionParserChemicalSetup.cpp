@@ -34,12 +34,12 @@ static void addVariable(const T& value, const std::string& identifier)
 
 static IValueToken* BinaryOperator_Addition(IValueToken* lhs, IValueToken* rhs)
 {
-  return new ChemValueType(lhs->AsPointer<ChemValueType>()->GetValue<ChemArithmeticType>() + rhs->AsPointer<ChemValueType>()->GetValue<ChemArithmeticType>());
+  return new ChemValueType(lhs->As<ChemValueType*>()->GetValue<ChemArithmeticType>() + rhs->As<ChemValueType*>()->GetValue<ChemArithmeticType>());
 }
 
 static IValueToken* BinaryOperator_Multiplication(IValueToken* lhs, IValueToken* rhs)
 {
-  return new ChemValueType(lhs->AsPointer<ChemValueType>()->GetValue<ChemArithmeticType>() * rhs->AsPointer<ChemValueType>()->GetValue<ChemArithmeticType>());
+  return new ChemValueType(lhs->As<ChemValueType*>()->GetValue<ChemArithmeticType>() * rhs->As<ChemValueType*>()->GetValue<ChemArithmeticType>());
 }
 
 static BinaryOperatorToken juxtapositionOperator(BinaryOperator_Multiplication, "*", 2, Associativity::Right);
