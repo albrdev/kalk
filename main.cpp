@@ -286,7 +286,7 @@ void list(const std::string& searchPattern)
     if(std::regex_match(identifier.begin(), identifier.end(), regex) || std::regex_match(title.begin(), title.end(), regex) ||
        std::regex_match(description.begin(), description.end(), regex))
     {
-      std::cout << (boost::format("  %|1$-18|%|2$-31|%|3$|") % identifier % title % description) << std::endl;
+      std::cout << (boost::format("  %|1$-16|%|2$-29|%|3$|") % identifier % title % description) << std::endl;
       isPrevEmptyLine = false;
     }
   }
