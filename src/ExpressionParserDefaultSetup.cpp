@@ -152,7 +152,7 @@ static void addUnaryOperator(const UnaryOperatorToken::CallbackType& callback,
                              const std::string& title       = "",
                              const std::string& description = "")
 {
-  auto tmpNew                           = std::make_unique<UnaryOperatorToken>(callback, identifier, precedence, associativity);
+  auto tmpNew                           = std::make_unique<UnaryOperatorToken>(identifier, callback, precedence, associativity);
   auto tmp                              = tmpNew.get();
   defaultUnaryOperatorCache[identifier] = std::move(tmpNew);
   defaultUnaryOperators[identifier]     = tmp;
@@ -167,7 +167,7 @@ static void addBinaryOperator(const BinaryOperatorToken::CallbackType& callback,
                               const std::string& title       = "",
                               const std::string& description = "")
 {
-  auto tmpNew                            = std::make_unique<BinaryOperatorToken>(callback, identifier, precedence, associativity);
+  auto tmpNew                            = std::make_unique<BinaryOperatorToken>(identifier, callback, precedence, associativity);
   auto tmp                               = tmpNew.get();
   defaultBinaryOperatorCache[identifier] = std::move(tmpNew);
   defaultBinaryOperators[identifier]     = tmp;
@@ -182,7 +182,7 @@ static void addFunction(const FunctionToken::CallbackType& callback,
                         const std::string& title       = "",
                         const std::string& description = "")
 {
-  auto tmpNew                      = std::make_unique<FunctionToken>(callback, identifier, minArgs, maxArgs);
+  auto tmpNew                      = std::make_unique<FunctionToken>(identifier, callback, minArgs, maxArgs);
   auto tmp                         = tmpNew.get();
   defaultFunctionCache[identifier] = std::move(tmpNew);
   defaultFunctions[identifier]     = tmp;
@@ -1048,7 +1048,7 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
 {
   if(options.jpo_precedence != 0)
   {
-    juxtapositionOperator = std::make_unique<BinaryOperatorToken>(BinaryOperator_Multiplication, "*", 6 + options.jpo_precedence, Associativity::Left);
+    juxtapositionOperator = std::make_unique<BinaryOperatorToken>("*", BinaryOperator_Multiplication, 6 + options.jpo_precedence, Associativity::Left);
   }
 
   instance.SetOnParseNumberCallback(numberConverter);

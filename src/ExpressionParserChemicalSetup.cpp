@@ -17,7 +17,7 @@ static std::unordered_map<std::string, IVariableToken*> chemVariables;
 
 static void addBinaryOperator(const BinaryOperatorToken::CallbackType& callback, const std::string& identifier, int precedence, Associativity associativity)
 {
-  auto tmpNew                         = std::make_unique<BinaryOperatorToken>(callback, identifier, precedence, associativity);
+  auto tmpNew                         = std::make_unique<BinaryOperatorToken>(identifier, callback, precedence, associativity);
   auto tmp                            = tmpNew.get();
   chemBinaryOperatorCache[identifier] = std::move(tmpNew);
   chemBinaryOperators[identifier]     = tmp;
@@ -42,7 +42,7 @@ static IValueToken* BinaryOperator_Multiplication(IValueToken* lhs, IValueToken*
   return new ChemValueType(lhs->As<ChemValueType*>()->GetValue<ChemArithmeticType>() * rhs->As<ChemValueType*>()->GetValue<ChemArithmeticType>());
 }
 
-static BinaryOperatorToken juxtapositionOperator(BinaryOperator_Multiplication, "*", 2, Associativity::Right);
+static BinaryOperatorToken juxtapositionOperator("*", BinaryOperator_Multiplication, 2, Associativity::Right);
 
 void InitChemicalExpressionParser(ExpressionParser& instance)
 {
