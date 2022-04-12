@@ -1,5 +1,5 @@
-#ifndef __KALKSETUP_HPP__
-#define __KALKSETUP_HPP__
+#ifndef __SETUP_HPP__
+#define __SETUP_HPP__
 
 #include "text/exception/SyntaxException.hpp"
 #include "text/expression/ExpressionParser.hpp"
@@ -87,4 +87,4 @@ void InitDefaultExpressionParser(ExpressionParser& instance);
 void InitChemicalExpressionParser(ExpressionParser& instance);
 void InitCommandParser(CommandParser& instance);
 
-#endif // __KALKSETUP_HPP__
+#endif // __SETUP_HPP__
