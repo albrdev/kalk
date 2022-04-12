@@ -1,17 +1,19 @@
 #ifndef __KALKSETUP_HPP__
 #define __KALKSETUP_HPP__
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <tuple>
-#include <mpfr.h>
-#include <mpreal.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
+#include "text/exception/SyntaxException.hpp"
 #include "text/expression/ExpressionParser.hpp"
 #include "text/parsing/CommandParser.hpp"
-#include "text/exception/SyntaxException.hpp"
+
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
+
+#include <mpfr.h>
+#include <mpreal.h>
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 using DefaultArithmeticType = mpfr::mpreal;
 using DefaultValueType =

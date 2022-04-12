@@ -1,6 +1,8 @@
 #include "Setup.hpp"
+
 #include <cstdlib>
 #include <functional>
+
 #include <readline/history.h>
 
 int Command_Prec(const std::vector<std::string>& args)

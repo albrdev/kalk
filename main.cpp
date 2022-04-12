@@ -1,27 +1,29 @@
+#include "Setup.hpp"
+#include "math/Common.hpp"
+
+#include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <cstdio>
-#include <cerrno>
-#include <string>
-#include <vector>
-#include <unordered_map>
+#include <exception>
 #include <iostream>
+#include <locale>
 #include <memory>
 #include <random>
 #include <regex>
-#include <locale>
-#include <exception>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include <mpreal.h>
 #include <unistd.h>
-#include <readline/readline.h>
-#include <readline/history.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
-#include <boost/program_options.hpp>
 #include <boost/date_time/date_facet.hpp>
 #include <boost/date_time/time_facet.hpp>
-#include <mpreal.h>
-#include "math/Common.hpp"
-#include "Setup.hpp"
+#include <boost/format.hpp>
+#include <boost/program_options.hpp>
+#include <readline/history.h>
+#include <readline/readline.h>
 
 static const std::unordered_map<mpfr_rnd_t, std::string> rmodeNameMap = {
     {mpfr_rnd_t::MPFR_RNDN, "N"},

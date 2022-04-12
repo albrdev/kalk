@@ -1,12 +1,14 @@
 #include "Setup.hpp"
+
 #include <cstdint>
 #include <iostream>
-#include <sstream>
-#include <memory>
 #include <limits>
-#include <boost/format.hpp>
-#include <boost/date_time/time_duration.hpp>
+#include <memory>
+#include <sstream>
+
 #include <gmpxx.h>
+#include <boost/date_time/time_duration.hpp>
+#include <boost/format.hpp>
 
 static IValueToken* numberConverter(const std::string& value)
 {
