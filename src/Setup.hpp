@@ -1,7 +1,7 @@
 #ifndef __SETUP_HPP__
 #define __SETUP_HPP__
 
-#include "text/exception/SyntaxException.hpp"
+#include "text/exception/SyntaxError.hpp"
 #include "text/expression/ExpressionParser.hpp"
 #include "text/parsing/CommandParser.hpp"
 
@@ -38,7 +38,7 @@ using Text::Expression::Associativity;
 
 using Text::Expression::ExpressionParser;
 using Text::Parsing::CommandParser;
-using Text::Exception::SyntaxException;
+using Text::Exception::SyntaxError;
 
 inline std::unordered_map<char, std::unique_ptr<UnaryOperatorToken>> defaultUnaryOperatorCache;
 inline std::unordered_map<char, IUnaryOperatorToken*> defaultUnaryOperators;

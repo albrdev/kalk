@@ -495,7 +495,7 @@ int main(int argc, char* argv[])
           {
             commandParser.Execute(input.erase(0, 1));
           }
-          catch(const SyntaxException& e)
+          catch(const SyntaxError& e)
           {
             std::cerr << "*** Command error: " << e.what() << std::endl;
           }
@@ -514,7 +514,7 @@ int main(int argc, char* argv[])
           {
             evaluate(input, expressionParser);
           }
-          catch(const SyntaxException& e)
+          catch(const SyntaxError& e)
           {
             std::cerr << "*** Expression error: " << e.what() << std::endl;
           }

@@ -103,7 +103,7 @@ const DefaultValueType* ans(int index)
 
   if(index < 0 || static_cast<std::size_t>(index) >= results.size())
   {
-    throw SyntaxException((boost::format("Results index out of range: %1%/%2%") % index % results.size()).str());
+    throw SyntaxError((boost::format("Results index out of range: %1%/%2%") % index % results.size()).str());
   }
 
   return &results.at(static_cast<std::size_t>(index));
@@ -113,7 +113,7 @@ static std::string makeCompoundString(std::string text)
 {
   if(text.empty() || std::isdigit(text.front()) != 0)
   {
-    throw SyntaxException("Invalid chemical compound string");
+    throw SyntaxError("Invalid chemical compound string");
   }
 
   char lastChar = '\0';
@@ -122,7 +122,7 @@ static std::string makeCompoundString(std::string text)
   {
     if(std::isalnum(i) == 0 && (i != '(' && i != ')'))
     {
-      throw SyntaxException("Invalid characters in chemical compound string");
+      throw SyntaxError("Invalid characters in chemical compound string");
     }
 
     if(lastChar != '\0' && lastChar != '(')
@@ -485,7 +485,7 @@ static IValueToken* BinaryOperator_VariableAssignment(IValueToken* lhs, IValueTo
   DefaultVariableType* variable = lhs->As<DefaultVariableType*>();
   if(variable == nullptr)
   {
-    throw SyntaxException((boost::format("Assignment of non-variable type: %1% (%2%)") % lhs->ToString() % lhs->GetTypeInfo().name()).str());
+    throw SyntaxError((boost::format("Assignment of non-variable type: %1% (%2%)") % lhs->ToString() % lhs->GetTypeInfo().name()).str());
   }
 
   bool isInitialAssignment = !variable->IsInitialized();
@@ -513,7 +513,7 @@ static IValueToken* BinaryOperator_VariableAssignment(IValueToken* lhs, IValueTo
   }
   else
   {
-    throw SyntaxException((boost::format("Assignment from unsupported type: %1% (%2%)") % rhs->ToString() % rhs->GetType().name()).str());
+    throw SyntaxError((boost::format("Assignment from unsupported type: %1% (%2%)") % rhs->ToString() % rhs->GetType().name()).str());
   }
 
   if(isInitialAssignment)
@@ -1024,7 +1024,7 @@ static IValueToken* Function_Del(const std::vector<IValueToken*>& args)
     iter = defaultUninitializedVariableCache.find(identifier);
     if(iter == defaultUninitializedVariableCache.end())
     {
-      throw SyntaxException("Deletion of nonexistent variable: " + identifier);
+      throw SyntaxError("Deletion of nonexistent variable: " + identifier);
     }
   }
 
