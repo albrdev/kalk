@@ -248,6 +248,16 @@ static IValueToken* UnaryOperator_Minus(IValueToken* rhs)
     return new DefaultValueType(-rhs->As<DefaultValueType*>()->GetValue<DefaultArithmeticType>());
   }
 }
+
+static IValueToken* UnaryOperator_Factorial(IValueToken* rhs)
+{
+  if(rhs->As<DefaultValueType*>()->GetValue<DefaultArithmeticType>() < 0)
+  {
+    throw std::range_error("Value cannot be negative");
+  }
+
+  return new DefaultValueType(mpfr::fac_ui(static_cast<unsigned long>(rhs->As<DefaultValueType*>()->GetValue<DefaultArithmeticType>())));
+}
 #endif // __REGION__UNOPS__COMMON
 
 #ifndef __REGION__UNOPS__BITWISE
@@ -1067,6 +1077,7 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   unaryOperatorInfoMap.push_back(std::make_tuple(nullptr, "", ""));
   addUnaryOperator(UnaryOperator_Plus, '+', 9, Associativity::Right, "Unary plus", "+x");
   addUnaryOperator(UnaryOperator_Minus, '-', 9, Associativity::Right, "Unary minus", "-x");
+  addUnaryOperator(UnaryOperator_Factorial, ':', 9, Associativity::Right, "Factorial", ":x = x!");
   addUnaryOperator(UnaryOperator_BitwiseOnesComplement, '~', 9, Associativity::Right, "One\'s complement", "Invert bits");
 
   addBinaryOperator(BinaryOperator_Equals, "==", 3, Associativity::Left, "Equals", "x == y");
