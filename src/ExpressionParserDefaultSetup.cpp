@@ -957,6 +957,20 @@ static IValueToken* Function_Mode(const std::vector<IValueToken*>& args)
 
   return new DefaultValueType(mode->As<DefaultValueType*>()->GetValue<DefaultArithmeticType>());
 }
+
+static IValueToken* Function_StdDev(const std::vector<IValueToken*>& args)
+{
+  DefaultArithmeticType result = 0;
+  std::unique_ptr<IValueToken> tmpMean(Function_Mean(args));
+
+  for(const auto& i : args)
+  {
+    result +=
+        mpfr::pow(i->As<DefaultValueType*>()->GetValue<DefaultArithmeticType>() - tmpMean.get()->As<DefaultValueType*>()->GetValue<DefaultArithmeticType>(), 2);
+  }
+
+  return new DefaultValueType(mpfr::sqrt(result / static_cast<DefaultArithmeticType>(args.size())));
+}
 #endif // __REGION__FUNCTIONS__AGGREGATES
 
 #ifndef __REGION__FUNCTIONS__STRING
@@ -1207,6 +1221,12 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
               FunctionToken::GetArgumentCountMaxLimit(),
               "Third quartile",
               "Returns the third quartile of specified arguments");
+  addFunction(Function_StdDev,
+              "math.stddev",
+              1u,
+              FunctionToken::GetArgumentCountMaxLimit(),
+              "Standard deviation",
+              "Returns the standard deviation of specified arguments");
   functionInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
   addFunction(Function_Str, "str", 1u, 1u, "Stringify", "Returns string representation of argument");
