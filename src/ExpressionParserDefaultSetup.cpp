@@ -84,26 +84,29 @@ int compare(const IValueToken* a, const IValueToken* b)
 
 void printValue(const DefaultValueType& value)
 {
-  if(value.GetType() == typeid(DefaultArithmeticType) && !options.vnames)
+  if(options.vnames && value.IsType<DefaultVariableType>())
   {
-    std::cout << value.GetValue<DefaultArithmeticType>().toString(options.digits, options.output_base, mpfr::mpreal::get_default_rnd()) << std::endl;
+    const auto& variable = value.As<const DefaultVariableType&>();
+    std::cout << variable.GetIdentifier();
   }
-  else if(value.GetType() == typeid(std::string) && !options.vnames)
+  else if(value.GetType() == typeid(DefaultArithmeticType))
   {
-    std::cout << value.GetValue<std::string>() << std::endl;
+    std::cout << value.GetValue<DefaultArithmeticType>().toString(options.digits, options.output_base, mpfr::mpreal::get_default_rnd());
   }
   else if(value.GetType() == typeid(boost::posix_time::ptime))
   {
-    std::cout << value.GetValue<boost::posix_time::ptime>() << std::endl;
+    std::cout << value.GetValue<boost::posix_time::ptime>();
   }
   else if(value.GetType() == typeid(boost::posix_time::time_duration))
   {
-    std::cout << value.GetValue<boost::posix_time::time_duration>() << std::endl;
+    std::cout << value.GetValue<boost::posix_time::time_duration>();
   }
   else
   {
-    std::cout << value.ToString() << std::endl;
+    std::cout << value.ToString();
   }
+
+  std::cout << std::endl;
 }
 
 const DefaultValueType* ans(int index)
