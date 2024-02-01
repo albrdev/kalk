@@ -23,7 +23,7 @@ prebuild:
 
 .PHONY: clean
 clean:
-	$(CMD_RM) --force --recursive ./$(DIR_BUILD)/*
+	$(CMD_RM) --force --recursive ./$(DIR_BUILD)
 
 .PHONY: memcheck
 memcheck:
