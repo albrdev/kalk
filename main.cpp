@@ -303,6 +303,7 @@ static void printOptions()
   std::cerr << (boost::format("  %|1$-26|%|2$|") % "Output base" % options.output_base) << std::endl;
   std::cerr << (boost::format("  %|1$-26|%|2$|") % "Input base" % options.input_base) << std::endl;
   std::cerr << (boost::format("  %|1$-26|%|2$|") % "Juxtaposition precedence" % options.jpo_precedence) << std::endl;
+  std::cerr << (boost::format("  %|1$-26|%|2$|") % "Variable names" % options.vnames) << std::endl;
   std::cerr << (boost::format("  %|1$-26|%|2$|") % "Date output format" % options.date_ofmt) << std::endl;
   std::cerr << (boost::format("  %|1$-26|%|2$|") % "Seed" % options.seed) << std::endl;
   std::cerr << std::endl;
@@ -334,6 +335,7 @@ int main(int argc, char* argv[])
   namedEnvDescs.add_options()("KALK_JUXTA", boost::program_options::value<int>()->default_value(defaultOptions.jpo_precedence)->notifier([](int value) {
     options.jpo_precedence = Math::Sign(value);
   }));
+  namedEnvDescs.add_options()("KALK_VNAMES", boost::program_options::value<bool>(&options.vnames)->default_value(defaultOptions.vnames));
   namedEnvDescs.add_options()("KALK_DATE_OFMT", boost::program_options::value<std::string>(&options.date_ofmt)->default_value(defaultOptions.date_ofmt));
   namedEnvDescs.add_options()("KALK_INTERACTIVE", boost::program_options::value<bool>(&options.interactive)->default_value(defaultOptions.interactive));
   namedEnvDescs.add_options()("KALK_VERBOSE", boost::program_options::value<std::string>()->default_value(""));
@@ -359,6 +361,7 @@ int main(int argc, char* argv[])
   namedArgDescs.add_options()("juxta,j",
                               boost::program_options::value<int>()->notifier([](int value) { options.jpo_precedence = Math::Sign(value); }),
                               "Set juxtaposition operator precedence (-1, 0, 1)");
+  namedArgDescs.add_options()("vnames", boost::program_options::value<bool>(&options.vnames)->implicit_value(true), "Print variable names instead of values");
   namedArgDescs.add_options()("date_ofmt,d", boost::program_options::value<std::string>(&options.date_ofmt), "Set date output format");
   namedArgDescs.add_options()("seed,z", boost::program_options::value<unsigned int>(&options.seed), "Set random seed (number)");
   namedArgDescs.add_options()("seedstr,Z",

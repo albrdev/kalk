@@ -70,12 +70,13 @@ struct kalk_options
   int output_base;
   int input_base;
   int jpo_precedence;
+  bool vnames;
   std::string date_ofmt;
   unsigned int seed;
   bool interactive;
 };
 
-const inline kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, -1, "%Y-%m-%d %H:%M:%S", 0u, false};
+const inline kalk_options defaultOptions {128, mpfr_rnd_t::MPFR_RNDN, 30, 10, 10, -1, false, "%Y-%m-%d %H:%M:%S", 0u, false};
 inline kalk_options options {};
 
 mpfr_rnd_t strToRmode(const std::string value);

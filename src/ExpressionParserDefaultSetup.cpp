@@ -7,7 +7,9 @@
 #include <sstream>
 
 #include <gmpxx.h>
+#include <boost/date_time/date_facet.hpp>
 #include <boost/date_time/time_duration.hpp>
+#include <boost/date_time/time_facet.hpp>
 #include <boost/format.hpp>
 
 static IValueToken* numberConverter(const std::string& value)
@@ -24,6 +26,17 @@ struct GreaterComparer
     return a->As<DefaultValueType*>()->GetValue<DefaultArithmeticType>() < b->As<DefaultValueType*>()->GetValue<DefaultArithmeticType>();
   }
 };
+
+static std::string formatDateTime(const boost::posix_time::ptime& dateTime, const std::string& format)
+{
+  std::locale(std::cout.getloc(), new boost::posix_time::time_facet());
+  auto facet = new boost::posix_time::time_facet(format.c_str());
+
+  std::ostringstream stringStream;
+  stringStream.imbue(std::locale(std::cout.getloc(), facet));
+  stringStream << dateTime;
+  return stringStream.str();
+}
 
 static std::string operator*(const std::string& lhs, std::size_t rhs)
 {
@@ -71,9 +84,13 @@ int compare(const IValueToken* a, const IValueToken* b)
 
 void printValue(const DefaultValueType& value)
 {
-  if(value.GetType() == typeid(DefaultArithmeticType))
+  if(value.GetType() == typeid(DefaultArithmeticType) && !options.vnames)
   {
     std::cout << value.GetValue<DefaultArithmeticType>().toString(options.digits, options.output_base, mpfr::mpreal::get_default_rnd()) << std::endl;
+  }
+  else if(value.GetType() == typeid(std::string) && !options.vnames)
+  {
+    std::cout << value.GetValue<std::string>() << std::endl;
   }
   else if(value.GetType() == typeid(boost::posix_time::ptime))
   {
@@ -985,13 +1002,29 @@ static IValueToken* Function_StrLen(const std::vector<IValueToken*>& args)
 #ifndef __REGION__FUNCTIONS__DATE_TIME
 static IValueToken* Function_Date(const std::vector<IValueToken*>& args)
 {
+  const auto now = boost::posix_time::second_clock::local_time();
   if(args.size() == 0u)
   {
-    return new DefaultValueType(boost::posix_time::second_clock::local_time());
+    return new DefaultValueType(now);
   }
   else
   {
-    return new DefaultValueType(boost::posix_time::time_from_string(args[0]->As<DefaultValueType*>()->GetValue<std::string>()));
+    const std::string datePattern(R"(^\s*(\d{2})(\d{2})?(-|\.)(\d{1,2})(-|\.)(\d{1,2})\s*$)");
+    const std::string timePattern(R"(^\s*(\d{1,2}):(\d{1,2}):(\d{1,2})(\.\d*)?\s*$)");
+    const std::regex dateRegex(datePattern);
+    const std::regex timeRegex(timePattern);
+
+    auto dateTimeString = args[0]->As<DefaultValueType*>()->GetValue<std::string>();
+    if(std::regex_match(dateTimeString.begin(), dateTimeString.end(), dateRegex))
+    {
+      dateTimeString = (boost::format("%1% %2%") % dateTimeString % formatDateTime(now, "%H:%M:%S%F")).str();
+    }
+    else if(std::regex_match(dateTimeString.begin(), dateTimeString.end(), timeRegex))
+    {
+      dateTimeString = (boost::format("%1% %2%") % formatDateTime(now, "%Y-%m-%d") % dateTimeString).str();
+    }
+
+    return new DefaultValueType(boost::posix_time::time_from_string(dateTimeString));
   }
 }
 
