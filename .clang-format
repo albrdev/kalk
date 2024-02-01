@@ -39,7 +39,6 @@ AllowAllParametersOfDeclarationOnNextLine : false # Override BinPackParameters w
 
 AccessModifierOffset: 0 # public, protected, private
 
-AlignConsecutiveMacros: true
 AlignConsecutiveAssignments: AcrossComments
 AlignConsecutiveDeclarations: false
 AlignConsecutiveBitFields: AcrossEmptyLinesAndComments
