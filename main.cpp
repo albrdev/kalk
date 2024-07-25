@@ -144,7 +144,10 @@ static void handleResult(const DefaultValueType* value, bool verbose)
   {
     printValue(*value);
   }
+}
 
+static void removeUninitializedVariables()
+{
   if(!defaultUninitializedVariableCache.empty())
   {
     std::cout << "*** Warning: Uninitialized variable(s)" << std::endl;
@@ -524,6 +527,7 @@ int main(int argc, char* argv[])
           catch(const std::runtime_error& e)
           {
             std::cerr << "*** Expression error: " << e.what() << std::endl;
+            removeUninitializedVariables();
           }
           catch(const std::domain_error& e)
           {
