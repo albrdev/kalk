@@ -1296,6 +1296,8 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addVariable(mpfr::mpreal("2.71828182846"), "math.e", "Euler's number", "Mathematical constant");
   variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
+  addVariable(mpfr::exp10(mpfr::mpreal(30)), "Q", "Quetta", "Metric prefix (10^30)");
+  addVariable(mpfr::exp10(mpfr::mpreal(27)), "R", "Ronna", "Metric prefix (10^27)");
   addVariable(mpfr::exp10(mpfr::mpreal(24)), "Y", "Yotta", "Metric prefix (10^24)");
   addVariable(mpfr::exp10(mpfr::mpreal(21)), "Z", "Zetta", "Metric prefix (10^21)");
   addVariable(mpfr::exp10(mpfr::mpreal(18)), "E", "Exa", "Metric prefix (10^18)");
@@ -1316,6 +1318,8 @@ void InitDefaultExpressionParser(ExpressionParser& instance)
   addVariable(mpfr::exp10(mpfr::mpreal(-18)), "a", "Atto", "Metric prefix (10^-18)");
   addVariable(mpfr::exp10(mpfr::mpreal(-21)), "z", "Zepto", "Metric prefix (10^-21)");
   addVariable(mpfr::exp10(mpfr::mpreal(-24)), "y", "Yocto", "Metric prefix (10^-24)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-27)), "r", "Ronto", "Metric prefix (10^-27)");
+  addVariable(mpfr::exp10(mpfr::mpreal(-30)), "q", "Quekto", "Metric prefix (10^-30)");
   variableInfoMap.push_back(std::make_tuple(nullptr, "", ""));
 
   addVariable(mpfr::exp2(mpfr::mpreal(10)), "Ki", "Kibi", "Binary prefix (2^10)");
